@@ -27,8 +27,13 @@ public class LuceneBuildWrapper extends BuildWrapper {
 
         @Override
         public boolean tearDown(final AbstractBuild build, final BuildListener listener) throws IOException, InterruptedException {
-            LuceneManager.getInstance().storeBuild(build, listener);
-            return super.tearDown(build, listener);
+            boolean tearDown;
+            try {
+                tearDown = super.tearDown(build, listener);
+            } finally {
+                LuceneManager.getInstance().storeBuild(build, listener);
+            }
+            return tearDown;
         }
 
     }
