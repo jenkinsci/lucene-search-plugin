@@ -9,19 +9,16 @@ import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 import net.sf.json.JSONObject;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.kohsuke.stapler.StaplerRequest;
 
 @SuppressWarnings("rawtypes")
 public class LuceneBuildWrapper extends BuildWrapper {
 
     @Override
-    public Environment setUp(AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException,
+    public Environment setUp(final AbstractBuild build, final Launcher launcher, final BuildListener listener) throws IOException,
             InterruptedException {
         return new LuceneEnvironment();
     }
@@ -29,7 +26,7 @@ public class LuceneBuildWrapper extends BuildWrapper {
     public class LuceneEnvironment extends Environment {
 
         @Override
-        public boolean tearDown(AbstractBuild build, BuildListener listener) throws IOException, InterruptedException {
+        public boolean tearDown(final AbstractBuild build, final BuildListener listener) throws IOException, InterruptedException {
             LuceneManager.getInstance().storeBuild(build, listener);
             return super.tearDown(build, listener);
         }
@@ -44,12 +41,12 @@ public class LuceneBuildWrapper extends BuildWrapper {
         }
 
         @Override
-        public boolean isApplicable(AbstractProject<?, ?> item) {
+        public boolean isApplicable(final AbstractProject<?, ?> item) {
             return true;
         }
 
         @Override
-        public LuceneBuildWrapper newInstance(StaplerRequest req, JSONObject formData) {
+        public LuceneBuildWrapper newInstance(final StaplerRequest req, final JSONObject formData) {
             return new LuceneBuildWrapper();
         }
 

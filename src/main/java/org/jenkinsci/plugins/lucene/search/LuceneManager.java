@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.lucene.search;
 
-import hudson.EnvVars;
 import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
 import hudson.search.SearchIndex;
@@ -22,7 +21,6 @@ import org.apache.lucene.document.IntField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -34,8 +32,6 @@ import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
-
-import com.trilead.ssh2.util.IOUtils;
 
 public class LuceneManager {
 
@@ -64,7 +60,7 @@ public class LuceneManager {
         reader = DirectoryReader.open(index);
     }
 
-    public LuceneSearchResultImpl getHits(String query) {
+    public LuceneSearchResultImpl getHits(final String query) {
         LuceneSearchResultImpl luceneSearchResultImpl = new LuceneSearchResultImpl();
         try {
             Query q = new QueryParser(LUCENE49, "console", analyzer).parse(query);
@@ -88,7 +84,7 @@ public class LuceneManager {
 
     }
 
-    public void storeBuild(AbstractBuild<?, ?> build, BuildListener listener) throws IOException {
+    public void storeBuild(final AbstractBuild<?, ?> build, final BuildListener listener) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         build.getLogText().writeLogTo(0, byteArrayOutputStream);
         String consoleOutput = byteArrayOutputStream.toString();
@@ -142,10 +138,10 @@ public class LuceneManager {
 
 class SearchItemImplementation implements SearchItem {
 
-    private String buildNumber;
-    private String projectName;
+    private final String buildNumber;
+    private final String projectName;
 
-    public SearchItemImplementation(String projectName, String buildNumber) {
+    public SearchItemImplementation(final String projectName, final String buildNumber) {
         this.projectName = projectName;
         this.buildNumber = buildNumber;
     }
@@ -161,12 +157,12 @@ class SearchItemImplementation implements SearchItem {
     public SearchIndex getSearchIndex() {
         return new SearchIndex() {
 
-            public void suggest(String token, List<SearchItem> result) {
+            public void suggest(final String token, final List<SearchItem> result) {
                 // TODO Auto-generated method stub
 
             }
 
-            public void find(String token, List<SearchItem> result) {
+            public void find(final String token, final List<SearchItem> result) {
                 // TODO Auto-generated method stub
 
             }
