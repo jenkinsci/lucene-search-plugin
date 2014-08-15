@@ -12,6 +12,9 @@
 	<artifactId>lucene-search</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<packaging>hpi</packaging>
+	<properties>
+		<lucene.version>4.9.0</lucene.version>
+	</properties>
 
 	<!-- Jenkins plugin config -->
 	<name>Lucene-Search</name>
@@ -44,17 +47,17 @@
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-core</artifactId>
-			<version>4.9.0</version>
+			<version>${lucene.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-analyzers-common</artifactId>
-			<version>4.9.0</version>
+			<version>${lucene.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-queryparser</artifactId>
-			<version>4.9.0</version>
+			<version>${lucene.version}</version>
 		</dependency>
 	</dependencies>
 
