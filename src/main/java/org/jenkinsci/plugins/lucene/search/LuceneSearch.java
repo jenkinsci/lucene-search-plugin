@@ -23,7 +23,7 @@ public class LuceneSearch extends Search {
     @Override
     public SearchResult getSuggestions(final StaplerRequest req, @QueryParameter final String query) {
         try {
-            return LuceneManager.getInstance().getHits(query);
+            return LuceneManager.getInstance().getHits(query, true);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
