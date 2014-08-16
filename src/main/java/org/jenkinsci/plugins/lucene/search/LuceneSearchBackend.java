@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.lucene.search;
 
-import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
 import hudson.search.SuggestedItem;

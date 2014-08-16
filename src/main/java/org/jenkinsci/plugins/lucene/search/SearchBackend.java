@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.lucene.search;
 
 import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
 import hudson.search.SearchResult;
 
 import java.io.IOException;
