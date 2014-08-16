@@ -20,6 +20,7 @@ import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
@@ -40,6 +41,7 @@ public class LuceneSearchBackend implements SearchBackend {
     private static final String IDX_CONSOLE = "console";
     private static final String IDX_PROJECTNAME = "projectName";
     private static final String IDX_BUILDNUMBER = "buildNumber";
+    private static final String IDX_ID = "ID";
 
     private static final Version LUCENE_VERSION = Version.LUCENE_4_9;
     private static final int MAXHITPERPAGE = 10;
@@ -138,7 +140,7 @@ public class LuceneSearchBackend implements SearchBackend {
 
         try {
             Document doc = new Document();
-
+            doc.add(new StringField(IDX_ID, build.getId(), Field.Store.YES));
             doc.add(new StringField(IDX_PROJECTNAME, build.getProject().getName(), Field.Store.YES));
             doc.add(new StringField("projectDisplayName", build.getProject().getDisplayName(), Field.Store.YES));
             doc.add(new IntField(IDX_BUILDNUMBER, build.getNumber(), Field.Store.YES));
@@ -169,5 +171,14 @@ public class LuceneSearchBackend implements SearchBackend {
     @Override
     public SearchBackendEngine getEngine() {
         return SearchBackendEngine.LUCENE;
+    }
+
+    @Override
+    public void removeBuild(final AbstractBuild<?, ?> build) {
+        try {
+            dbWriter.deleteDocuments(new Term(IDX_ID, build.getId()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

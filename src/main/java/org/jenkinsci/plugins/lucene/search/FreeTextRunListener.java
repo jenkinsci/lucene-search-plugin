@@ -25,4 +25,8 @@ public class FreeTextRunListener extends RunListener<AbstractBuild<?, ?>> {
         }
     }
 
+    @Override
+    public void onDeleted(final AbstractBuild<?, ?> build) {
+        searchBackendManager.getBackend().removeBuild(build);
+    }
 }
