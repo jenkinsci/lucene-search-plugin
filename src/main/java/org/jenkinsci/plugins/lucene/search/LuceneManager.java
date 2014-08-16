@@ -33,11 +33,14 @@ import org.apache.lucene.util.Version;
 
 public class LuceneManager {
 
-    private static final Version LUCENE49 = Version.LUCENE_4_9;
+    private static final String IDX_CONSOLE = "console";
+    private static final String IDX_PROJECTNAME = "projectName";
+    private static final String IDX_BUILDNUMBER = "buildNumber";
+
+    private static final Version LUCENE_VERSION = Version.LUCENE_4_9;
     private static final int MAXHITPERPAGE = 10;
-    private static final String PROJECTNAME = "projectName";
-    private static final String BUILDNUMBER = "buildNumber";
-    public static LuceneManager instance = null;
+
+    public static LuceneManager instance;
 
     private final Directory index;
     private final StandardAnalyzer analyzer;
@@ -46,9 +49,9 @@ public class LuceneManager {
     private DirectoryReader reader;
 
     public LuceneManager() throws IOException {
-        analyzer = new StandardAnalyzer(LUCENE49);
+        analyzer = new StandardAnalyzer(LUCENE_VERSION);
         index = FSDirectory.open(new File(Jenkins.getInstance().getRootDir(), "luceneIndex"));
-        IndexWriterConfig config = new IndexWriterConfig(LUCENE49, analyzer);
+        IndexWriterConfig config = new IndexWriterConfig(LUCENE_VERSION, analyzer);
         dbWriter = new IndexWriter(index, config);
         updateReader();
     }
@@ -61,7 +64,7 @@ public class LuceneManager {
     public LuceneSearchResultImpl getHits(final String query) {
         LuceneSearchResultImpl luceneSearchResultImpl = new LuceneSearchResultImpl();
         try {
-            Query q = new QueryParser(LUCENE49, "console", analyzer).parse(query);
+            Query q = new QueryParser(LUCENE_VERSION, IDX_CONSOLE,, analyzer).parse(query);
 
             IndexSearcher searcher = new IndexSearcher(reader);
             TopScoreDocCollector collector = TopScoreDocCollector.create(MAXHITPERPAGE, true);
@@ -69,16 +72,17 @@ public class LuceneManager {
             ScoreDoc[] hits = collector.topDocs().scoreDocs;
             for (ScoreDoc hit : hits) {
                 Document doc = searcher.doc(hit.doc);
-                luceneSearchResultImpl.add(new SuggestedItem(new LuceneSearchItemImplementation(doc.get(PROJECTNAME), doc
-                        .get(BUILDNUMBER))));
+                luceneSearchResultImpl.add(new SuggestedItem(new LuceneSearchItemImplementation(doc.get(IDX_PROJECTNAME), doc
+                        .get(IDX_BUILDNUMBER))));
             }
-            luceneSearchResultImpl.hasMoreResults = false;
 
-        } catch (ParseException e) {} catch (IOException e) {}
+        } catch (ParseException e) {
+            // Do nothing
+        } catch (IOException e) {
+            // Do nothing
+        }
 
         return luceneSearchResultImpl;
-
-        // for q.results { luceneSearch.add()
 
     }
 
@@ -90,9 +94,9 @@ public class LuceneManager {
         try {
             Document doc = new Document();
 
-            doc.add(new StringField(PROJECTNAME, build.getProject().getName(), Field.Store.YES));
+            doc.add(new StringField(IDX_PROJECTNAME, build.getProject().getName(), Field.Store.YES));
             doc.add(new StringField("projectDisplayName", build.getProject().getDisplayName(), Field.Store.YES));
-            doc.add(new IntField(BUILDNUMBER, build.getNumber(), Field.Store.YES));
+            doc.add(new IntField(IDX_BUILDNUMBER, build.getNumber(), Field.Store.YES));
             //doc.add(new StringField("result", build.getResult().toString(), Field.Store.YES));
 
             // build.getChangeSet()
@@ -104,14 +108,12 @@ public class LuceneManager {
             // EnvVars a = build.getEnvironment(listener);
             // build.get
 
-            doc.add(new TextField("console", consoleOutput, Field.Store.NO));
+            doc.add(new TextField(IDX_CONSOLE, consoleOutput, Field.Store.YES));
 
             dbWriter.addDocument(doc);
         } finally {
             updateReader();
         }
-
-        System.err.println(consoleOutput);
     }
 
     public synchronized static LuceneManager getInstance() throws IOException {
