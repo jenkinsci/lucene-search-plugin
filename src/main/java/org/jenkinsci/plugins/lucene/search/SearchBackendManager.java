@@ -37,7 +37,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 
-public class LuceneManager {
+public class SearchBackendManager {
 
     private static final int MAX_NUM_FRAGMENTS = 5;
     private static final String IDX_CONSOLE = "console";
@@ -48,7 +48,7 @@ public class LuceneManager {
     private static final int MAXHITPERPAGE = 10;
     private static final String[] EMPTY_ARRAY = new String[0];
 
-    public static LuceneManager instance;
+    public static SearchBackendManager instance;
 
     private final Directory index;
     private final StandardAnalyzer analyzer;
@@ -56,7 +56,7 @@ public class LuceneManager {
 
     private DirectoryReader reader;
 
-    public LuceneManager() throws IOException {
+    public SearchBackendManager() throws IOException {
         analyzer = new StandardAnalyzer(LUCENE_VERSION);
         index = FSDirectory.open(new File(Jenkins.getInstance().getRootDir(), "luceneIndex"));
         IndexWriterConfig config = new IndexWriterConfig(LUCENE_VERSION, analyzer);
@@ -90,7 +90,7 @@ public class LuceneManager {
                         e.printStackTrace();
                     }
                 }
-                luceneSearchResultImpl.add(new SuggestedItem(new LuceneSearchItemImplementation(doc.get(IDX_PROJECTNAME), doc
+                luceneSearchResultImpl.add(new SuggestedItem(new FreeTextSearchItemImplementation(doc.get(IDX_PROJECTNAME), doc
                         .get(IDX_BUILDNUMBER), bestFragments)));
             }
 
@@ -139,9 +139,9 @@ public class LuceneManager {
         }
     }
 
-    public synchronized static LuceneManager getInstance() throws IOException {
+    public synchronized static SearchBackendManager getInstance() throws IOException {
         if (instance == null) {
-            instance = new LuceneManager();
+            instance = new SearchBackendManager();
         }
         return instance;
     }

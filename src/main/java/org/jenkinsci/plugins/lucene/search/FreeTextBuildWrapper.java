@@ -15,7 +15,7 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 
 @SuppressWarnings("rawtypes")
-public class LuceneBuildWrapper extends BuildWrapper {
+public class FreeTextBuildWrapper extends BuildWrapper {
 
     @Override
     public Environment setUp(final AbstractBuild build, final Launcher launcher, final BuildListener listener) throws IOException,
@@ -31,7 +31,7 @@ public class LuceneBuildWrapper extends BuildWrapper {
             try {
                 tearDown = super.tearDown(build, listener);
             } finally {
-                LuceneManager.getInstance().storeBuild(build, listener);
+                SearchBackendManager.getInstance().storeBuild(build, listener);
             }
             return tearDown;
         }
@@ -51,8 +51,8 @@ public class LuceneBuildWrapper extends BuildWrapper {
         }
 
         @Override
-        public LuceneBuildWrapper newInstance(final StaplerRequest req, final JSONObject formData) {
-            return new LuceneBuildWrapper();
+        public FreeTextBuildWrapper newInstance(final StaplerRequest req, final JSONObject formData) {
+            return new FreeTextBuildWrapper();
         }
 
     }

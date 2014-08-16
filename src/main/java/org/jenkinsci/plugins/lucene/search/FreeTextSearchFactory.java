@@ -6,9 +6,9 @@ import hudson.search.SearchableModelObject;
 import hudson.search.Search;
 
 @Extension
-public class LuceneSearchFactory extends SearchFactory{
+public class FreeTextSearchFactory extends SearchFactory{
     @Override
     public Search createFor(final SearchableModelObject owner) {
-        return new LuceneSearch();
+        return new FreeTextSearch();
     }
 }
