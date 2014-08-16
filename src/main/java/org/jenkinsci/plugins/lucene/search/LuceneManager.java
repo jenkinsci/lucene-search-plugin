@@ -2,14 +2,11 @@ package org.jenkinsci.plugins.lucene.search;
 
 import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
-import hudson.search.SearchIndex;
-import hudson.search.SearchItem;
 import hudson.search.SearchResult;
 import hudson.search.SuggestedItem;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 import jenkins.model.Jenkins;
 
@@ -71,7 +68,7 @@ public class LuceneManager {
             ScoreDoc[] hits = collector.topDocs().scoreDocs;
             for (ScoreDoc hit : hits) {
                 Document doc = searcher.doc(hit.doc);
-                luceneSearchResultImpl.add(new SuggestedItem(new SearchItemImplementation(doc.get(PROJECTNAME), doc
+                luceneSearchResultImpl.add(new SuggestedItem(new LuceneSearchItemImplementation(doc.get(PROJECTNAME), doc
                         .get(BUILDNUMBER))));
             }
             luceneSearchResultImpl.hasMoreResults = false;
@@ -127,45 +124,11 @@ public class LuceneManager {
 
         private static final long serialVersionUID = 1L;
 
-        private boolean hasMoreResults = false;
+        private final boolean hasMoreResults = false;
 
         public boolean hasMoreResults() {
             return hasMoreResults;
         }
     }
 
-}
-
-class SearchItemImplementation implements SearchItem {
-
-    private final String buildNumber;
-    private final String projectName;
-
-    public SearchItemImplementation(final String projectName, final String buildNumber) {
-        this.projectName = projectName;
-        this.buildNumber = buildNumber;
-    }
-
-    public String getSearchUrl() {
-        return Jenkins.getInstance().getRootUrl() + "/job/" + projectName + "/" + buildNumber + "/";
-    }
-
-    public String getSearchName() {
-        return projectName + " #" + buildNumber;
-    }
-
-    public SearchIndex getSearchIndex() {
-        return new SearchIndex() {
-
-            public void suggest(final String token, final List<SearchItem> result) {
-                // TODO Auto-generated method stub
-
-            }
-
-            public void find(final String token, final List<SearchItem> result) {
-                // TODO Auto-generated method stub
-
-            }
-        };
-    }
 }
