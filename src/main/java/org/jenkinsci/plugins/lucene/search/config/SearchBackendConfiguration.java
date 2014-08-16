@@ -10,12 +10,17 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.inject.Inject;
 
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.io.IOUtils;
+import org.jenkinsci.plugins.lucene.search.SearchBackendManager;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -25,6 +30,9 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
 
     private static final String LUCENE_PATH = "lucenePath";
     private static final String SOLR_URL = "solrUrl";
+
+    @Inject
+    SearchBackendManager backendManager;
 
     private URI solrUrl = URI.create("http://127.0.0.1:8983/");
     private File lucenePath = new File(Jenkins.getInstance().getRootDir(), "luceneIndex");
@@ -64,6 +72,10 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
 
     public String getSearchBackend() {
         return searchBackend.toString();
+    }
+
+    public SearchBackendEngine getSearchBackendEngine() {
+        return searchBackend;
     }
 
     public void setSearchBackend(final SearchBackendEngine searchBackend) {
@@ -134,6 +146,14 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
         }
         setSearchBackend(SearchBackendEngine.valueOf(json.get("").toString()));
         save();
+        backendManager.reconfigure(searchBackend, getConfig());
         return super.configure(req, json);
+    }
+
+    public Map<String, Object> getConfig() {
+        Map<String, Object> config = new HashMap<String, Object>();
+        config.put("solrUrl", solrUrl);
+        config.put("lucenePath", lucenePath);
+        return config;
     }
 }

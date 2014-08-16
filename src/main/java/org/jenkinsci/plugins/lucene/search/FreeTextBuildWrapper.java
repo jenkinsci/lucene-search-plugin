@@ -14,6 +14,8 @@ import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.StaplerRequest;
 
+import com.google.inject.Inject;
+
 @SuppressWarnings("rawtypes")
 public class FreeTextBuildWrapper extends BuildWrapper {
 
@@ -21,6 +23,10 @@ public class FreeTextBuildWrapper extends BuildWrapper {
     public Environment setUp(final AbstractBuild build, final Launcher launcher, final BuildListener listener) throws IOException,
             InterruptedException {
         return new LuceneEnvironment();
+    }
+
+    private SearchBackend getSearchBackend() {
+        return ((DescriptorImpl) getDescriptor()).getSearchBackendManager().getBackend();
     }
 
     public class LuceneEnvironment extends Environment {
@@ -31,15 +37,17 @@ public class FreeTextBuildWrapper extends BuildWrapper {
             try {
                 tearDown = super.tearDown(build, listener);
             } finally {
-                SearchBackendManager.getInstance().storeBuild(build, listener);
+                getSearchBackend().storeBuild(build, listener);
             }
             return tearDown;
         }
-
     }
 
     @Extension
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
+        @Inject
+        SearchBackendManager manager;
+
         @Override
         public String getDisplayName() {
             return "Lucene data sucker";
@@ -48,6 +56,10 @@ public class FreeTextBuildWrapper extends BuildWrapper {
         @Override
         public boolean isApplicable(final AbstractProject<?, ?> item) {
             return true;
+        }
+
+        private SearchBackendManager getSearchBackendManager() {
+            return manager;
         }
 
         @Override
