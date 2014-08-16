@@ -11,7 +11,7 @@ import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 
 
 public interface SearchBackend {
-    public void storeBuild(final AbstractBuild<?, ?> build, final BuildListener listener) throws IOException;
+    public void storeBuild(final AbstractBuild<?, ?> build) throws IOException;
     public SearchResult getHits(final String query, final boolean includeHighlights);
     public SearchBackendEngine getEngine();
     public SearchBackend reconfigure(Map<String, Object> config);

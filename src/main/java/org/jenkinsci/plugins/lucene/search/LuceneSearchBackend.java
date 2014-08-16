@@ -132,7 +132,7 @@ public class LuceneSearchBackend implements SearchBackend {
     }
 
     @Override
-    public void storeBuild(final AbstractBuild<?, ?> build, final BuildListener listener) throws IOException {
+    public void storeBuild(final AbstractBuild<?, ?> build) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         build.getLogText().writeLogTo(0, byteArrayOutputStream);
         String consoleOutput = byteArrayOutputStream.toString();
