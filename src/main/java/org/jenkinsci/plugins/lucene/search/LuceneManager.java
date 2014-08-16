@@ -5,6 +5,7 @@ import hudson.model.AbstractBuild;
 import hudson.search.SearchResult;
 import hudson.search.SuggestedItem;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -27,7 +28,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 
 public class LuceneManager {
@@ -46,7 +47,7 @@ public class LuceneManager {
 
     public LuceneManager() throws IOException {
         analyzer = new StandardAnalyzer(LUCENE49);
-        index = new RAMDirectory();
+        index = FSDirectory.open(new File(Jenkins.getInstance().getRootDir(), "luceneIndex"));
         IndexWriterConfig config = new IndexWriterConfig(LUCENE49, analyzer);
         dbWriter = new IndexWriter(index, config);
         updateReader();
