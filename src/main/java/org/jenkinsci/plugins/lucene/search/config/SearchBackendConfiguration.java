@@ -112,7 +112,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     private URI makeSolrUrl(final String solrUrlX) throws IOException {
         IOException e = null;
         String solrUrl = solrUrlX.replaceAll("/*$", "");
-        for (String s : new String[] { solrUrl + "/solr/schema", solrUrl + "/schema", solrUrl }) {
+        for (String s : new String[] { solrUrl + "/solr/schema", solrUrl + "/schema" }) {
             try {
                 return checkSolrUrl(s);
             } catch (IOException e2) {

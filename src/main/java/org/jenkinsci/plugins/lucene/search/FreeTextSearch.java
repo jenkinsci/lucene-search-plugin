@@ -17,7 +17,6 @@ public class FreeTextSearch extends Search {
 
     public FreeTextSearch(final SearchBackendManager manager) {
         this.manager = manager;
-        System.err.println("Created: " + getClass());
     }
 
     @Override

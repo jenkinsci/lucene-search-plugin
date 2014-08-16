@@ -44,7 +44,7 @@ public class LuceneSearchBackend implements SearchBackend {
     private static final String IDX_ID = "ID";
 
     private static final Version LUCENE_VERSION = Version.LUCENE_4_9;
-    private static final int MAXHITPERPAGE = 10;
+    private static final int MAXHITPERPAGE = 100;
     private static final String[] EMPTY_ARRAY = new String[0];
 
     private final Directory index;
@@ -127,9 +127,7 @@ public class LuceneSearchBackend implements SearchBackend {
         } catch (IOException e) {
             // Do nothing
         }
-
         return luceneSearchResultImpl;
-
     }
 
     @Override
