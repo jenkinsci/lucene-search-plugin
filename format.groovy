@@ -1,12 +1,14 @@
 #!/usr/bin/groovy
 
-@Grab(group='org.eclipse.text', module='org.eclipse.text', version='3.5.101')
+@Grab('org.eclipse.text:org.eclipse.text:3.5.101')
 @Grab('org.eclipse.tycho:org.eclipse.jdt.core:3.10.0.v20140604-1726')
+
 
 import org.eclipse.jdt.core.formatter.CodeFormatter
 import org.eclipse.jdt.core.ToolFactory
 import org.eclipse.jface.text.Document
 import groovy.io.FileType
+
 
 def settings =  new XmlSlurper().parse('codestyle.xml')
 def options = settings[0].children[0].children.collectEntries { [it.attributes.id, it.attributes.value] }
