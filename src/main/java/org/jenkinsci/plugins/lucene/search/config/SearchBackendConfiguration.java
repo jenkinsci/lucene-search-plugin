@@ -132,7 +132,8 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     }
 
     @Override
-    public boolean configure(final StaplerRequest req, final JSONObject json) throws hudson.model.Descriptor.FormException {
+    public boolean configure(final StaplerRequest req, final JSONObject json)
+            throws hudson.model.Descriptor.FormException {
         JSONObject selectedJson = json.getJSONObject("searchBackend");
         if (selectedJson.containsKey(SOLR_URL)) {
             try {

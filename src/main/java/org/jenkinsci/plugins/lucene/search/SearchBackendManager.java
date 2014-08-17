@@ -20,12 +20,12 @@ public class SearchBackendManager {
         if (instance == null) {
             SearchBackendEngine engine = backendConfig.getSearchBackendEngine();
             switch (engine) {
-                case LUCENE:
-                    instance = LuceneSearchBackend.create(backendConfig.getConfig());
-                    break;
-                case SOLR:
-                default:
-                    throw new IllegalArgumentException("Can't instantiate " + engine);
+            case LUCENE:
+                instance = LuceneSearchBackend.create(backendConfig.getConfig());
+                break;
+            case SOLR:
+            default:
+                throw new IllegalArgumentException("Can't instantiate " + engine);
             }
 
         }

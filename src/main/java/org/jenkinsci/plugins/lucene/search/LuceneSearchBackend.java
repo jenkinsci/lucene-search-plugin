@@ -113,13 +113,14 @@ public class LuceneSearchBackend implements SearchBackend {
                 String[] bestFragments = EMPTY_ARRAY;
                 if (includeHighlights) {
                     try {
-                        bestFragments = highlighter.getBestFragments(analyzer, "contents", doc.get(IDX_CONSOLE), MAX_NUM_FRAGMENTS);
+                        bestFragments = highlighter.getBestFragments(analyzer, "contents", doc.get(IDX_CONSOLE),
+                                MAX_NUM_FRAGMENTS);
                     } catch (InvalidTokenOffsetsException e) {
                         e.printStackTrace();
                     }
                 }
-                luceneSearchResultImpl.add(new SuggestedItem(new FreeTextSearchItemImplementation(doc.get(IDX_PROJECTNAME), doc
-                        .get(IDX_BUILDNUMBER), bestFragments)));
+                luceneSearchResultImpl.add(new SuggestedItem(new FreeTextSearchItemImplementation(doc
+                        .get(IDX_PROJECTNAME), doc.get(IDX_BUILDNUMBER), bestFragments)));
             }
 
         } catch (ParseException e) {

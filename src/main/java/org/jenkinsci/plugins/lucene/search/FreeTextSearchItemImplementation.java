@@ -13,7 +13,8 @@ public class FreeTextSearchItemImplementation implements SearchItem {
     private final String projectName;
     private final String[] bestFragments;
 
-    public FreeTextSearchItemImplementation(final String projectName, final String buildNumber, final String[] bestFragments) {
+    public FreeTextSearchItemImplementation(final String projectName, final String buildNumber,
+            final String[] bestFragments) {
         this.projectName = projectName;
         this.buildNumber = buildNumber;
         this.bestFragments = bestFragments;
