@@ -161,6 +161,11 @@ public class LuceneSearchBackend implements SearchBackend {
 
             doc.add(new TextField(IDX_CONSOLE, consoleOutput, Field.Store.YES));
 
+            for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
+                doc.add(new StringField(extension.getKeyWord(), extension.getTextResult(build), (extension.persist()) ?
+                        Field.Store.YES : Field.Store.NO));
+            }
+
             dbWriter.addDocument(doc);
         } finally {
             updateReader();
