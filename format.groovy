@@ -23,6 +23,7 @@ new File("src").eachFileRecurse(FileType.FILES) {
 		edit.apply(document)
 		def formattedSource = document.get()
 		if (formattedSource != source) {
+			//new File(it.toString()).withWriter { it.write(document.get()) }
 			System.err.println("${it} is incorrectly formatted")
 			System.exit(1)
 		}
