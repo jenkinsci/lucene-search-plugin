@@ -17,7 +17,7 @@
                         <j:forEach var="hit" items="${hits}">
                             <li>
                             <span style="white-space: nowrap;">
-                                <a href="${hit.searchUrl}">${hit.searchName}</a>${" "}<a href="${hit.searchUrl}/console"><img src="/jenkins/images/24x24/terminal.png"/></a>
+                                <img src="${rootURL}/images/16x16/${hit.iconFileName}"/>${" "}<a href="${hit.searchUrl}">${hit.searchName}</a>${" "}<a href="${hit.searchUrl}/console"><img src="${rootURL}/images/16x16/terminal.png"/></a>
                                 </span>
                                 <div class="collapsible">
                                     <j:forEach var="fragment" items="${hit.bestFragments}">
