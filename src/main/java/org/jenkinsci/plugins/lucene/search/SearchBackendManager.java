@@ -2,10 +2,15 @@ package org.jenkinsci.plugins.lucene.search;
 
 import hudson.Extension;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
 
+import hudson.model.AbstractBuild;
+import hudson.search.SearchResult;
+import hudson.search.SuggestedItem;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 
@@ -16,7 +21,7 @@ public class SearchBackendManager {
     @Inject
     private SearchBackendConfiguration backendConfig;
 
-    public synchronized SearchBackend getBackend() {
+    private synchronized SearchBackend getBackend() {
         if (instance == null) {
             SearchBackendEngine engine = backendConfig.getSearchBackendEngine();
             switch (engine) {
@@ -27,7 +32,6 @@ public class SearchBackendManager {
             default:
                 throw new IllegalArgumentException("Can't instantiate " + engine);
             }
-
         }
         return instance;
     }
@@ -37,4 +41,26 @@ public class SearchBackendManager {
             instance = instance.reconfigure(config);
         }
     }
+
+    public List<FreeTextSearchItemImplementation> getHits(String query, boolean includeHighlights) {
+        return getBackend().getHits(query, includeHighlights);
+    }
+
+    public SearchResult getSuggestedItems(String query) {
+        SearchResultImpl result = new SearchResultImpl();
+        for (FreeTextSearchItemImplementation item : getHits(query, false)) {
+            result.add(new SuggestedItem(item));
+        }
+        return result;
+    }
+
+    public void removeBuild(AbstractBuild<?, ?> build) {
+        getBackend().removeBuild(build);
+    }
+
+    public void storeBuild(AbstractBuild<?, ?> build) throws IOException {
+        getBackend().storeBuild(build);
+    }
+
+
 }

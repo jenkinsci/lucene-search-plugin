@@ -1,0 +1,37 @@
+<?jelly escape-by-default='false'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
+    <j:set var="q" value="${request.getParameter('q')}"/>
+    <j:new var="h" className="hudson.Functions" /><!-- needed for printing title. -->
+    <l:layout title="${%Search for} '${q}'">
+        <l:main-panel>
+            <j:set var="hits" value="${it.hits}"/>
+            <h1>${%Search for} '${q}'</h1>
+            <j:choose>
+                <j:when test="${hits.isEmpty()}">
+                    <div class='error'>
+                        ${%Nothing seems to match.}
+                    </div>
+                </j:when>
+                <j:otherwise>
+                    <ol>
+                        <j:forEach var="hit" items="${hits}">
+                            <li>
+                                <a href="${hit.searchUrl}">${hit.searchName}</a>
+                                <div class="collapsible">
+                                    <j:forEach var="fragment" items="${hit.bestFragments}">
+                                        <ul>
+                                            <li>
+                                                ${fragment}
+                                            </li>
+                                        </ul>
+                                    </j:forEach>
+                                </div>
+                            </li>
+                        </j:forEach>
+                    </ol>
+                </j:otherwise>
+            </j:choose>
+            Nisse
+        </l:main-panel>
+    </l:layout>
+</j:jelly>

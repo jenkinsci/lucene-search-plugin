@@ -19,7 +19,7 @@ public class FreeTextRunListener extends RunListener<AbstractBuild<?, ?>> {
     @Override
     public void onCompleted(final AbstractBuild<?, ?> build, @Nonnull final TaskListener listener) {
         try {
-            searchBackendManager.getBackend().storeBuild(build);
+            searchBackendManager.storeBuild(build);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -27,6 +27,6 @@ public class FreeTextRunListener extends RunListener<AbstractBuild<?, ?>> {
 
     @Override
     public void onDeleted(final AbstractBuild<?, ?> build) {
-        searchBackendManager.getBackend().removeBuild(build);
+        searchBackendManager.removeBuild(build);
     }
 }
