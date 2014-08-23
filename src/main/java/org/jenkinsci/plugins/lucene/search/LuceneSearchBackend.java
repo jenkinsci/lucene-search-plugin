@@ -6,6 +6,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
@@ -79,7 +80,7 @@ public class LuceneSearchBackend implements SearchBackend {
 
     public LuceneSearchBackend(final File indexPath) throws IOException {
         this.indexPath = indexPath;
-        analyzer = new StandardAnalyzer(LUCENE_VERSION);
+        analyzer = new StandardAnalyzer(LUCENE_VERSION, CharArraySet.EMPTY_SET);
         index = FSDirectory.open(indexPath);
         IndexWriterConfig config = new IndexWriterConfig(LUCENE_VERSION, analyzer);
         dbWriter = new IndexWriter(index, config);

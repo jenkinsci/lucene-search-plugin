@@ -4,10 +4,13 @@ import hudson.search.SearchIndex;
 import hudson.search.SearchItem;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import jenkins.model.Jenkins;
 
 public class FreeTextSearchItemImplementation implements SearchItem {
+
+    private static final Pattern LINE_ENDINGS = Pattern.compile("(\\r\\n|\\n|\\r)");
 
     private final String buildNumber;
     private final String projectName;
@@ -17,7 +20,10 @@ public class FreeTextSearchItemImplementation implements SearchItem {
             final String[] bestFragments) {
         this.projectName = projectName;
         this.buildNumber = buildNumber;
-        this.bestFragments = bestFragments;
+        this.bestFragments = new String[bestFragments.length];
+        for(int i = 0; i < bestFragments.length; i++) {
+            this.bestFragments[i] = LINE_ENDINGS.matcher(bestFragments[i]).replaceAll("\1<br/>");
+        }
     }
 
     public String getSearchUrl() {
