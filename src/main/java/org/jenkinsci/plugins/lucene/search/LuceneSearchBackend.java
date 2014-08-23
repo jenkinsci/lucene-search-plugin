@@ -1,13 +1,28 @@
 package org.jenkinsci.plugins.lucene.search;
 
+import hudson.model.BallColor;
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
-import org.apache.lucene.document.*;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.LongField;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -15,7 +30,12 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.NumericRangeQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
 import org.apache.lucene.search.highlight.QueryTermScorer;
@@ -24,10 +44,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
 
 public class LuceneSearchBackend implements SearchBackend {
     private static final int MAX_NUM_FRAGMENTS = 5;
@@ -38,8 +54,8 @@ public class LuceneSearchBackend implements SearchBackend {
 
     private enum Index {
         CONSOLE("console"), PROJECT_NAME("projectname"), BUILD_NUMBER("buildnumber", true, true), ID("id", false, true), PROJECT_DISPLAY_NAME(
-                "projectdisplayname"), RESULT("result"), DURATION("duration", false, true), START_TIME("starttime", false, true), BUILT_ON(
-                "builton"), START_CAUSE("startcause");
+                "projectdisplayname"), RESULT("result"), DURATION("duration", false, true), START_TIME("starttime",
+                false, true), BUILT_ON("builton"), START_CAUSE("startcause"), BALL_COLOR("color", false, false);
         public final String fieldName;
         public final boolean defaultSearchable;
         public final boolean numeric;
@@ -130,7 +146,6 @@ public class LuceneSearchBackend implements SearchBackend {
         return defaultNumber;
     }
 
-
     @Override
     public List<FreeTextSearchItemImplementation> getHits(String query, boolean includeHighlights) {
         List<FreeTextSearchItemImplementation> luceneSearchResultImpl = new ArrayList<FreeTextSearchItemImplementation>();
@@ -138,7 +153,8 @@ public class LuceneSearchBackend implements SearchBackend {
             getAllFields();
             MultiFieldQueryParser queryParser = new MultiFieldQueryParser(LUCENE_VERSION, getAllFields(), analyzer) {
                 @Override
-                protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive, boolean endInclusive) throws ParseException {
+                protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive,
+                        boolean endInclusive) throws ParseException {
                     if (field != null && Index.getIndex(field).numeric) {
                         Long min = getWithDefault(part1, null);
                         Long max = getWithDefault(part2, null);
@@ -155,7 +171,7 @@ public class LuceneSearchBackend implements SearchBackend {
             queryParser.setLowercaseExpandedTerms(true);
             Query q = queryParser.parse(query).rewrite(reader);
 
-            //.rewrite(reader);
+            // .rewrite(reader);
 
             IndexSearcher searcher = new IndexSearcher(reader);
             TopScoreDocCollector collector = TopScoreDocCollector.create(MAX_HITS_PER_PAGE, true);
@@ -174,10 +190,15 @@ public class LuceneSearchBackend implements SearchBackend {
                         e.printStackTrace();
                     }
                 }
-                luceneSearchResultImpl.add(new FreeTextSearchItemImplementation(doc
-                        .get(Index.PROJECT_NAME.fieldName), doc.get(Index.BUILD_NUMBER.fieldName), bestFragments));
-            }
+                BallColor buildIcon = BallColor.GREY;
+                String colorName = doc.get(Index.BALL_COLOR.fieldName);
+                if (colorName != null) {
+                    buildIcon = BallColor.valueOf(colorName);
+                }
 
+                luceneSearchResultImpl.add(new FreeTextSearchItemImplementation(doc.get(Index.PROJECT_NAME.fieldName),
+                        doc.get(Index.BUILD_NUMBER.fieldName), bestFragments, buildIcon.getImage()));
+            }
         } catch (ParseException e) {
             // Do nothing
         } catch (IOException e) {
@@ -222,7 +243,7 @@ public class LuceneSearchBackend implements SearchBackend {
                 shortDescriptions.append(" ").append(cause.getShortDescription());
             }
             doc.add(new TextField(Index.START_CAUSE.fieldName, shortDescriptions.toString(), NO));
-
+            doc.add(new StringField(Index.BALL_COLOR.fieldName, build.getIconColor().name(), YES));
             // build.getChangeSet()
             // build.getCulprits()
             // EnvVars a = build.getEnvironment(listener);
