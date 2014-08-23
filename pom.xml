@@ -76,7 +76,7 @@
 					<target>1.6</target>
 				</configuration>
 			</plugin>
-			<plugin>
+			<!--<plugin>
 				<groupId>org.codehaus.gmavenplus</groupId>
 				<artifactId>gmavenplus-plugin</artifactId>
 				<version>1.2</version>
@@ -94,7 +94,7 @@
 						<script>file://${basedir}/format.groovy</script>
 					</scripts>
 				</configuration>
-			</plugin>
+			</plugin>-->
 		</plugins>
 	</build>
 
