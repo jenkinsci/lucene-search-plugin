@@ -4,6 +4,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.Cause;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.DirectoryReader;
@@ -53,9 +54,10 @@ public class LuceneSearchBackend implements SearchBackend {
         }
 
         private static Map<String, Index> index;
+
         public static Index getIndex(String fieldName) {
             if (index == null) {
-                Map<String, Index>  indexReverseLookup = new HashMap<String, Index>();
+                Map<String, Index> indexReverseLookup = new HashMap<String, Index>();
                 for (Index idx : Index.values()) {
                     indexReverseLookup.put(idx.fieldName, idx);
                 }
@@ -69,7 +71,7 @@ public class LuceneSearchBackend implements SearchBackend {
     private static final int MAX_HITS_PER_PAGE = 100;
 
     private final Directory index;
-    private final StandardAnalyzer analyzer;
+    private final Analyzer analyzer;
     private final IndexWriter dbWriter;
 
     private DirectoryReader reader;
