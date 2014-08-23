@@ -2,6 +2,7 @@
 
 @Grab('org.eclipse.text:org.eclipse.text:3.5.101')
 @Grab('org.eclipse.tycho:org.eclipse.jdt.core:3.10.0.v20140604-1726')
+@Grab('org.eclipse.birt.runtime:org.eclipse.core.resources:3.9.0.v20140514-1307')
 
 
 import org.eclipse.jdt.core.formatter.CodeFormatter
@@ -22,7 +23,8 @@ new File("src").eachFileRecurse(FileType.FILES) {
 		edit.apply(document)
 		def formattedSource = document.get()
 		if (formattedSource != source) {
-			new File(it.toString()).withWriter { it.write(document.get()) }
+			System.err.println("${it} is incorrectly formatted")
+			System.exit(1)
 		}
 	}
 }

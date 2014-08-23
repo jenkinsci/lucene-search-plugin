@@ -83,7 +83,7 @@
 				<executions>
 					<execution>
 						<id>format-code</id>
-						<phase>prepare-package</phase>
+						<phase>test</phase>
 						<goals>
 							<goal>execute</goal>
 						</goals>
