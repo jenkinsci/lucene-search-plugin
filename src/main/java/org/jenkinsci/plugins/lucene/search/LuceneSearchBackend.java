@@ -1,18 +1,20 @@
 package org.jenkinsci.plugins.lucene.search;
 
-import hudson.model.BallColor;
-import hudson.model.AbstractBuild;
-import hudson.model.Cause;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import com.google.common.collect.Multimap;
+import com.google.common.collect.TreeMultimap;
+import hudson.model.AbstractBuild;
+import hudson.model.BallColor;
+import hudson.model.Cause;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.lucene.analysis.Analyzer;
@@ -26,10 +28,12 @@ import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.FieldComparator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
@@ -51,6 +55,28 @@ public class LuceneSearchBackend implements SearchBackend {
 
     private static final Field.Store NO = Field.Store.YES;
     private static final Field.Store YES = Field.Store.YES;
+
+    private static final Comparator<Float> FLOAT_COMPARATOR = new Comparator<Float>() {
+        @Override
+        public int compare(Float o1, Float o2) {
+            return o1.compareTo(o2);
+        }
+    };
+
+    private static final Comparator<Document> START_TIME_COMPARATOR = new Comparator<Document>() {
+        private Long getStartTime(Document o) {
+            IndexableField field = o.getField(Index.START_TIME.fieldName);
+            if (field != null) {
+                return field.numericValue().longValue();
+            }
+            return 0l;
+        }
+
+        @Override
+        public int compare(Document o1, Document o2) {
+            return getStartTime(o1).compareTo(getStartTime(o2));
+        }
+    };
 
     private enum Index {
         CONSOLE("console"), PROJECT_NAME("projectname"), BUILD_NUMBER("buildnumber", true, true), ID("id", false, true), PROJECT_DISPLAY_NAME(
@@ -171,16 +197,19 @@ public class LuceneSearchBackend implements SearchBackend {
             queryParser.setLowercaseExpandedTerms(true);
             Query q = queryParser.parse(query).rewrite(reader);
 
-            // .rewrite(reader);
-
             IndexSearcher searcher = new IndexSearcher(reader);
             TopScoreDocCollector collector = TopScoreDocCollector.create(MAX_HITS_PER_PAGE, true);
             QueryTermScorer scorer = new QueryTermScorer(q);
             Highlighter highlighter = new Highlighter(new SimpleHTMLFormatter(), scorer);
             searcher.search(q, collector);
             ScoreDoc[] hits = collector.topDocs().scoreDocs;
+            TreeMultimap<Float, Document> docs = TreeMultimap.create(FLOAT_COMPARATOR , START_TIME_COMPARATOR);
+
             for (ScoreDoc hit : hits) {
                 Document doc = searcher.doc(hit.doc);
+                docs.put(hit.score, doc);
+            }
+            for(Document doc : docs.values()) {
                 String[] bestFragments = EMPTY_ARRAY;
                 if (includeHighlights) {
                     try {
