@@ -19,8 +19,8 @@
 	<name>Lucene-Search</name>
 	<url>https://wiki.jenkins-ci.org/display/JENKINS/Lucen-Search</url>
 	<scm>
-		<connection>scm:git:git://github.com/hanabishi/lucene-search.git</connection>
-		<developerConnection>scm:git:git@github.com:hanabishi/lucene-search.git</developerConnection>
+		<connection>scm:git:git://github.com/jenkinsci/lucene-search-plugin</connection>
+		<developerConnection>scm:git:git@github.com:jenkinsci/lucene-search-plugin</developerConnection>
 	</scm>
 	<developers>
 		<developer>
