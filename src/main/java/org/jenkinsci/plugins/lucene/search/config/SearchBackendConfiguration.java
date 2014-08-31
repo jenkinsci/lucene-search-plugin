@@ -5,9 +5,15 @@ import hudson.util.FormValidation;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -16,6 +22,14 @@ import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.ContentEncodingHttpClient;
+import org.apache.http.impl.client.DecompressingHttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.jenkinsci.plugins.lucene.search.SearchBackendManager;
@@ -28,6 +42,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
 
     private static final String LUCENE_PATH = "lucenePath";
     private static final String SOLR_URL = "solrUrl";
+	private static final String SOLR_COLLECTION = "solrCollection";
 
     @Inject
     SearchBackendManager backendManager;
@@ -91,14 +106,22 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
         }
     }
 
-    private URI checkSolrUrl(String url) throws IOException {
-        HttpSolrServer server = new HttpSolrServer(url);
-        try {
-            server.ping();
-            return new URI(url);
-        } catch (Exception e) {
-            throw new IOException(e);
-        }
+    private List<String> getCollections(String baseUrl) throws IOException {
+		HttpClient httpClient = HttpClientBuilder.create().build();
+		String url = baseUrl + "/admin/cores?wt=json";
+		HttpGet get = new HttpGet(url);
+		HttpResponse response = httpClient.execute(get);
+		if (response.getStatusLine().getStatusCode() != 200) {
+			throw new IOException("Failed to GET " + url);
+		}
+		InputStream content = response.getEntity().getContent();
+		try {
+			String jsonString = IOUtils.toString(content, "UTF-8");
+			JSONObject json = JSONObject.fromObject(jsonString);
+			return new ArrayList(json.getJSONObject("status").keySet());
+		} finally {
+			IOUtils.closeQuietly(content);
+		}
     }
 
 
@@ -107,7 +130,8 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
         String solrUrl = solrUrlX.replaceAll("/*$", "");
         for (String s : new String[] { solrUrl + "/solr", solrUrl }) {
             try {
-                return checkSolrUrl(s);
+				getCollections(s);
+				return URI.create(s);
             } catch (IOException e2) {
                 e = e2;
             }
@@ -135,6 +159,9 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
                 throw new IllegalArgumentException(e);
             }
         }
+		if (selectedJson.containsKey(SOLR_COLLECTION)) {
+			setSolrCollection(selectedJson.getString(SOLR_COLLECTION));
+		}
         if (selectedJson.containsKey(LUCENE_PATH)) {
             setLucenePath(new File(selectedJson.getString(LUCENE_PATH)));
         }
