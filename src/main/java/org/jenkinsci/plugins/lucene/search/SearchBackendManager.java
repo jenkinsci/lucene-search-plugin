@@ -11,10 +11,12 @@ import javax.inject.Inject;
 import hudson.model.AbstractBuild;
 import hudson.search.SearchResult;
 import hudson.search.SuggestedItem;
+
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 import org.jenkinsci.plugins.lucene.search.databackend.LuceneSearchBackend;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackend;
+import org.jenkinsci.plugins.lucene.search.databackend.SolrSearchBackend;
 
 @Extension
 public class SearchBackendManager {
@@ -31,6 +33,8 @@ public class SearchBackendManager {
                 instance = LuceneSearchBackend.create(backendConfig.getConfig());
                 break;
             case SOLR:
+                instance = SolrSearchBackend.create(backendConfig.getConfig());
+                break;
             default:
                 throw new IllegalArgumentException("Can't instantiate " + engine);
             }
@@ -63,6 +67,5 @@ public class SearchBackendManager {
     public void storeBuild(AbstractBuild<?, ?> build) throws IOException {
         getBackend().storeBuild(build);
     }
-
 
 }

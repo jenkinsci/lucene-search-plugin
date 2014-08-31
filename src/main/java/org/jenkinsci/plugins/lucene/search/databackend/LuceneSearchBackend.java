@@ -248,6 +248,7 @@ public class LuceneSearchBackend implements SearchBackend {
             }
             doc.add(new TextField(Field.START_CAUSE.fieldName, shortDescriptions.toString(), NO));
             doc.add(new StringField(Field.BALL_COLOR.fieldName, build.getIconColor().name(), YES));
+            // TODO Add the following data
             // build.getChangeSet()
             // build.getCulprits()
             // EnvVars a = build.getEnvironment(listener);
@@ -258,7 +259,7 @@ public class LuceneSearchBackend implements SearchBackend {
 
             for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
                 doc.add(new TextField(extension.getKeyword(), extension.getTextResult(build),
-                        (extension.persist()) ? YES : NO));
+                        (extension.isPersist()) ? YES : NO));
             }
 
             dbWriter.addDocument(doc);

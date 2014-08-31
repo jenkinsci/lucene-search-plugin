@@ -6,3 +6,4 @@ hs_err_pid*
 /work/
 /.idea/
 *.iml
+/target/

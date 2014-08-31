@@ -1,24 +1,35 @@
 package org.jenkinsci.plugins.lucene.search;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public enum Field {
-    CONSOLE("console"), PROJECT_NAME("projectname"), BUILD_NUMBER("buildnumber", true, true), ID("id", false, true), PROJECT_DISPLAY_NAME(
-            "projectdisplayname"), RESULT("result"), DURATION("duration", false, true), START_TIME("starttime",
-            false, true), BUILT_ON("builton"), START_CAUSE("startcause"), BALL_COLOR("color", false, false);
+    ID("id", DefaultSearchable.FALSE, Numeric.TRUE, Persist.TRUE), //
+    PROJECT_NAME("projectname", Persist.TRUE), //
+    PROJECT_DISPLAY_NAME("projectdisplayname", Persist.TRUE), //
+    BUILD_NUMBER("buildnumber", Numeric.TRUE), //
+    RESULT("result", Persist.TRUE), //
+    DURATION("duration"), //
+    START_TIME("starttime", DefaultSearchable.FALSE, Numeric.TRUE), //
+    BUILT_ON("builton"), //
+    START_CAUSE("startcause"), //
+    BALL_COLOR("color", DefaultSearchable.FALSE, Persist.TRUE), //
+    CONSOLE("console", Persist.TRUE); //
+
     public final String fieldName;
     public final boolean defaultSearchable;
     public final boolean numeric;
-
-    private Field(String fieldName) {
-        this(fieldName, true, false);
-    }
-
-    private Field(String fieldName, boolean defaultSearchable, boolean numeric) {
+    public final boolean persist;
+    
+    @SuppressWarnings("rawtypes")
+    private Field(String fieldName, Enum... e) {
+        List<Enum> es = Arrays.asList(e);
+        defaultSearchable = !es.contains(DefaultSearchable.FALSE);
+        numeric = es.contains(Numeric.TRUE);
+        persist = es.contains(Numeric.TRUE);
         this.fieldName = fieldName;
-        this.defaultSearchable = defaultSearchable;
-        this.numeric = numeric;
     }
 
     private static Map<String, Field> index;
@@ -33,4 +44,19 @@ public enum Field {
         }
         return index.get(fieldName);
     }
+    
+    private enum Persist {
+        TRUE;
+    }
+
+    private enum DefaultSearchable {
+        FALSE;
+    }
+
+    private enum Numeric {
+        TRUE;
+    }
+
 }
+
+
