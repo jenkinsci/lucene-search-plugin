@@ -1,16 +1,5 @@
 package org.jenkinsci.plugins.lucene.search;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
-import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
 import hudson.model.AbstractBuild;
 import hudson.model.BallColor;
@@ -21,7 +10,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
@@ -33,7 +21,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.FieldComparator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
@@ -49,12 +36,28 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
+import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
+import static org.jenkinsci.plugins.lucene.search.Field.CONSOLE;
+import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
+import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
+import static org.jenkinsci.plugins.lucene.search.Field.getIndex;
+
 public class LuceneSearchBackend implements SearchBackend {
     private static final int MAX_NUM_FRAGMENTS = 5;
     private static final String[] EMPTY_ARRAY = new String[0];
 
-    private static final Field.Store NO = Field.Store.YES;
-    private static final Field.Store YES = Field.Store.YES;
+    private static final org.apache.lucene.document.Field.Store NO = org.apache.lucene.document.Field.Store.YES;
+    private static final org.apache.lucene.document.Field.Store YES = org.apache.lucene.document.Field.Store.YES;
 
     private static final Comparator<Float> FLOAT_COMPARATOR = new Comparator<Float>() {
         @Override
@@ -65,7 +68,7 @@ public class LuceneSearchBackend implements SearchBackend {
 
     private static final Comparator<Document> START_TIME_COMPARATOR = new Comparator<Document>() {
         private Long getStartTime(Document o) {
-            IndexableField field = o.getField(Index.START_TIME.fieldName);
+            IndexableField field = o.getField(START_TIME.fieldName);
             if (field != null) {
                 return field.numericValue().longValue();
             }
@@ -77,38 +80,6 @@ public class LuceneSearchBackend implements SearchBackend {
             return getStartTime(o2).compareTo(getStartTime(o1));
         }
     };
-
-    private enum Index {
-        CONSOLE("console"), PROJECT_NAME("projectname"), BUILD_NUMBER("buildnumber", true, true), ID("id", false, true), PROJECT_DISPLAY_NAME(
-                "projectdisplayname"), RESULT("result"), DURATION("duration", false, true), START_TIME("starttime",
-                false, true), BUILT_ON("builton"), START_CAUSE("startcause"), BALL_COLOR("color", false, false);
-        public final String fieldName;
-        public final boolean defaultSearchable;
-        public final boolean numeric;
-
-        private Index(String fieldName) {
-            this(fieldName, true, false);
-        }
-
-        private Index(String fieldName, boolean defaultSearchable, boolean numeric) {
-            this.fieldName = fieldName;
-            this.defaultSearchable = defaultSearchable;
-            this.numeric = numeric;
-        }
-
-        private static Map<String, Index> index;
-
-        public static Index getIndex(String fieldName) {
-            if (index == null) {
-                Map<String, Index> indexReverseLookup = new HashMap<String, Index>();
-                for (Index idx : Index.values()) {
-                    indexReverseLookup.put(idx.fieldName, idx);
-                }
-                index = indexReverseLookup;
-            }
-            return index.get(fieldName);
-        }
-    }
 
     private static final Version LUCENE_VERSION = Version.LUCENE_4_9;
     private static final int MAX_HITS_PER_PAGE = 100;
@@ -180,8 +151,8 @@ public class LuceneSearchBackend implements SearchBackend {
             MultiFieldQueryParser queryParser = new MultiFieldQueryParser(LUCENE_VERSION, getAllFields(), analyzer) {
                 @Override
                 protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive,
-                        boolean endInclusive) throws ParseException {
-                    if (field != null && Index.getIndex(field).numeric) {
+                                              boolean endInclusive) throws ParseException {
+                    if (field != null && getIndex(field).numeric) {
                         Long min = getWithDefault(part1, null);
                         Long max = getWithDefault(part2, null);
                         return NumericRangeQuery.newLongRange(field, min, max, true, true);
@@ -208,26 +179,26 @@ public class LuceneSearchBackend implements SearchBackend {
             for (ScoreDoc hit : hits) {
                 Document doc = searcher.doc(hit.doc);
                 docs.put(hit.score, doc);
-                System.err.println(hit.score + ", " + doc.get(Index.BUILD_NUMBER.fieldName));
+                System.err.println(hit.score + ", " + doc.get(BUILD_NUMBER.fieldName));
             }
             for (Document doc : docs.values()) {
                 String[] bestFragments = EMPTY_ARRAY;
                 if (includeHighlights) {
                     try {
-                        bestFragments = highlighter.getBestFragments(analyzer, Index.CONSOLE.fieldName,
-                                doc.get(Index.CONSOLE.fieldName), MAX_NUM_FRAGMENTS);
+                        bestFragments = highlighter.getBestFragments(analyzer, CONSOLE.fieldName,
+                                doc.get(CONSOLE.fieldName), MAX_NUM_FRAGMENTS);
                     } catch (InvalidTokenOffsetsException e) {
                         e.printStackTrace();
                     }
                 }
                 BallColor buildIcon = BallColor.GREY;
-                String colorName = doc.get(Index.BALL_COLOR.fieldName);
+                String colorName = doc.get(BALL_COLOR.fieldName);
                 if (colorName != null) {
                     buildIcon = BallColor.valueOf(colorName);
                 }
 
-                luceneSearchResultImpl.add(new FreeTextSearchItemImplementation(doc.get(Index.PROJECT_NAME.fieldName),
-                        doc.get(Index.BUILD_NUMBER.fieldName), bestFragments, buildIcon.getImage()));
+                luceneSearchResultImpl.add(new FreeTextSearchItemImplementation(doc.get(PROJECT_NAME.fieldName),
+                        doc.get(BUILD_NUMBER.fieldName), bestFragments, buildIcon.getImage()));
             }
         } catch (ParseException e) {
             // Do nothing
@@ -239,7 +210,7 @@ public class LuceneSearchBackend implements SearchBackend {
 
     private String[] getAllFields() {
         List<String> fieldNames = new LinkedList<String>();
-        for (Index field : Index.values()) {
+        for (Field field : Field.values()) {
             if (field.defaultSearchable) {
                 fieldNames.add(field.fieldName);
             }
@@ -260,27 +231,27 @@ public class LuceneSearchBackend implements SearchBackend {
 
         try {
             Document doc = new Document();
-            doc.add(new StringField(Index.ID.fieldName, build.getId(), YES));
-            doc.add(new TextField(Index.PROJECT_NAME.fieldName, build.getProject().getName(), YES));
-            doc.add(new TextField(Index.PROJECT_DISPLAY_NAME.fieldName, build.getProject().getDisplayName(), YES));
-            doc.add(new LongField(Index.BUILD_NUMBER.fieldName, build.getNumber(), YES));
-            doc.add(new TextField(Index.RESULT.fieldName, build.getResult().toString(), YES));
-            doc.add(new LongField(Index.DURATION.fieldName, build.getDuration(), NO));
-            doc.add(new LongField(Index.START_TIME.fieldName, build.getStartTimeInMillis(), NO));
-            doc.add(new TextField(Index.BUILT_ON.fieldName, build.getBuiltOnStr(), NO));
+            doc.add(new StringField(Field.ID.fieldName, build.getId(), YES));
+            doc.add(new TextField(Field.PROJECT_NAME.fieldName, build.getProject().getName(), YES));
+            doc.add(new TextField(Field.PROJECT_DISPLAY_NAME.fieldName, build.getProject().getDisplayName(), YES));
+            doc.add(new LongField(Field.BUILD_NUMBER.fieldName, build.getNumber(), YES));
+            doc.add(new TextField(Field.RESULT.fieldName, build.getResult().toString(), YES));
+            doc.add(new LongField(Field.DURATION.fieldName, build.getDuration(), NO));
+            doc.add(new LongField(Field.START_TIME.fieldName, build.getStartTimeInMillis(), NO));
+            doc.add(new TextField(Field.BUILT_ON.fieldName, build.getBuiltOnStr(), NO));
             StringBuilder shortDescriptions = new StringBuilder();
             for (Cause cause : build.getCauses()) {
                 shortDescriptions.append(" ").append(cause.getShortDescription());
             }
-            doc.add(new TextField(Index.START_CAUSE.fieldName, shortDescriptions.toString(), NO));
-            doc.add(new StringField(Index.BALL_COLOR.fieldName, build.getIconColor().name(), YES));
+            doc.add(new TextField(Field.START_CAUSE.fieldName, shortDescriptions.toString(), NO));
+            doc.add(new StringField(Field.BALL_COLOR.fieldName, build.getIconColor().name(), YES));
             // build.getChangeSet()
             // build.getCulprits()
             // EnvVars a = build.getEnvironment(listener);
             // build.get
             // build.getArtifacts()
 
-            doc.add(new TextField(Index.CONSOLE.fieldName, consoleOutput, YES));
+            doc.add(new TextField(Field.CONSOLE.fieldName, consoleOutput, YES));
 
             for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
                 doc.add(new TextField(extension.getKeyword(), extension.getTextResult(build),
@@ -301,7 +272,7 @@ public class LuceneSearchBackend implements SearchBackend {
     @Override
     public void removeBuild(final AbstractBuild<?, ?> build) {
         try {
-            dbWriter.deleteDocuments(new Term(Index.ID.fieldName, build.getId()));
+            dbWriter.deleteDocuments(new Term(Field.ID.fieldName, build.getId()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
