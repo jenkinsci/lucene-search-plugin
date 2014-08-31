@@ -59,7 +59,7 @@ public class LuceneSearchBackend implements SearchBackend {
     private static final Comparator<Float> FLOAT_COMPARATOR = new Comparator<Float>() {
         @Override
         public int compare(Float o1, Float o2) {
-            return o1.compareTo(o2);
+            return o2.compareTo(o1);
         }
     };
 
@@ -74,7 +74,7 @@ public class LuceneSearchBackend implements SearchBackend {
 
         @Override
         public int compare(Document o1, Document o2) {
-            return getStartTime(o1).compareTo(getStartTime(o2));
+            return getStartTime(o2).compareTo(getStartTime(o1));
         }
     };
 
@@ -203,13 +203,14 @@ public class LuceneSearchBackend implements SearchBackend {
             Highlighter highlighter = new Highlighter(new SimpleHTMLFormatter(), scorer);
             searcher.search(q, collector);
             ScoreDoc[] hits = collector.topDocs().scoreDocs;
-            TreeMultimap<Float, Document> docs = TreeMultimap.create(FLOAT_COMPARATOR , START_TIME_COMPARATOR);
+            TreeMultimap<Float, Document> docs = TreeMultimap.create(FLOAT_COMPARATOR, START_TIME_COMPARATOR);
 
             for (ScoreDoc hit : hits) {
                 Document doc = searcher.doc(hit.doc);
                 docs.put(hit.score, doc);
+                System.err.println(hit.score + ", " + doc.get(Index.BUILD_NUMBER.fieldName));
             }
-            for(Document doc : docs.values()) {
+            for (Document doc : docs.values()) {
                 String[] bestFragments = EMPTY_ARRAY;
                 if (includeHighlights) {
                     try {
