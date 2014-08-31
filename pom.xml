@@ -18,21 +18,21 @@
 
 	<!-- Jenkins plugin config -->
 	<name>Lucene-Search</name>
-	<url></url>
+	<url>https://wiki.jenkins-ci.org/display/JENKINS/Lucen-Search</url>
 	<scm>
 		<connection>scm:git:git://github.com/hanabishi/lucene-search.git</connection>
 		<developerConnection>scm:git:git@github.com:hanabishi/lucene-search.git</developerConnection>
 	</scm>
 	<developers>
 		<developer>
-			<id>hanabishi</id>
-			<name>Marcus Jacobsson</name>
-			<email>jenkins@hanabi.se</email>
-		</developer>
-		<developer>
 			<id>tobias-</id>
 			<name>Tobias Olsson</name>
 			<email></email>
+		</developer>
+		<developer>
+			<id>hanabishi</id>
+			<name>Marcus Jacobsson</name>
+			<email>jenkins@hanabi.se</email>
 		</developer>
 	</developers>
 
