@@ -13,6 +13,8 @@ import hudson.search.SearchResult;
 import hudson.search.SuggestedItem;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
+import org.jenkinsci.plugins.lucene.search.databackend.LuceneSearchBackend;
+import org.jenkinsci.plugins.lucene.search.databackend.SearchBackend;
 
 @Extension
 public class SearchBackendManager {

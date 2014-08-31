@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.lucene.search;
+package org.jenkinsci.plugins.lucene.search.databackend;
 
 import com.google.common.collect.TreeMultimap;
 import hudson.model.AbstractBuild;
@@ -34,6 +34,9 @@ import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
+import org.jenkinsci.plugins.lucene.search.Field;
+import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
+import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 
 import java.io.File;

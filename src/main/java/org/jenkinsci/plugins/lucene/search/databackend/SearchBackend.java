@@ -1,12 +1,12 @@
-package org.jenkinsci.plugins.lucene.search;
+package org.jenkinsci.plugins.lucene.search.databackend;
 
 import hudson.model.AbstractBuild;
-import hudson.search.SearchResult;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 
 public interface SearchBackend {
