@@ -56,7 +56,7 @@ public class LuceneSearchBackend implements SearchBackend {
     private static final int MAX_NUM_FRAGMENTS = 5;
     private static final String[] EMPTY_ARRAY = new String[0];
 
-    private static final org.apache.lucene.document.Field.Store NO = org.apache.lucene.document.Field.Store.YES;
+    private static final org.apache.lucene.document.Field.Store NO = org.apache.lucene.document.Field.Store.NO;
     private static final org.apache.lucene.document.Field.Store YES = org.apache.lucene.document.Field.Store.YES;
 
     private static final Comparator<Float> FLOAT_COMPARATOR = new Comparator<Float>() {
