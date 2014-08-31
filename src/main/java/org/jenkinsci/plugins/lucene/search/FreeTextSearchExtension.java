@@ -30,7 +30,7 @@ public abstract class FreeTextSearchExtension implements ExtensionPoint {
      * If the original data should be stored in the index. This is necessary if the data should be displayed with
      * context around the match in the search result.
      */
-    public boolean persist() {
+    public boolean isPersist() {
         return false;
     }
 

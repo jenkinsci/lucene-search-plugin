@@ -13,6 +13,9 @@
 					<f:entry title="${%Solr host url}" field="solrUrl" description="${%The url to the Solr service}">
 						<f:textbox name="solrUrl" />
 					</f:entry>
+					<f:entry title="${%Solr collection}" field="solrCollection" description="${%The collection on the Solr server that will store the data}">
+						<f:textbox name="solrCollection" />
+					</f:entry>
 				</f:dropdownListBlock>
 			</f:dropdownList>
 		</f:advanced>

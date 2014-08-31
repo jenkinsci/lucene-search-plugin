@@ -5,11 +5,8 @@ import hudson.util.FormValidation;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +16,8 @@ import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.jenkinsci.plugins.lucene.search.SearchBackendManager;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -36,18 +34,20 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
 
     private URI solrUrl = URI.create("http://127.0.0.1:8983/");
     private File lucenePath = new File(Jenkins.getInstance().getRootDir(), "luceneIndex");
+    private String solrCollection = "lucene-search-plugin";
     private SearchBackendEngine searchBackend = SearchBackendEngine.LUCENE;
 
     @DataBoundConstructor
-    public SearchBackendConfiguration(final String solrUrl, final String lucenePath, final String searchBackend) {
-        this(URI.create(solrUrl), new File(lucenePath), SearchBackendEngine.valueOf(searchBackend));
+    public SearchBackendConfiguration(final String solrUrl, final String lucenePath, final String searchBackend, final String solrCollection) {
+        this(URI.create(solrUrl), new File(lucenePath), SearchBackendEngine.valueOf(searchBackend), solrCollection);
     }
 
-    public SearchBackendConfiguration(final URI solrUrl, final File lucenePath, final SearchBackendEngine searchBackend) {
+    public SearchBackendConfiguration(final URI solrUrl, final File lucenePath, final SearchBackendEngine searchBackend, final String solrCollection) {
         load();
         this.searchBackend = searchBackend;
         this.lucenePath = lucenePath;
         this.solrUrl = solrUrl;
+        this.solrCollection = solrCollection;
     }
 
     public SearchBackendConfiguration() {
@@ -91,28 +91,21 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
         }
     }
 
-    private URI checkSolrUrl(final String solrUrl) throws IOException {
-        InputStream is = null;
+    private URI checkSolrUrl(String url) throws IOException {
+        HttpSolrServer server = new HttpSolrServer(url);
         try {
-            URL url = new URL(solrUrl);
-            URLConnection openConnection = url.openConnection();
-            is = openConnection.getInputStream();
-            JSONObject json = JSONObject.fromObject(IOUtils.toString(is, openConnection.getContentEncoding()));
-            if (json.getJSONObject("responseHeader").getInt("status") != 0) {
-                throw new IOException("Solr not working at url " + solrUrl);
-            }
-            return url.toURI();
-        } catch (URISyntaxException e) {
+            server.ping();
+            return new URI(url);
+        } catch (Exception e) {
             throw new IOException(e);
-        } finally {
-            IOUtils.closeQuietly(is);
         }
     }
+
 
     private URI makeSolrUrl(final String solrUrlX) throws IOException {
         IOException e = null;
         String solrUrl = solrUrlX.replaceAll("/*$", "");
-        for (String s : new String[] { solrUrl + "/solr/schema", solrUrl + "/schema" }) {
+        for (String s : new String[] { solrUrl + "/solr", solrUrl }) {
             try {
                 return checkSolrUrl(s);
             } catch (IOException e2) {
@@ -155,6 +148,15 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
         Map<String, Object> config = new HashMap<String, Object>();
         config.put("solrUrl", solrUrl);
         config.put("lucenePath", lucenePath);
+        config.put("solrCollection", solrCollection);
         return config;
+    }
+
+    public String getSolrCollection() {
+        return solrCollection;
+    }
+
+    public void setSolrCollection(String solrCollection) {
+        this.solrCollection = solrCollection;
     }
 }
