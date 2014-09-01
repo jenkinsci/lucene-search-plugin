@@ -9,7 +9,7 @@ public enum Field {
     ID("id", DefaultSearchable.FALSE, Numeric.TRUE, Persist.TRUE), //
     PROJECT_NAME("projectname", Persist.TRUE), //
     PROJECT_DISPLAY_NAME("projectdisplayname", Persist.TRUE), //
-    BUILD_NUMBER("buildnumber", Numeric.TRUE), //
+    BUILD_NUMBER("buildnumber", Numeric.TRUE, Persist.TRUE), //
     RESULT("result", Persist.TRUE), //
     DURATION("duration", DefaultSearchable.FALSE), //
     START_TIME("starttime", DefaultSearchable.FALSE, Numeric.TRUE), //
