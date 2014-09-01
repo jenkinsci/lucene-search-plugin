@@ -78,7 +78,9 @@ public class SolrSearchBackend implements SearchBackend {
 			} else {
 				fieldDefinition.put("type", "text_general");
 			}
+			fieldDefinition.put("multiValued", false);
 			fieldDefinition.put("stored", stored);
+			//fieldDefinition.put("required", true); // built-on is sometimes empty
 			HttpPut httpPut = new HttpPut(url);
 			String thisIsAString = fieldDefinition.toString();
 			StringEntity entity = new StringEntity(thisIsAString, ContentType.APPLICATION_JSON);
