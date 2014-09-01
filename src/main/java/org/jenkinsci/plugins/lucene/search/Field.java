@@ -22,7 +22,7 @@ public enum Field {
     public final boolean defaultSearchable;
     public final boolean numeric;
     public final boolean persist;
-    
+
     @SuppressWarnings("rawtypes")
     private Field(String fieldName, Enum... e) {
         List<Enum> es = Arrays.asList(e);
@@ -44,7 +44,7 @@ public enum Field {
         }
         return index.get(fieldName);
     }
-    
+
     private enum Persist {
         TRUE;
     }
@@ -56,7 +56,4 @@ public enum Field {
     private enum Numeric {
         TRUE;
     }
-
 }
-
-

@@ -22,7 +22,7 @@ public class FreeTextSearchItemImplementation implements SearchItem {
         this.projectName = projectName;
         this.buildNumber = buildNumber;
         this.bestFragments = new String[bestFragments.length];
-        for(int i = 0; i < bestFragments.length; i++) {
+        for (int i = 0; i < bestFragments.length; i++) {
             this.bestFragments[i] = LINE_ENDINGS.matcher(bestFragments[i]).replaceAll("\1<br/>");
         }
         this.iconFileName = iconFileName;

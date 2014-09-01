@@ -31,7 +31,7 @@ public class FreeTextSearch extends Search {
     @Override
     public void doIndex(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
         String query = req.getParameter("q");
-        if(query!=null) {
+        if (query != null) {
             hits = manager.getHits(query, true);
         }
         if (hits.isEmpty()) {

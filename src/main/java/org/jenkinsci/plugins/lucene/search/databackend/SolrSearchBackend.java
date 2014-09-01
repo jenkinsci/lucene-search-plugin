@@ -30,8 +30,19 @@ import java.util.logging.Logger;
 
 public class SolrSearchBackend implements SearchBackend {
 
+    private final static Logger LOGGER = Logger.getLogger(SolrSearchBackend.class.getName());
     private HttpSolrServer httpSolrServer;
     private String solrCollection;
+
+    public SolrSearchBackend(URI url, String solrCollection) {
+        httpSolrServer = new HttpSolrServer(url.toString());
+        this.solrCollection = solrCollection;
+        try {
+            definedSolrFields();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static SolrSearchBackend create(final Map<String, Object> config) {
         return new SolrSearchBackend(getUrl(config), getSolrCollection(config));
@@ -45,53 +56,43 @@ public class SolrSearchBackend implements SearchBackend {
         return (URI) config.get("solrUrl");
     }
 
-    public SolrSearchBackend(URI url, String solrCollection) {
-        httpSolrServer = new HttpSolrServer(url.toString());
-        this.solrCollection = solrCollection;
-        try {
-            definedSolrFields();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    private void defineField(String fieldName, boolean numeric, boolean stored) throws IOException {
+        HttpClient httpClient = httpSolrServer.getHttpClient();
+
+        String url = httpSolrServer.getBaseURL() + "/" + solrCollection + "/schema/fields/" + fieldName;
+        HttpGet httpGet = new HttpGet(url);
+        httpGet.addHeader("Accept", ContentType.APPLICATION_JSON.getMimeType());
+        HttpResponse response = httpClient.execute(httpGet);
+        JSONObject json = getJson(response);
+        int statusCode = response.getStatusLine().getStatusCode();
+        if (statusCode == 404) {
+            JSONObject fieldDefinition = new JSONObject();
+            if (numeric) {
+                fieldDefinition.put("type", "tlongs");
+            } else {
+                fieldDefinition.put("type", "text_general");
+            }
+            fieldDefinition.put("multiValued", false);
+            fieldDefinition.put("stored", stored);
+            //fieldDefinition.put("required", true); // built-on is sometimes empty
+            HttpPut httpPut = new HttpPut(url);
+            String thisIsAString = fieldDefinition.toString();
+            StringEntity entity = new StringEntity(thisIsAString, ContentType.APPLICATION_JSON);
+            httpPut.setEntity(entity);
+            HttpResponse putResponse = httpClient.execute(httpPut);
+            if (putResponse.getStatusLine().getStatusCode() != 200) {
+                System.err.println(json);
+                throw new IOException("Could not PUT url: " + url);
+            }
+        } else if (statusCode != 200) {
+            throw new IOException("Could not GET url: " + url);
         }
     }
 
-    private void defineField(String fieldName, boolean numeric, boolean stored) throws IOException {
-		HttpClient httpClient = httpSolrServer.getHttpClient();
-
-		String url = httpSolrServer.getBaseURL() + "/" + solrCollection + "/schema/fields/" + fieldName;
-		HttpGet httpGet = new HttpGet(url);
-		httpGet.addHeader("Accept", ContentType.APPLICATION_JSON.getMimeType());
-		HttpResponse response = httpClient.execute(httpGet);
-		JSONObject json = getJson(response);
-		int statusCode = response.getStatusLine().getStatusCode();
-		if (statusCode == 404) {
-			JSONObject fieldDefinition = new JSONObject();
-			if (numeric) {
-				fieldDefinition.put("type", "tlongs");
-			} else {
-				fieldDefinition.put("type", "text_general");
-			}
-			fieldDefinition.put("multiValued", false);
-			fieldDefinition.put("stored", stored);
-			//fieldDefinition.put("required", true); // built-on is sometimes empty
-			HttpPut httpPut = new HttpPut(url);
-			String thisIsAString = fieldDefinition.toString();
-			StringEntity entity = new StringEntity(thisIsAString, ContentType.APPLICATION_JSON);
-			httpPut.setEntity(entity);
-			HttpResponse putResponse = httpClient.execute(httpPut);
-			if (putResponse.getStatusLine().getStatusCode() != 200) {
-				System.err.println(json);
-				throw new IOException("Could not PUT url: " + url);
-			}
-		} else if (statusCode != 200) {
-			throw new IOException("Could not GET url: " + url);
-		}
+    private JSONObject getJson(HttpResponse response) throws IOException {
+        String json = IOUtils.toString(response.getEntity().getContent());
+        return JSONObject.fromObject(json);
     }
-
-	private JSONObject getJson(HttpResponse response) throws IOException {
-		String json = IOUtils.toString(response.getEntity().getContent());
-		return JSONObject.fromObject(json);
-	}
 
     private void definedSolrFields() throws IOException {
         List<String> defaultSearchableFieldNames = new ArrayList<String>();
@@ -206,7 +207,6 @@ public class SolrSearchBackend implements SearchBackend {
 
     @Override
     public List<FreeTextSearchItemImplementation> getHits(String query, boolean includeHighlights) {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -217,7 +217,8 @@ public class SolrSearchBackend implements SearchBackend {
 
     @Override
     public SearchBackend reconfigure(Map<String, Object> config) {
-        if (getUrl(config).toString().equals(httpSolrServer.getBaseURL()) && solrCollection.equals(getSolrCollection(config))) {
+        if (getUrl(config).toString().equals(httpSolrServer.getBaseURL())
+                && solrCollection.equals(getSolrCollection(config))) {
             return this;
         } else {
             return new SolrSearchBackend(getUrl(config), getSolrCollection(config));
@@ -226,14 +227,12 @@ public class SolrSearchBackend implements SearchBackend {
 
     @Override
     public void removeBuild(AbstractBuild<?, ?> build) {
-		try {
-			httpSolrServer.deleteById(build.getId());
-		} catch (SolrServerException e) {
-			LOGGER.warning("Could not delete build from solr: " + e.getMessage());
-		} catch (IOException e) {
-			LOGGER.warning("Could not delete build from solr: " + e.getMessage());
-		}
-	}
-
-	private final static Logger LOGGER = Logger.getLogger(SolrSearchBackend.class.getName());
+        try {
+            httpSolrServer.deleteById(build.getId());
+        } catch (SolrServerException e) {
+            LOGGER.warning("Could not delete build from solr: " + e.getMessage());
+        } catch (IOException e) {
+            LOGGER.warning("Could not delete build from solr: " + e.getMessage());
+        }
+    }
 }

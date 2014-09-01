@@ -153,7 +153,7 @@ public class LuceneSearchBackend implements SearchBackend {
             MultiFieldQueryParser queryParser = new MultiFieldQueryParser(LUCENE_VERSION, getAllFields(), analyzer) {
                 @Override
                 protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive,
-                                              boolean endInclusive) throws ParseException {
+                        boolean endInclusive) throws ParseException {
                     if (field != null && getIndex(field).numeric) {
                         Long min = getWithDefault(part1, null);
                         Long max = getWithDefault(part2, null);
@@ -199,8 +199,8 @@ public class LuceneSearchBackend implements SearchBackend {
                     buildIcon = BallColor.valueOf(colorName);
                 }
 
-                luceneSearchResultImpl.add(new FreeTextSearchItemImplementation(doc.get(PROJECT_NAME.fieldName),
-                        doc.get(BUILD_NUMBER.fieldName), bestFragments, buildIcon.getImage()));
+                luceneSearchResultImpl.add(new FreeTextSearchItemImplementation(doc.get(PROJECT_NAME.fieldName), doc
+                        .get(BUILD_NUMBER.fieldName), bestFragments, buildIcon.getImage()));
             }
         } catch (ParseException e) {
             // Do nothing
