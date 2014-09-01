@@ -2,28 +2,15 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
-
-import net.sf.json.JSON;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
-import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -34,7 +21,12 @@ import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 
-import com.sun.xml.txw2.annotation.XmlElement;
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
 
 public class SolrSearchBackend implements SearchBackend {
 
@@ -101,12 +93,79 @@ public class SolrSearchBackend implements SearchBackend {
 		return JSONObject.fromObject(json);
 	}
 
-	private void definedSolrFields() throws IOException {
-        for (Field f : Field.values()) {
-            defineField(f.fieldName, f.numeric, f.persist);
+    private void definedSolrFields() throws IOException {
+        List<String> defaultSearchableFieldNames = new ArrayList<String>();
+        for (Field field : Field.values()) {
+            defineField(field.fieldName, field.numeric, field.persist);
+            if (field.defaultSearchable) {
+                defaultSearchableFieldNames.add(field.fieldName);
+            }
         }
         for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
             defineField(extension.getKeyword(), false, extension.isPersist());
+            if (extension.isDefaultSearchable()) {
+                defaultSearchableFieldNames.add(extension.getKeyword());
+            }
+        }
+        defineCopyField(defaultSearchableFieldNames);
+    }
+
+    private void defineCopyField(List<String> defaultSearchable) throws IOException {
+        HttpClient httpClient = httpSolrServer.getHttpClient();
+
+        String url = httpSolrServer.getBaseURL() + "/" + solrCollection + "/schema/copyfields/?wt=json";
+        HttpGet httpGet = new HttpGet(url);
+        HttpResponse response = httpClient.execute(httpGet);
+        if (response.getStatusLine().getStatusCode() != 200) {
+            throw new IOException("Could not load copyfields: " + response.getStatusLine());
+        }
+        JSONObject json = getJson(response);
+        boolean changedCopyField = false;
+        for (String fieldName : defaultSearchable) {
+            JSONObject copyField = null;
+            JSONArray copyFields = json.getJSONArray("copyFields");
+            for (Object o : copyFields) {
+                JSONObject cf = (JSONObject) o;
+                if (copyField.getString("source").equals(fieldName)) {
+                    copyField = cf;
+                    break;
+                }
+            }
+
+            if (copyField == null) {
+                JSONObject newCopyField = new JSONObject();
+                newCopyField.put("source", fieldName);
+                newCopyField.put("dest", "text");
+                copyFields.add(newCopyField);
+                changedCopyField = true;
+            } else {
+                Object dest = copyField.get("dest");
+                if (dest instanceof String) {
+                    if (!dest.equals("text")) {
+                        JSONArray array = new JSONArray();
+                        array.add(dest);
+                        array.add("text");
+                        copyField.put("dest", array);
+                        changedCopyField = true;
+                    }
+                } else if (dest instanceof JSONArray) {
+                    if (!((JSONArray) dest).contains("text")) {
+                        ((JSONArray) dest).add("text");
+                        changedCopyField = true;
+                    }
+                }
+            }
+        }
+        if (changedCopyField) {
+            String jsonString = json.toString(4);
+            StringEntity stringEntity = new StringEntity(jsonString);
+            HttpPost post = new HttpPost(httpSolrServer.getBaseURL() + "/" + solrCollection
+                    + "/schema/copyfields/?wt=json");
+            post.setEntity(stringEntity);
+            response = httpClient.execute(post);
+        }
+        if (response.getStatusLine().getStatusCode() != 200) {
+            throw new IOException("Could not load copyfields: " + response.getStatusLine());
         }
     }
 

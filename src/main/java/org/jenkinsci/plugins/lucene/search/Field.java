@@ -11,7 +11,7 @@ public enum Field {
     PROJECT_DISPLAY_NAME("projectdisplayname", Persist.TRUE), //
     BUILD_NUMBER("buildnumber", Numeric.TRUE), //
     RESULT("result", Persist.TRUE), //
-    DURATION("duration"), //
+    DURATION("duration", DefaultSearchable.FALSE), //
     START_TIME("starttime", DefaultSearchable.FALSE, Numeric.TRUE), //
     BUILT_ON("builton"), //
     START_CAUSE("startcause"), //

@@ -150,7 +150,6 @@ public class LuceneSearchBackend implements SearchBackend {
     public List<FreeTextSearchItemImplementation> getHits(String query, boolean includeHighlights) {
         List<FreeTextSearchItemImplementation> luceneSearchResultImpl = new ArrayList<FreeTextSearchItemImplementation>();
         try {
-            getAllFields();
             MultiFieldQueryParser queryParser = new MultiFieldQueryParser(LUCENE_VERSION, getAllFields(), analyzer) {
                 @Override
                 protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive,
