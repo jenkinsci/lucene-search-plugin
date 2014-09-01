@@ -224,8 +224,45 @@ public class SolrSearchBackend implements SearchBackend {
     }
 
     @Override
-    public List<FreeTextSearchItemImplementation> getHits(String query, boolean includeHighlights) {
-        return null;
+    public List<FreeTextSearchItemImplementation> getHits(String queryString, boolean includeHighlights) {
+        SolrQuery query = new SolrQuery();
+        query.set("df", "text");
+        query.setFields(defaultSearchableFields);
+        query.setQuery(queryString);
+        query.setStart(0);
+        //query.set("defType", "edismax");
+        if (includeHighlights) {
+            query.setHighlightSnippets(5);
+            query.setHighlight(true);
+        }
+        query.setSort("score", SolrQuery.ORDER.desc);
+        query.addSort(Field.START_TIME.fieldName, SolrQuery.ORDER.desc);
+        try {
+            ArrayList<FreeTextSearchItemImplementation> luceneSearchResultImpl = new ArrayList<FreeTextSearchItemImplementation>();
+            QueryResponse queryResponse = httpSolrServer.query(query);
+            for (SolrDocument doc : queryResponse.getResults()) {
+                String[] bestFragments = EMPTY_ARRAY;
+                Map<String, List<String>> highlighting = queryResponse.getHighlighting().get(ID.fieldName);
+                if (highlighting != null) {
+                    List<String> frags = highlighting.get(CONSOLE.fieldName);
+                    if (frags != null) {
+                        bestFragments = frags.toArray(new String[frags.size()]);
+                    }
+                }
+                BallColor buildIcon = BallColor.GREY;
+                String colorName = (String) doc.get(BALL_COLOR.fieldName);
+                if (colorName != null) {
+                    buildIcon = BallColor.valueOf(colorName);
+                }
+                String projectName = (String) doc.get(PROJECT_NAME.fieldName);
+                String buildNumber = (String) doc.get(BUILD_NUMBER.fieldName);
+                luceneSearchResultImpl.add(new FreeTextSearchItemImplementation(projectName, buildNumber,
+                        bestFragments, buildIcon.getImage()));
+            }
+            return luceneSearchResultImpl;
+        } catch (SolrServerException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
