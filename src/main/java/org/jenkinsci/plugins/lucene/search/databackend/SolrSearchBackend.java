@@ -1,11 +1,13 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
 import hudson.model.AbstractBuild;
+import hudson.model.BallColor;
 import hudson.model.Cause;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -13,8 +15,11 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrInputDocument;
 import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
@@ -28,11 +33,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import static org.jenkinsci.plugins.lucene.search.Field.*;
+
 public class SolrSearchBackend implements SearchBackend {
 
-    private final static Logger LOGGER = Logger.getLogger(SolrSearchBackend.class.getName());
-    private HttpSolrServer httpSolrServer;
-    private String solrCollection;
+    private static final Logger LOGGER = Logger.getLogger(SolrSearchBackend.class.getName());
+    private static final String[] EMPTY_ARRAY = new String[0];
+
+    private final HttpSolrServer httpSolrServer;
+    private final String solrCollection;
+    private final String[] defaultSearchableFields;
 
     public SolrSearchBackend(URI url, String solrCollection) {
         httpSolrServer = new HttpSolrServer(url.toString());
@@ -42,6 +52,7 @@ public class SolrSearchBackend implements SearchBackend {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        defaultSearchableFields = getDefaultSearchableFields();
     }
 
     public static SolrSearchBackend create(final Map<String, Object> config) {
@@ -94,21 +105,19 @@ public class SolrSearchBackend implements SearchBackend {
         return JSONObject.fromObject(json);
     }
 
-    private void definedSolrFields() throws IOException {
+    private String[] getDefaultSearchableFields() {
         List<String> defaultSearchableFieldNames = new ArrayList<String>();
         for (Field field : Field.values()) {
-            defineField(field.fieldName, field.numeric, field.persist);
             if (field.defaultSearchable) {
                 defaultSearchableFieldNames.add(field.fieldName);
             }
         }
         for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
-            defineField(extension.getKeyword(), false, extension.isPersist());
             if (extension.isDefaultSearchable()) {
                 defaultSearchableFieldNames.add(extension.getKeyword());
             }
         }
-        defineCopyField(defaultSearchableFieldNames);
+        return defaultSearchableFieldNames.toArray(new String[defaultSearchableFieldNames.size()]);
     }
 
     private void defineCopyField(List<String> defaultSearchable) throws IOException {
@@ -167,6 +176,15 @@ public class SolrSearchBackend implements SearchBackend {
         }
         if (response.getStatusLine().getStatusCode() != 200) {
             throw new IOException("Could not load copyfields: " + response.getStatusLine());
+        }
+    }
+
+    private void definedSolrFields() throws IOException {
+        for (Field field : Field.values()) {
+            defineField(field.fieldName, field.numeric, field.persist);
+        }
+        for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
+            defineField(extension.getKeyword(), false, extension.isPersist());
         }
     }
 
