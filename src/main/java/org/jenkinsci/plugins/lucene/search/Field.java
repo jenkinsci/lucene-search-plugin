@@ -28,7 +28,7 @@ public enum Field {
         List<Enum> es = Arrays.asList(e);
         defaultSearchable = !es.contains(DefaultSearchable.FALSE);
         numeric = es.contains(Numeric.TRUE);
-        persist = es.contains(Numeric.TRUE);
+        persist = es.contains(Persist.TRUE);
         this.fieldName = fieldName;
     }
 
