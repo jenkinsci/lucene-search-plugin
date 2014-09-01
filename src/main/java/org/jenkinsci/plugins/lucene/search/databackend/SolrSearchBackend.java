@@ -74,7 +74,7 @@ public class SolrSearchBackend implements SearchBackend {
 		if (statusCode == 404) {
 			JSONObject fieldDefinition = new JSONObject();
 			if (numeric) {
-				fieldDefinition.put("type", "text_general"); // FIXME TODO
+				fieldDefinition.put("type", "tlongs");
 			} else {
 				fieldDefinition.put("type", "text_general");
 			}
