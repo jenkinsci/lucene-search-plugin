@@ -33,7 +33,6 @@
                     </ol>
                 </j:otherwise>
             </j:choose>
-            Nisse
         </l:main-panel>
     </l:layout>
 </j:jelly>
