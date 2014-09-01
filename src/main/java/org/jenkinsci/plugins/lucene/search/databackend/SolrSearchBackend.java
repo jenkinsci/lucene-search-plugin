@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import net.sf.json.JSON;
 import net.sf.json.JSONObject;
@@ -166,8 +167,14 @@ public class SolrSearchBackend implements SearchBackend {
 
     @Override
     public void removeBuild(AbstractBuild<?, ?> build) {
-        // TODO Auto-generated method stub
+		try {
+			httpSolrServer.deleteById(build.getId());
+		} catch (SolrServerException e) {
+			LOGGER.warning("Could not delete build from solr: " + e.getMessage());
+		} catch (IOException e) {
+			LOGGER.warning("Could not delete build from solr: " + e.getMessage());
+		}
+	}
 
-    }
-
+	private final static Logger LOGGER = Logger.getLogger(SolrSearchBackend.class.getName());
 }
