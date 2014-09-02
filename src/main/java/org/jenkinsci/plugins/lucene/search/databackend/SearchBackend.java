@@ -58,5 +58,4 @@ public abstract class SearchBackend {
         return fieldNames.toArray(new String[fieldNames.size()]);
     }
 
-
 }
