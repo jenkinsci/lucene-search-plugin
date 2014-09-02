@@ -68,7 +68,7 @@ public class SolrSearchBackend implements SearchBackend {
         return (URI) config.get("solrUrl");
     }
 
-    private void defineField(String fieldName, boolean numeric, boolean stored) throws IOException {
+    private void defineField(String fieldName, boolean numeric, boolean stored, boolean multiValued) throws IOException {
         HttpClient httpClient = httpSolrServer.getHttpClient();
 
         String url = httpSolrServer.getBaseURL() + "/" + solrCollection + "/schema/fields/" + fieldName;
@@ -84,7 +84,7 @@ public class SolrSearchBackend implements SearchBackend {
             } else {
                 fieldDefinition.put("type", "text_general");
             }
-            fieldDefinition.put("multiValued", false);
+            fieldDefinition.put("multiValued", multiValued);
             fieldDefinition.put("stored", stored);
             //fieldDefinition.put("required", true); // built-on is sometimes empty
             HttpPut httpPut = new HttpPut(url);
@@ -182,12 +182,12 @@ public class SolrSearchBackend implements SearchBackend {
     }
 
     private void definedSolrFields() throws IOException {
-        defineField("text", false, false);
+        defineField("text", false, true, true);
         for (Field field : Field.values()) {
-            defineField(field.fieldName, field.numeric, field.persist);
+            defineField(field.fieldName, field.numeric, field.persist, false);
         }
         for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
-            defineField(extension.getKeyword(), false, extension.isPersist());
+            defineField(extension.getKeyword(), false, extension.isPersist(), false);
         }
     }
 
