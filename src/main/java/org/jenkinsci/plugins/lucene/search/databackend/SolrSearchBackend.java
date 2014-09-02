@@ -7,7 +7,6 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -35,7 +34,7 @@ import java.util.logging.Logger;
 
 import static org.jenkinsci.plugins.lucene.search.Field.*;
 
-public class SolrSearchBackend implements SearchBackend {
+public class SolrSearchBackend extends SearchBackend {
 
     private static final Logger LOGGER = Logger.getLogger(SolrSearchBackend.class.getName());
     private static final String[] EMPTY_ARRAY = new String[0];
@@ -45,11 +44,12 @@ public class SolrSearchBackend implements SearchBackend {
     private final String[] defaultSearchableFields;
 
     public SolrSearchBackend(URI url, String solrCollection) {
+        super(SearchBackendEngine.SOLR);
         httpSolrServer = new HttpSolrServer(url.toString());
         this.solrCollection = solrCollection;
         try {
             definedSolrFields();
-            defaultSearchableFields = getDefaultSearchableFields();
+            defaultSearchableFields = getAllDefaultSearchableFields();
             defineCopyField(defaultSearchableFields);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -104,21 +104,6 @@ public class SolrSearchBackend implements SearchBackend {
     private JSONObject getJson(HttpResponse response) throws IOException {
         String json = IOUtils.toString(response.getEntity().getContent());
         return JSONObject.fromObject(json);
-    }
-
-    private String[] getDefaultSearchableFields() {
-        List<String> defaultSearchableFieldNames = new ArrayList<String>();
-        for (Field field : Field.values()) {
-            if (field.defaultSearchable) {
-                defaultSearchableFieldNames.add(field.fieldName);
-            }
-        }
-        for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
-            if (extension.isDefaultSearchable()) {
-                defaultSearchableFieldNames.add(extension.getKeyword());
-            }
-        }
-        return defaultSearchableFieldNames.toArray(new String[defaultSearchableFieldNames.size()]);
     }
 
     private void defineCopyField(String[] defaultSearchable) throws IOException {
@@ -230,7 +215,7 @@ public class SolrSearchBackend implements SearchBackend {
     public List<FreeTextSearchItemImplementation> getHits(String queryString, boolean includeHighlights) {
         SolrQuery query = new SolrQuery();
         query.set("df", "text");
-        query.setFields(defaultSearchableFields);
+        query.setFields(getAllFields());
         query.setQuery(queryString);
         query.setStart(0);
         //query.set("defType", "edismax");
@@ -266,11 +251,6 @@ public class SolrSearchBackend implements SearchBackend {
         } catch (SolrServerException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public SearchBackendEngine getEngine() {
-        return SearchBackendEngine.SOLR;
     }
 
     @Override

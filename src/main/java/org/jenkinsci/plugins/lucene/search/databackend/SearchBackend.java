@@ -1,22 +1,62 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
 import hudson.model.AbstractBuild;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-
+import org.jenkinsci.plugins.lucene.search.Field;
+import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 
-public interface SearchBackend {
-    public void storeBuild(final AbstractBuild<?, ?> build) throws IOException;
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
-    public List<FreeTextSearchItemImplementation> getHits(final String query, final boolean includeHighlights);
+public abstract class SearchBackend {
 
-    public SearchBackendEngine getEngine();
+    private final SearchBackendEngine engine;
 
-    public SearchBackend reconfigure(Map<String, Object> config);
+    public SearchBackend(SearchBackendEngine engine) {
+        this.engine = engine;
+    }
 
-    public void removeBuild(AbstractBuild<?, ?> build);
+    public abstract void storeBuild(final AbstractBuild<?, ?> build) throws IOException;
+
+    public abstract List<FreeTextSearchItemImplementation> getHits(final String query, final boolean includeHighlights);
+
+    public final SearchBackendEngine getEngine() {
+        return engine;
+    }
+
+    public abstract SearchBackend reconfigure(Map<String, Object> config);
+
+    public abstract void removeBuild(AbstractBuild<?, ?> build);
+
+    // Caching this method might be dangerous
+    protected String[] getAllDefaultSearchableFields() {
+        List<String> fieldNames = new LinkedList<String>();
+        for (Field field : Field.values()) {
+            if (field.defaultSearchable) {
+                fieldNames.add(field.fieldName);
+            }
+        }
+        for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
+            if (extension.isDefaultSearchable()) {
+                fieldNames.add(extension.getKeyword());
+            }
+        }
+        return fieldNames.toArray(new String[fieldNames.size()]);
+    }
+
+    protected String[] getAllFields() {
+        List<String> fieldNames = new LinkedList<String>();
+        for (Field field : Field.values()) {
+            fieldNames.add(field.fieldName);
+        }
+        for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
+            fieldNames.add(extension.getKeyword());
+        }
+        return fieldNames.toArray(new String[fieldNames.size()]);
+    }
+
+
 }

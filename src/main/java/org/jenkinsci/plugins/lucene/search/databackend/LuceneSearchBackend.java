@@ -43,7 +43,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -55,7 +54,7 @@ import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
 import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
 import static org.jenkinsci.plugins.lucene.search.Field.getIndex;
 
-public class LuceneSearchBackend implements SearchBackend {
+public class LuceneSearchBackend extends SearchBackend {
     private static final int MAX_NUM_FRAGMENTS = 5;
     private static final String[] EMPTY_ARRAY = new String[0];
 
@@ -95,6 +94,7 @@ public class LuceneSearchBackend implements SearchBackend {
     private final File indexPath;
 
     public LuceneSearchBackend(final File indexPath) throws IOException {
+        super(SearchBackendEngine.LUCENE);
         this.indexPath = indexPath;
         analyzer = new StandardAnalyzer(LUCENE_VERSION, CharArraySet.EMPTY_SET);
         index = FSDirectory.open(indexPath);
@@ -150,7 +150,7 @@ public class LuceneSearchBackend implements SearchBackend {
     public List<FreeTextSearchItemImplementation> getHits(String query, boolean includeHighlights) {
         List<FreeTextSearchItemImplementation> luceneSearchResultImpl = new ArrayList<FreeTextSearchItemImplementation>();
         try {
-            MultiFieldQueryParser queryParser = new MultiFieldQueryParser(LUCENE_VERSION, getAllFields(), analyzer) {
+            MultiFieldQueryParser queryParser = new MultiFieldQueryParser(LUCENE_VERSION, getAllDefaultSearchableFields(), analyzer) {
                 @Override
                 protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive,
                         boolean endInclusive) throws ParseException {
@@ -210,21 +210,6 @@ public class LuceneSearchBackend implements SearchBackend {
         return luceneSearchResultImpl;
     }
 
-    private String[] getAllFields() {
-        List<String> fieldNames = new LinkedList<String>();
-        for (Field field : Field.values()) {
-            if (field.defaultSearchable) {
-                fieldNames.add(field.fieldName);
-            }
-        }
-        for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
-            if (extension.isDefaultSearchable()) {
-                fieldNames.add(extension.getKeyword());
-            }
-        }
-        return fieldNames.toArray(EMPTY_ARRAY);
-    }
-
     @Override
     public void storeBuild(final AbstractBuild<?, ?> build) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -265,11 +250,6 @@ public class LuceneSearchBackend implements SearchBackend {
         } finally {
             updateReader();
         }
-    }
-
-    @Override
-    public SearchBackendEngine getEngine() {
-        return SearchBackendEngine.LUCENE;
     }
 
     @Override
