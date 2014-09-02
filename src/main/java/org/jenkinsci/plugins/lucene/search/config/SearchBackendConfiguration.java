@@ -7,11 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,12 +22,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.ContentEncodingHttpClient;
-import org.apache.http.impl.client.DecompressingHttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.jenkinsci.plugins.lucene.search.SearchBackendManager;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -49,7 +40,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
 
     private URI solrUrl = URI.create("http://127.0.0.1:8983/");
     private File lucenePath = new File(Jenkins.getInstance().getRootDir(), "luceneIndex");
-    private String solrCollection = "lucene-search-plugin";
+    private String solrCollection = "collection1";
     private SearchBackendEngine searchBackend = SearchBackendEngine.LUCENE;
 
     @DataBoundConstructor
@@ -143,7 +134,24 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     public FormValidation doCheckSolrUrl(@QueryParameter final String solrUrl) {
         try {
             URI uri = makeSolrUrl(solrUrl);
-            return FormValidation.ok("Found at " + uri);
+            if (solrUrl.equals(uri.toString())) {
+                return FormValidation.ok();
+            } else {
+                return FormValidation.warning("Incomplete url, but solr was found at " + uri.toString());
+            }
+        } catch (IOException e) {
+            return FormValidation.error(e.getMessage());
+        }
+    }
+
+    public FormValidation doCheckSolrCollection(@QueryParameter final String solrCollection) {
+        try {
+            List<String> collections = getCollections(solrUrl.toString());
+            if (collections.contains(solrCollection)) {
+                return FormValidation.ok();
+            } else {
+                return FormValidation.error("Collection not found among: " + collections);
+            }
         } catch (IOException e) {
             return FormValidation.error(e.getMessage());
         }
@@ -154,22 +162,35 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
             throws hudson.model.Descriptor.FormException {
         JSONObject selectedJson = json.getJSONObject("searchBackend");
         if (selectedJson.containsKey(SOLR_URL)) {
+            String solrUrl = selectedJson.getString(SOLR_URL);
+            ensureNotError(doCheckSolrUrl(solrUrl), SOLR_URL);
             try {
-                setSolrUrl(makeSolrUrl(selectedJson.getString(SOLR_URL)));
+                setSolrUrl(makeSolrUrl(solrUrl));
             } catch (IOException e) {
-                throw new IllegalArgumentException(e);
+                // Really shouldn't be possible, but this is the correct action, should it ever happen
+                throw new FormException("Incorrect freetext config", SOLR_URL);
             }
         }
         if (selectedJson.containsKey(SOLR_COLLECTION)) {
-            setSolrCollection(selectedJson.getString(SOLR_COLLECTION));
+            String solrCollection = selectedJson.getString(SOLR_COLLECTION);
+            ensureNotError(doCheckSolrCollection(solrCollection), SOLR_COLLECTION);
+            setSolrCollection(solrCollection);
         }
         if (selectedJson.containsKey(LUCENE_PATH)) {
-            setLucenePath(new File(selectedJson.getString(LUCENE_PATH)));
+            String lucenePath = selectedJson.getString(LUCENE_PATH);
+            ensureNotError(doCheckLucenePath(lucenePath), LUCENE_PATH);
+            setLucenePath(new File(lucenePath));
         }
         setSearchBackend(SearchBackendEngine.valueOf(json.get("").toString()));
-        save();
         backendManager.reconfigure(searchBackend, getConfig());
+        save();
         return super.configure(req, json);
+    }
+
+    private void ensureNotError(FormValidation formValidation, String field) throws FormException {
+        if (formValidation.kind == FormValidation.Kind.ERROR) {
+            throw new FormException("Incorrect search config field: " + field, field);
+        }
     }
 
     public Map<String, Object> getConfig() {
