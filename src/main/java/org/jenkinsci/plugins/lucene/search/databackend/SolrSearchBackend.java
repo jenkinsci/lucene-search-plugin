@@ -49,10 +49,11 @@ public class SolrSearchBackend implements SearchBackend {
         this.solrCollection = solrCollection;
         try {
             definedSolrFields();
+            defaultSearchableFields = getDefaultSearchableFields();
+            defineCopyField(defaultSearchableFields);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        defaultSearchableFields = getDefaultSearchableFields();
     }
 
     public static SolrSearchBackend create(final Map<String, Object> config) {
@@ -120,7 +121,7 @@ public class SolrSearchBackend implements SearchBackend {
         return defaultSearchableFieldNames.toArray(new String[defaultSearchableFieldNames.size()]);
     }
 
-    private void defineCopyField(List<String> defaultSearchable) throws IOException {
+    private void defineCopyField(String[] defaultSearchable) throws IOException {
         HttpClient httpClient = httpSolrServer.getHttpClient();
 
         String url = httpSolrServer.getBaseURL() + "/" + solrCollection + "/schema/copyfields/?wt=json";
@@ -131,12 +132,12 @@ public class SolrSearchBackend implements SearchBackend {
         }
         JSONObject json = getJson(response);
         boolean changedCopyField = false;
+        JSONArray copyFields = json.getJSONArray("copyFields");
         for (String fieldName : defaultSearchable) {
             JSONObject copyField = null;
-            JSONArray copyFields = json.getJSONArray("copyFields");
             for (Object o : copyFields) {
                 JSONObject cf = (JSONObject) o;
-                if (copyField.getString("source").equals(fieldName)) {
+                if (cf.getString("source").equals(fieldName)) {
                     copyField = cf;
                     break;
                 }
@@ -145,7 +146,9 @@ public class SolrSearchBackend implements SearchBackend {
             if (copyField == null) {
                 JSONObject newCopyField = new JSONObject();
                 newCopyField.put("source", fieldName);
-                newCopyField.put("dest", "text");
+                JSONArray array = new JSONArray();
+                array.add("text");
+                newCopyField.put("dest", array);
                 copyFields.add(newCopyField);
                 changedCopyField = true;
             } else {
@@ -167,19 +170,19 @@ public class SolrSearchBackend implements SearchBackend {
             }
         }
         if (changedCopyField) {
-            String jsonString = json.toString(4);
-            StringEntity stringEntity = new StringEntity(jsonString);
-            HttpPost post = new HttpPost(httpSolrServer.getBaseURL() + "/" + solrCollection
-                    + "/schema/copyfields/?wt=json");
+            String jsonString = copyFields.toString(4);
+            StringEntity stringEntity = new StringEntity(jsonString, ContentType.APPLICATION_JSON);
+            HttpPost post = new HttpPost(httpSolrServer.getBaseURL() + "/" + solrCollection + "/schema/copyfields");
             post.setEntity(stringEntity);
             response = httpClient.execute(post);
         }
         if (response.getStatusLine().getStatusCode() != 200) {
-            throw new IOException("Could not load copyfields: " + response.getStatusLine());
+            throw new IOException("Could not save copyfields: " + response.getStatusLine());
         }
     }
 
     private void definedSolrFields() throws IOException {
+        defineField("text", false, false);
         for (Field field : Field.values()) {
             defineField(field.fieldName, field.numeric, field.persist);
         }
@@ -255,7 +258,7 @@ public class SolrSearchBackend implements SearchBackend {
                     buildIcon = BallColor.valueOf(colorName);
                 }
                 String projectName = (String) doc.get(PROJECT_NAME.fieldName);
-                String buildNumber = (String) doc.get(BUILD_NUMBER.fieldName);
+                String buildNumber = doc.get(BUILD_NUMBER.fieldName).toString();
                 luceneSearchResultImpl.add(new FreeTextSearchItemImplementation(projectName, buildNumber,
                         bestFragments, buildIcon.getImage()));
             }
