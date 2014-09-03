@@ -36,7 +36,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     private static final String SOLR_COLLECTION = "solrCollection";
 
     @Inject
-    SearchBackendManager backendManager;
+    private transient SearchBackendManager backendManager;
 
     private URI solrUrl = URI.create("http://127.0.0.1:8983/");
     private File lucenePath = new File(Jenkins.getInstance().getRootDir(), "luceneIndex");
