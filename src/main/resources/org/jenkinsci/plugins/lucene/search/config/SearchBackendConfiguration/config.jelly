@@ -2,27 +2,25 @@
          xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form"
          xmlns:html="jelly:html">
     <f:section title="${%Free Text Search}">
-        <f:advanced title="${%Search Backend}">
-            <f:dropdownList name="searchBackend" field="searchBackend" title="${%Select Search Backend}"
-                            help="${%Select the type of backend to use when searching. Lucene is just a directory locally, while Solr is an external service that needs to be set up. When in doubt, use Lucene. Migration between the two is not supported.}">
-                <f:dropdownListBlock value="LUCENE" title="${%Lucene}"
-                                     selected="${descriptor.searchBackend.equals('LUCENE')}">
-                    <f:entry title="${%Lucene directory}" field="lucenePath"
-                             description="${%The path to the lucene search index}">
-                        <f:textbox name="lucenePath"/>
-                    </f:entry>
-                </f:dropdownListBlock>
-                <f:dropdownListBlock value="SOLR" title="${%Solr}"
-                                     selected="${descriptor.searchBackend.equals('SOLR')}">
-                    <f:entry title="${%Solr host url}" field="solrUrl" description="${%The url to the Solr service}">
-                        <f:textbox name="solrUrl"/>
-                    </f:entry>
-                    <f:entry title="${%Solr collection}" field="solrCollection"
-                             description="${%The collection on the Solr server that will store the data}">
-                        <f:select/>
-                    </f:entry>
-                </f:dropdownListBlock>
-            </f:dropdownList>
-        </f:advanced>
+        <f:dropdownList name="searchBackend" field="searchBackend" title="${%Select Search Backend}"
+                        help="${%Select the type of backend to use when searching. Lucene is just a directory locally, while Solr is an external service that needs to be set up. When in doubt, use Lucene. Migration between the two is not supported.}">
+            <f:dropdownListBlock value="LUCENE" title="${%Lucene}"
+                                 selected="${descriptor.searchBackend.equals('LUCENE')}">
+                <f:entry title="${%Lucene directory}" field="lucenePath"
+                         description="${%The path to the lucene search index}">
+                    <f:textbox name="lucenePath"/>
+                </f:entry>
+            </f:dropdownListBlock>
+            <f:dropdownListBlock value="SOLR" title="${%Solr}"
+                                 selected="${descriptor.searchBackend.equals('SOLR')}">
+                <f:entry title="${%Solr host url}" field="solrUrl" description="${%The url to the Solr service}">
+                    <f:textbox name="solrUrl"/>
+                </f:entry>
+                <f:entry title="${%Solr collection}" field="solrCollection"
+                         description="${%The collection on the Solr server that will store the data}">
+                    <f:select/>
+                </f:entry>
+            </f:dropdownListBlock>
+        </f:dropdownList>
     </f:section>
 </j:jelly>
