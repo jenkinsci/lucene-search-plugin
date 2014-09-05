@@ -1,22 +1,19 @@
 package org.jenkinsci.plugins.lucene.search;
 
 import hudson.Extension;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-
-import javax.inject.Inject;
-
 import hudson.model.AbstractBuild;
 import hudson.search.SearchResult;
 import hudson.search.SuggestedItem;
-
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 import org.jenkinsci.plugins.lucene.search.databackend.LuceneSearchBackend;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackend;
 import org.jenkinsci.plugins.lucene.search.databackend.SolrSearchBackend;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 @Extension
 public class SearchBackendManager {

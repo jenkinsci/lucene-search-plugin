@@ -4,10 +4,6 @@ import hudson.ExtensionPoint;
 import hudson.model.AbstractBuild;
 import jenkins.model.Jenkins;
 
-import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
-
 public abstract class FreeTextSearchExtension implements ExtensionPoint {
 
     public static hudson.ExtensionList<FreeTextSearchExtension> all() {
@@ -17,6 +13,7 @@ public abstract class FreeTextSearchExtension implements ExtensionPoint {
     /**
      * Specifies the keyword that lucene stores the data as. This keyword is the same as the user can use to search for.
      * E.g. with keyword = "foo", the following query "foo:bar" will look for "bar" in the textresult for this extension.
+     *
      * @return the keyword, the word must be lower case
      */
     public abstract String getKeyword();

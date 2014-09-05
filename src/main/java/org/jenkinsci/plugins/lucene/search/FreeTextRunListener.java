@@ -1,14 +1,13 @@
 package org.jenkinsci.plugins.lucene.search;
 
 import hudson.Extension;
-import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
+import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
-
-import java.io.IOException;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.io.IOException;
 
 @Extension
 public class FreeTextRunListener extends RunListener<AbstractBuild<?, ?>> {

@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.lucene.search;
 
-import hudson.search.*;
+import hudson.search.Search;
+import hudson.search.SearchResult;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;

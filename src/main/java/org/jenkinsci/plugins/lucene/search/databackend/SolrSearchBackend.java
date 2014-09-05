@@ -32,7 +32,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import static org.jenkinsci.plugins.lucene.search.Field.*;
+import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
+import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
+import static org.jenkinsci.plugins.lucene.search.Field.CONSOLE;
+import static org.jenkinsci.plugins.lucene.search.Field.ID;
+import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
 
 public class SolrSearchBackend extends SearchBackend {
 

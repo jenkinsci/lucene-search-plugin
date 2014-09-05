@@ -2,11 +2,10 @@ package org.jenkinsci.plugins.lucene.search;
 
 import hudson.search.SearchIndex;
 import hudson.search.SearchItem;
+import jenkins.model.Jenkins;
 
 import java.util.List;
 import java.util.regex.Pattern;
-
-import jenkins.model.Jenkins;
 
 public class FreeTextSearchItemImplementation implements SearchItem {
 
