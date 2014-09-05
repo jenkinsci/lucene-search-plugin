@@ -42,6 +42,7 @@ public class SolrSearchBackend extends SearchBackend {
 
     private static final Logger LOGGER = Logger.getLogger(SolrSearchBackend.class.getName());
     private static final String[] EMPTY_ARRAY = new String[0];
+    public static final String COMPOSITE_SEARCH_FIELD = "text";
 
     private final HttpSolrServer httpSolrServer;
     private final String solrCollection;
@@ -136,23 +137,23 @@ public class SolrSearchBackend extends SearchBackend {
                 JSONObject newCopyField = new JSONObject();
                 newCopyField.put("source", fieldName);
                 JSONArray array = new JSONArray();
-                array.add("text");
+                array.add(COMPOSITE_SEARCH_FIELD);
                 newCopyField.put("dest", array);
                 copyFields.add(newCopyField);
                 changedCopyField = true;
             } else {
                 Object dest = copyField.get("dest");
                 if (dest instanceof String) {
-                    if (!dest.equals("text")) {
+                    if (!dest.equals(COMPOSITE_SEARCH_FIELD)) {
                         JSONArray array = new JSONArray();
                         array.add(dest);
-                        array.add("text");
+                        array.add(COMPOSITE_SEARCH_FIELD);
                         copyField.put("dest", array);
                         changedCopyField = true;
                     }
                 } else if (dest instanceof JSONArray) {
-                    if (!((JSONArray) dest).contains("text")) {
-                        ((JSONArray) dest).add("text");
+                    if (!((JSONArray) dest).contains(COMPOSITE_SEARCH_FIELD)) {
+                        ((JSONArray) dest).add(COMPOSITE_SEARCH_FIELD);
                         changedCopyField = true;
                     }
                 }
@@ -171,7 +172,7 @@ public class SolrSearchBackend extends SearchBackend {
     }
 
     private void definedSolrFields() throws IOException {
-        defineField("text", false, true, true);
+        defineField(COMPOSITE_SEARCH_FIELD, false, false, true);
         for (Field field : Field.values()) {
             defineField(field.fieldName, field.numeric, field.persist, false);
         }
@@ -218,7 +219,7 @@ public class SolrSearchBackend extends SearchBackend {
     @Override
     public List<FreeTextSearchItemImplementation> getHits(String queryString, boolean includeHighlights) {
         SolrQuery query = new SolrQuery();
-        query.set("df", "text");
+        query.set("df", COMPOSITE_SEARCH_FIELD);
         query.setFields(getAllFields());
         query.setQuery(queryString);
         query.setStart(0);
