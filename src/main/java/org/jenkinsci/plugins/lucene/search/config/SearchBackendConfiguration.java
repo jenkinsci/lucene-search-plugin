@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.lucene.search.config;
 
 import hudson.Extension;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
@@ -114,6 +115,19 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
         }
     }
 
+    public ListBoxModel doFillSolrCollectionItems(@QueryParameter String solrUrl) {
+        ListBoxModel items = new ListBoxModel();
+        try {
+            for (String collection : getCollections(getSolrUrl())) {
+                items.add(collection);
+            }
+        } catch (IOException e) {
+            items.add("URL invalid");
+        }
+        return items;
+    }
+
+
     private URI makeSolrUrl(final String solrUrlX) throws IOException {
         IOException e = null;
         String solrUrl = solrUrlX.replaceAll("/*$", "");
@@ -141,9 +155,9 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
         }
     }
 
-    public FormValidation doCheckSolrCollection(@QueryParameter final String solrCollection) {
+    public FormValidation doCheckSolrCollection(@QueryParameter final String solrCollection, @QueryParameter String solrUrl) {
         try {
-            List<String> collections = getCollections(solrUrl.toString());
+            List<String> collections = getCollections(solrUrl);
             if (collections.contains(solrCollection)) {
                 return FormValidation.ok();
             } else {
@@ -155,8 +169,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     }
 
     @Override
-    public boolean configure(final StaplerRequest req, final JSONObject json)
-            throws hudson.model.Descriptor.FormException {
+    public boolean configure(final StaplerRequest req, final JSONObject json) throws FormException {
         JSONObject selectedJson = json.getJSONObject("searchBackend");
         if (selectedJson.containsKey(SOLR_URL)) {
             String solrUrl = selectedJson.getString(SOLR_URL);
@@ -170,7 +183,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
         }
         if (selectedJson.containsKey(SOLR_COLLECTION)) {
             String solrCollection = selectedJson.getString(SOLR_COLLECTION);
-            ensureNotError(doCheckSolrCollection(solrCollection), SOLR_COLLECTION);
+            ensureNotError(doCheckSolrCollection(solrCollection, getSolrUrl()), SOLR_COLLECTION);
             setSolrCollection(solrCollection);
         }
         if (selectedJson.containsKey(LUCENE_PATH)) {
