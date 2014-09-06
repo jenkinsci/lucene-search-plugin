@@ -46,6 +46,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
 import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
@@ -55,6 +56,8 @@ import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
 import static org.jenkinsci.plugins.lucene.search.Field.getIndex;
 
 public class LuceneSearchBackend extends SearchBackend {
+    private static final Logger LOGGER = Logger.getLogger(LuceneSearchBackend.class.getName());
+
     private static final int MAX_NUM_FRAGMENTS = 5;
     private static final String[] EMPTY_ARRAY = new String[0];
 
@@ -89,9 +92,8 @@ public class LuceneSearchBackend extends SearchBackend {
     private final Directory index;
     private final Analyzer analyzer;
     private final IndexWriter dbWriter;
-
-    private DirectoryReader reader;
     private final File indexPath;
+    private DirectoryReader reader;
 
     public LuceneSearchBackend(final File indexPath) throws IOException {
         super(SearchBackendEngine.LUCENE);
@@ -154,7 +156,7 @@ public class LuceneSearchBackend extends SearchBackend {
                     getAllDefaultSearchableFields(), analyzer) {
                 @Override
                 protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive,
-                        boolean endInclusive) throws ParseException {
+                                              boolean endInclusive) throws ParseException {
                     if (field != null && getIndex(field).numeric) {
                         Long min = getWithDefault(part1, null);
                         Long max = getWithDefault(part2, null);
@@ -162,7 +164,7 @@ public class LuceneSearchBackend extends SearchBackend {
                     } else if (field != null) {
                         return new TermQuery(new Term(field));
                     }
-                    return super.getRangeQuery(field, part1, part2, startInclusive, endInclusive);
+                    return super.getRangeQuery(null, part1, part2, startInclusive, endInclusive);
                 }
             };
             queryParser.setDefaultOperator(QueryParser.Operator.AND);
@@ -182,7 +184,6 @@ public class LuceneSearchBackend extends SearchBackend {
             for (ScoreDoc hit : hits) {
                 Document doc = searcher.doc(hit.doc);
                 docs.put(hit.score, doc);
-                System.err.println(hit.score + ", " + doc.get(BUILD_NUMBER.fieldName));
             }
             for (Document doc : docs.values()) {
                 String[] bestFragments = EMPTY_ARRAY;
@@ -191,7 +192,7 @@ public class LuceneSearchBackend extends SearchBackend {
                         bestFragments = highlighter.getBestFragments(analyzer, CONSOLE.fieldName,
                                 doc.get(CONSOLE.fieldName), MAX_NUM_FRAGMENTS);
                     } catch (InvalidTokenOffsetsException e) {
-                        e.printStackTrace();
+                        LOGGER.warning("Failed to find bestFragments: " + e);
                     }
                 }
                 BallColor buildIcon = BallColor.GREY;

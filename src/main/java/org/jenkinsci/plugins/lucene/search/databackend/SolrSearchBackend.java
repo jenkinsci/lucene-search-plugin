@@ -189,22 +189,22 @@ public class SolrSearchBackend extends SearchBackend {
 
         try {
             SolrInputDocument doc = new SolrInputDocument();
-            doc.addField(Field.ID.fieldName, build.getId());
-            doc.addField(Field.PROJECT_NAME.fieldName, build.getProject().getName());
-            doc.addField(Field.PROJECT_DISPLAY_NAME.fieldName, build.getProject().getDisplayName());
-            doc.addField(Field.BUILD_NUMBER.fieldName, build.getNumber());
-            doc.addField(Field.RESULT.fieldName, build.getResult().toString());
-            doc.addField(Field.DURATION.fieldName, build.getDuration());
-            doc.addField(Field.START_TIME.fieldName, build.getStartTimeInMillis());
-            doc.addField(Field.BUILT_ON.fieldName, build.getBuiltOnStr());
+            doc.addField(ID.fieldName, build.getId());
+            doc.addField(PROJECT_NAME.fieldName, build.getProject().getName());
+            doc.addField(PROJECT_DISPLAY_NAME.fieldName, build.getProject().getDisplayName());
+            doc.addField(BUILD_NUMBER.fieldName, build.getNumber());
+            doc.addField(RESULT.fieldName, build.getResult().toString());
+            doc.addField(DURATION.fieldName, build.getDuration());
+            doc.addField(START_TIME.fieldName, build.getStartTimeInMillis());
+            doc.addField(BUILT_ON.fieldName, build.getBuiltOnStr());
 
             StringBuilder shortDescriptions = new StringBuilder();
             for (Cause cause : build.getCauses()) {
                 shortDescriptions.append(" ").append(cause.getShortDescription());
             }
-            doc.addField(Field.START_CAUSE.fieldName, shortDescriptions.toString());
-            doc.addField(Field.BALL_COLOR.fieldName, build.getIconColor().name());
-            doc.addField(Field.CONSOLE.fieldName, consoleOutput);
+            doc.addField(START_CAUSE.fieldName, shortDescriptions.toString());
+            doc.addField(BALL_COLOR.fieldName, build.getIconColor().name());
+            doc.addField(CONSOLE.fieldName, consoleOutput);
 
             for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
                 doc.addField(extension.getKeyword(), extension.getTextResult(build));
@@ -229,7 +229,7 @@ public class SolrSearchBackend extends SearchBackend {
             query.setHighlight(true);
         }
         query.setSort("score", SolrQuery.ORDER.desc);
-        query.addSort(Field.START_TIME.fieldName, SolrQuery.ORDER.desc);
+        query.addSort(START_TIME.fieldName, SolrQuery.ORDER.desc);
         try {
             ArrayList<FreeTextSearchItemImplementation> luceneSearchResultImpl = new ArrayList<FreeTextSearchItemImplementation>();
             QueryResponse queryResponse = httpSolrServer.query(query);
@@ -278,4 +278,5 @@ public class SolrSearchBackend extends SearchBackend {
             LOGGER.warning("Could not delete build from solr: " + e.getMessage());
         }
     }
+            SolrQuery query = new SolrQuery();
 }
