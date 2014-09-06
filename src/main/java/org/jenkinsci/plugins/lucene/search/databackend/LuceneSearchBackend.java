@@ -4,6 +4,8 @@ import com.google.common.collect.TreeMultimap;
 import hudson.model.AbstractBuild;
 import hudson.model.BallColor;
 import hudson.model.Cause;
+import hudson.model.Job;
+import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.lucene.analysis.Analyzer;
@@ -22,10 +24,12 @@ import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
@@ -43,14 +47,17 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
 import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
 import static org.jenkinsci.plugins.lucene.search.Field.CONSOLE;
+import static org.jenkinsci.plugins.lucene.search.Field.ID;
 import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
 import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
 import static org.jenkinsci.plugins.lucene.search.Field.getIndex;
@@ -260,6 +267,74 @@ public class LuceneSearchBackend extends SearchBackend {
             dbWriter.deleteDocuments(new Term(Field.ID.fieldName, build.getId()));
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void cleanDeletedBuilds(Progress progress, Job job) {
+        try {
+            Integer firstBuildNumber = job.getFirstBuild().getNumber();
+            Query q = new TermQuery(new Term(Field.PROJECT_NAME.fieldName, job.getName()));
+            IndexSearcher searcher = new IndexSearcher(reader);
+            TopDocs topDocs = searcher.search(q, 99999999);
+            for (int i = 0; i < topDocs.scoreDocs.length; i++) {
+                Document doc = searcher.doc(topDocs.scoreDocs[i].doc);
+                progress.setMax(reader.maxDoc());
+                progress.setCurrent(i);
+                Integer buildNumber = Integer.valueOf(doc.get(BUILD_NUMBER.fieldName));
+                if (firstBuildNumber > buildNumber) {
+                    String id = doc.get(ID.fieldName);
+                    dbWriter.deleteDocuments(new Term(ID.fieldName, id));
+                }
+            }
+            progress.setSuccessfullyCompleted();
+        } catch (IOException e) {
+            progress.setError(e);
+        } finally {
+            progress.setFinished();
+        }
+    }
+
+    @Override
+    public void deleteJob(String jobName) {
+        try {
+            Query query = new QueryParser(LUCENE_VERSION, "projectName", analyzer).parse(jobName);
+            IndexSearcher searcher = new IndexSearcher(reader);
+            DistinctCollector distinctCollector = new DistinctCollector(ID.fieldName, searcher);
+            searcher.search(query, distinctCollector);
+            for (String id : distinctCollector.getDistinctData()) {
+                dbWriter.deleteDocuments(new Term(ID.fieldName, id));
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void cleanDeletedJobs(Progress progress) {
+        try {
+            Set<String> jobNames = new HashSet<String>();
+            for (Job job : Jenkins.getInstance().getAllItems(Job.class)) {
+                jobNames.add(job.getName());
+            }
+            progress.setMax(jobNames.size());
+            IndexSearcher searcher = new IndexSearcher(reader);
+            DistinctCollector distinctCollector = new DistinctCollector(PROJECT_NAME.fieldName, searcher);
+            searcher.search(new MatchAllDocsQuery(), distinctCollector);
+            int i = 0;
+            for (String jobName : distinctCollector.getDistinctData()) {
+                progress.setCurrent(i);
+                if (!jobNames.contains(jobName)) {
+                    deleteJob(jobName);
+                }
+                i++;
+            }
+        } catch (IOException e) {
+            progress.setError(e);
+        } finally {
+            progress.setFinished();
         }
     }
 }

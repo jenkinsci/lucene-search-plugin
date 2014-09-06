@@ -3,6 +3,8 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 import hudson.model.AbstractBuild;
 import hudson.model.BallColor;
 import hudson.model.Cause;
+import hudson.model.Job;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -17,6 +19,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrInputDocument;
@@ -28,15 +31,23 @@ import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
 import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
+import static org.jenkinsci.plugins.lucene.search.Field.BUILT_ON;
 import static org.jenkinsci.plugins.lucene.search.Field.CONSOLE;
+import static org.jenkinsci.plugins.lucene.search.Field.DURATION;
 import static org.jenkinsci.plugins.lucene.search.Field.ID;
+import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_DISPLAY_NAME;
 import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
+import static org.jenkinsci.plugins.lucene.search.Field.RESULT;
+import static org.jenkinsci.plugins.lucene.search.Field.START_CAUSE;
+import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
 
 public class SolrSearchBackend extends SearchBackend {
 
@@ -278,5 +289,72 @@ public class SolrSearchBackend extends SearchBackend {
             LOGGER.warning("Could not delete build from solr: " + e.getMessage());
         }
     }
-            SolrQuery query = new SolrQuery();
+
+    @Override
+    public void cleanDeletedBuilds(Progress progress, Job job) {
+        int firstBuildNumber = job.getFirstBuild().getNumber();
+        List<String> idsToDelete = new ArrayList<String>();
+        try {
+            String queryString = String.format("%s:\"%s\"", PROJECT_NAME.fieldName, job.getName());
+            SolrQuery query = new SolrQuery(queryString);
+            query.setFields(PROJECT_NAME.fieldName, BUILD_NUMBER.fieldName, ID.fieldName);
+            query.setStart(0);
+            query.setRows(99999999);
+            QueryResponse queryResponse = httpSolrServer.query(query);
+            progress.setMax(queryResponse.getResults().size());
+            int i = 0;
+            for (SolrDocument doc : queryResponse.getResults()) {
+                progress.setCurrent(i);
+                Integer buildNumber = (Integer) doc.get(BUILD_NUMBER.fieldName);
+                if (firstBuildNumber > buildNumber) {
+                    idsToDelete.add((String) doc.get(ID.fieldName));
+                }
+                i++;
+            }
+            httpSolrServer.deleteById(idsToDelete);
+            progress.setSuccessfullyCompleted();
+        } catch (SolrServerException e) {
+            progress.setError(e);
+        } catch (IOException e) {
+            progress.setError(e);
+        } finally {
+            progress.setFinished();
+        }
+    }
+
+    @Override
+    public void deleteJob(String jobName) {
+        String queryString = String.format("%s:\"%s\"", PROJECT_NAME.fieldName, jobName);
+        try {
+            httpSolrServer.deleteByQuery(queryString);
+        } catch (SolrServerException e) {
+            LOGGER.warning("Could not delete job: " + jobName + " from Solr: " + e);
+        } catch (IOException e) {
+            LOGGER.warning("Could not delete job: " + jobName + " from Solr: " + e);
+        }
+    }
+
+    @Override
+    public void cleanDeletedJobs(Progress progress) {
+        try {
+            Set<String> jobNames = new HashSet<String>();
+            for (Job job : Jenkins.getInstance().getAllItems(Job.class)) {
+                jobNames.add(job.getName());
+            }
+            SolrQuery query = new SolrQuery("*:*");
+            query.addFacetField(PROJECT_NAME.fieldName);
+            query.setRows(0);
+            QueryResponse queryResponse = httpSolrServer.query(query);
+            for (FacetField ff : queryResponse.getFacetFields()) {
+                String jobName = ff.getName();
+                if (! jobNames.contains(jobName)) {
+                    deleteJob(jobName);
+                }
+            }
+        } catch (SolrServerException e) {
+            progress.setError(e);
+        } finally {
+            progress.setFinished();
+        }
+    }
 }

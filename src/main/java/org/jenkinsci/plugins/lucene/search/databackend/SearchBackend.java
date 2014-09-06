@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
 import hudson.model.AbstractBuild;
+import hudson.model.Job;
 import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
@@ -31,6 +32,12 @@ public abstract class SearchBackend {
 
     public abstract void removeBuild(AbstractBuild<?, ?> build);
 
+    public abstract void cleanDeletedBuilds(Progress progress, Job job);
+
+    public abstract void cleanDeletedJobs(Progress progress);
+
+    public abstract void deleteJob(String jobName);
+
     // Caching this method might be dangerous
     protected String[] getAllDefaultSearchableFields() {
         List<String> fieldNames = new LinkedList<String>();
@@ -57,5 +64,4 @@ public abstract class SearchBackend {
         }
         return fieldNames.toArray(new String[fieldNames.size()]);
     }
-
 }
