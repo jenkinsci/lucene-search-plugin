@@ -57,7 +57,6 @@ public class SolrSearchBackend extends SearchBackend {
 
     private final HttpSolrServer httpSolrServer;
     private final String solrCollection;
-    private final String[] defaultSearchableFields;
 
     public SolrSearchBackend(URI url, String solrCollection) {
         super(SearchBackendEngine.SOLR);
@@ -65,7 +64,7 @@ public class SolrSearchBackend extends SearchBackend {
         this.solrCollection = solrCollection;
         try {
             definedSolrFields();
-            defaultSearchableFields = getAllDefaultSearchableFields();
+            String[] defaultSearchableFields = getAllDefaultSearchableFields();
             defineCopyField(defaultSearchableFields);
         } catch (IOException e) {
             throw new RuntimeException(e);
