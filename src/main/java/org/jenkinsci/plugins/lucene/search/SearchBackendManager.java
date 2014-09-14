@@ -17,10 +17,10 @@ import java.util.Map;
 
 @Extension
 public class SearchBackendManager {
-    private SearchBackend instance;
+    private transient SearchBackend instance;
 
     @Inject
-    private SearchBackendConfiguration backendConfig;
+    private transient SearchBackendConfiguration backendConfig;
 
     private synchronized SearchBackend getBackend() {
         if (instance == null) {
