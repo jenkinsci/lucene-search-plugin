@@ -1,0 +1,11 @@
+.description{
+	font-style: italic;
+}
+.warning{
+	font-style: bold;
+	color: red;
+}
+
+sectionHeader.{
+	font-style: bold;
+}

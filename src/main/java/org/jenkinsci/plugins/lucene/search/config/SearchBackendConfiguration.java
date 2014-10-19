@@ -3,9 +3,22 @@ package org.jenkinsci.plugins.lucene.search.config;
 import hudson.Extension;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -15,16 +28,6 @@ import org.jenkinsci.plugins.lucene.search.SearchBackendManager;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
-
-import javax.inject.Inject;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Extension
 public class SearchBackendConfiguration extends GlobalConfiguration {
@@ -97,6 +100,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
         }
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     private List<String> getCollections(String baseUrl) throws IOException {
         HttpClient httpClient = HttpClientBuilder.create().build();
         String url = baseUrl + "/admin/cores?wt=json";

@@ -7,6 +7,7 @@ import hudson.model.Job;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.http.HttpResponse;
@@ -289,6 +290,7 @@ public class SolrSearchBackend extends SearchBackend {
         }
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public void cleanDeletedBuilds(Progress progress, Job job) {
         int firstBuildNumber = job.getFirstBuild().getNumber();
@@ -333,6 +335,7 @@ public class SolrSearchBackend extends SearchBackend {
         }
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public void cleanDeletedJobs(Progress progress) {
         try {
@@ -356,4 +359,5 @@ public class SolrSearchBackend extends SearchBackend {
             progress.setFinished();
         }
     }
+
 }

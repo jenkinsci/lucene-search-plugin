@@ -1,11 +1,13 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
 import com.google.common.collect.TreeMultimap;
+
 import hudson.model.AbstractBuild;
 import hudson.model.BallColor;
 import hudson.model.Cause;
 import hudson.model.Job;
 import jenkins.model.Jenkins;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.lucene.analysis.Analyzer;
@@ -270,6 +272,7 @@ public class LuceneSearchBackend extends SearchBackend {
         }
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public void cleanDeletedBuilds(Progress progress, Job job) {
         try {
@@ -312,6 +315,7 @@ public class LuceneSearchBackend extends SearchBackend {
         }
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public void cleanDeletedJobs(Progress progress) {
         try {
@@ -331,10 +335,12 @@ public class LuceneSearchBackend extends SearchBackend {
                 }
                 i++;
             }
+            progress.setSuccessfullyCompleted();
         } catch (IOException e) {
             progress.setError(e);
         } finally {
             progress.setFinished();
         }
     }
+
 }

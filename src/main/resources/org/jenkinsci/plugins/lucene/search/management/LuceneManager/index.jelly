@@ -1,0 +1,48 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <l:layout title="Lucene Management" permission="${app.ADMINISTER}" norefresh="true">
+    <st:include it="${app}" page="sidepanel.jelly"/>
+    <l:header>
+      <link rel="stylesheet" type="text/css" href="${rootURL}/plugin/lucene-search/lucene.css" media="screen" />
+      <script src="${rootURL}/plugin/lucene-search/management.js" />
+      <script>
+          var iLuceneManager = <st:bind value="${it}"/>;
+          function iRebuildDatabase(){
+              console.log("A");
+              rebuildDatabase(iLuceneManager);
+          }
+          function iClearDatabase(){
+              console.log("B");
+              clearDatabase(iLuceneManager);
+          }
+          function iAbort(){
+              console.log("C");
+              abort(iLuceneManager);
+          }
+          window.setInterval(function (a, b) {
+                  getStatus(iLuceneManager);
+              }, 5000);
+      </script>
+    </l:header>
+    <l:main-panel>
+      <h1>Lucene Management</h1>
+      <p>
+        <span class="sectionHeader">Rebuild database</span><br/>
+        <span class="description">Rebuilds the database</span><br/>
+        <span class="warning">This is an expensive operations so we recommend that this is done when there is only a light load.</span><br/>
+        <button onclick="iRebuildDatabase()">Rebuild</button><br/>
+      </p>
+      <p style="display: none;">
+        <span class="sectionHeader">Clear database</span><br/>
+        <span class="description">Purges all data from the database</span><br/>
+        <span class="warning">This will remove all data and you will have to rebuild the database in order to search in the current builds.</span><br/>
+        <button onclick="iClearDatabase()">Rebuild database</button><br/>
+      </p>
+      <p id="progress" style="display: none;">
+        <span class="sectionHeader">Operation output</span><br/>
+        <button onclick="iAbort()">Abort</button><br/>
+        <progress id="luceneProgress" value="0" max="100"></progress>
+      </p>
+      <div id="jenkinsResponse"></div>
+    </l:main-panel>
+  </l:layout>  
+</j:jelly>
