@@ -36,13 +36,18 @@ public class FreeTextSearch extends Search {
             hits = manager.getHits(query, true);
         }
         if (hits.isEmpty()) {
-            rsp.setStatus(SC_NOT_FOUND);
+            super.doIndex(req, rsp);
+        } else {
+            req.getView(this, "search-results.jelly").forward(req, rsp);
         }
-        req.getView(this, "search-results.jelly").forward(req, rsp);
     }
 
     @Override
     public SearchResult getSuggestions(final StaplerRequest req, @QueryParameter final String query) {
-        return manager.getSuggestedItems(query);
+        SearchResult suggestedItems = manager.getSuggestedItems(query);
+        if (suggestedItems.isEmpty()) {
+            suggestedItems = super.getSuggestions(req, query);
+        }
+        return suggestedItems;
     }
 }
