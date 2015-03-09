@@ -69,6 +69,7 @@ public class LuceneSearchBackend extends SearchBackend {
 
     private static final int MAX_NUM_FRAGMENTS = 5;
     private static final String[] EMPTY_ARRAY = new String[0];
+    private static final Locale LOCALE = Locale.ENGLISH;
 
     private static final org.apache.lucene.document.Field.Store DONT_STORE = org.apache.lucene.document.Field.Store.NO;
     private static final org.apache.lucene.document.Field.Store STORE = org.apache.lucene.document.Field.Store.YES;
@@ -220,7 +221,7 @@ public class LuceneSearchBackend extends SearchBackend {
             }
         };
         queryParser.setDefaultOperator(QueryParser.Operator.AND);
-        queryParser.setLocale(Locale.ENGLISH);
+        queryParser.setLocale(LOCALE);
         queryParser.setAnalyzeRangeTerms(true);
         queryParser.setLowercaseExpandedTerms(true);
         return queryParser;
@@ -284,7 +285,7 @@ public class LuceneSearchBackend extends SearchBackend {
         try {
             Integer firstBuildNumber = job.getFirstBuild().getNumber();
             IndexSearcher searcher = new IndexSearcher(reader);
-            Term term = new Term(Field.PROJECT_NAME.fieldName, job.getName().toLowerCase());
+            Term term = new Term(Field.PROJECT_NAME.fieldName, job.getName().toLowerCase(LOCALE));
             Query q = new TermQuery(term).rewrite(reader);
             TopDocs topDocs = searcher.search(q, 9999999);
 
@@ -310,7 +311,7 @@ public class LuceneSearchBackend extends SearchBackend {
     @Override
     public void deleteJob(String jobName) {
         try {
-            Term term = new Term(PROJECT_NAME.fieldName, jobName);
+            Term term = new Term(PROJECT_NAME.fieldName, jobName.toLowerCase(LOCALE));
             dbWriter.deleteDocuments(term);
             updateReader();
         } catch (IOException e) {
