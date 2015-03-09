@@ -31,23 +31,18 @@ public class FreeTextSearch extends Search {
 
     @Override
     public void doIndex(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
+        super.doIndex(req, rsp);
         String query = req.getParameter("q");
         if (query != null) {
             hits = manager.getHits(query, true);
         }
-        if (hits.isEmpty()) {
-            super.doIndex(req, rsp);
-        } else {
-            req.getView(this, "search-results.jelly").forward(req, rsp);
-        }
+        req.getView(this, "search-results.jelly").forward(req, rsp);
     }
 
     @Override
     public SearchResult getSuggestions(final StaplerRequest req, @QueryParameter final String query) {
-        SearchResult suggestedItems = manager.getSuggestedItems(query);
-        if (suggestedItems.isEmpty()) {
-            suggestedItems = super.getSuggestions(req, query);
-        }
+        SearchResult suggestedItems = super.getSuggestions(req, query);
+        suggestedItems.addAll(manager.getSuggestedItems(query));
         return suggestedItems;
     }
 }
