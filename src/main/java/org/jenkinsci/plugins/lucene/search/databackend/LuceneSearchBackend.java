@@ -283,9 +283,11 @@ public class LuceneSearchBackend extends SearchBackend {
     public void cleanDeletedBuilds(Progress progress, Job job) {
         try {
             Integer firstBuildNumber = job.getFirstBuild().getNumber();
-            Query q = new TermQuery(new Term(Field.PROJECT_NAME.fieldName, job.getName()));
             IndexSearcher searcher = new IndexSearcher(reader);
-            TopDocs topDocs = searcher.search(q, 99999999);
+            Term term = new Term(Field.PROJECT_NAME.fieldName, job.getName().toLowerCase());
+            Query q = new TermQuery(term).rewrite(reader);
+            TopDocs topDocs = searcher.search(q, 9999999);
+
             for (int i = 0; i < topDocs.scoreDocs.length; i++) {
                 Document doc = searcher.doc(topDocs.scoreDocs[i].doc);
                 progress.setMax(reader.maxDoc());
@@ -308,16 +310,9 @@ public class LuceneSearchBackend extends SearchBackend {
     @Override
     public void deleteJob(String jobName) {
         try {
-            Query query = new QueryParser(LUCENE_VERSION, "projectName", analyzer).parse(jobName);
-            IndexSearcher searcher = new IndexSearcher(reader);
-            DistinctCollector distinctCollector = new DistinctCollector(ID.fieldName, searcher);
-            searcher.search(query, distinctCollector);
-            for (String id : distinctCollector.getDistinctData()) {
-                dbWriter.deleteDocuments(new Term(ID.fieldName, id));
-            }
+            Term term = new Term(PROJECT_NAME.fieldName, jobName);
+            dbWriter.deleteDocuments(term);
             updateReader();
-        } catch (ParseException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
