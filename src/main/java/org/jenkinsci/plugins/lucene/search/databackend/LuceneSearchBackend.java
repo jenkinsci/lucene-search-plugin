@@ -235,7 +235,7 @@ public class LuceneSearchBackend extends SearchBackend {
             doc.add(new LongField(Field.BUILD_NUMBER.fieldName, build.getNumber(), STORE));
             doc.add(new TextField(Field.RESULT.fieldName, build.getResult().toString(), STORE));
             doc.add(new LongField(Field.DURATION.fieldName, build.getDuration(), DONT_STORE));
-            doc.add(new LongField(Field.START_TIME.fieldName, build.getStartTimeInMillis(), DONT_STORE));
+            doc.add(new LongField(Field.START_TIME.fieldName, build.getStartTimeInMillis(), STORE));
             doc.add(new TextField(Field.BUILT_ON.fieldName, build.getBuiltOnStr(), DONT_STORE));
             StringBuilder shortDescriptions = new StringBuilder();
             for (Cause cause : build.getCauses()) {
