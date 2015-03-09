@@ -70,8 +70,8 @@ public class LuceneSearchBackend extends SearchBackend {
     private static final int MAX_NUM_FRAGMENTS = 5;
     private static final String[] EMPTY_ARRAY = new String[0];
 
-    private static final org.apache.lucene.document.Field.Store NO = org.apache.lucene.document.Field.Store.NO;
-    private static final org.apache.lucene.document.Field.Store YES = org.apache.lucene.document.Field.Store.YES;
+    private static final org.apache.lucene.document.Field.Store DONT_STORE = org.apache.lucene.document.Field.Store.NO;
+    private static final org.apache.lucene.document.Field.Store STORE = org.apache.lucene.document.Field.Store.YES;
 
     private static final Comparator<Float> FLOAT_COMPARATOR = new Comparator<Float>() {
         @Override
@@ -229,20 +229,20 @@ public class LuceneSearchBackend extends SearchBackend {
 
         try {
             Document doc = new Document();
-            doc.add(new StringField(Field.ID.fieldName, build.getId(), YES));
-            doc.add(new TextField(Field.PROJECT_NAME.fieldName, build.getProject().getName(), YES));
-            doc.add(new TextField(Field.PROJECT_DISPLAY_NAME.fieldName, build.getProject().getDisplayName(), YES));
-            doc.add(new LongField(Field.BUILD_NUMBER.fieldName, build.getNumber(), YES));
-            doc.add(new TextField(Field.RESULT.fieldName, build.getResult().toString(), YES));
-            doc.add(new LongField(Field.DURATION.fieldName, build.getDuration(), NO));
-            doc.add(new LongField(Field.START_TIME.fieldName, build.getStartTimeInMillis(), NO));
-            doc.add(new TextField(Field.BUILT_ON.fieldName, build.getBuiltOnStr(), NO));
+            doc.add(new StringField(Field.ID.fieldName, build.getId(), STORE));
+            doc.add(new TextField(Field.PROJECT_NAME.fieldName, build.getProject().getName(), STORE));
+            doc.add(new TextField(Field.PROJECT_DISPLAY_NAME.fieldName, build.getProject().getDisplayName(), STORE));
+            doc.add(new LongField(Field.BUILD_NUMBER.fieldName, build.getNumber(), STORE));
+            doc.add(new TextField(Field.RESULT.fieldName, build.getResult().toString(), STORE));
+            doc.add(new LongField(Field.DURATION.fieldName, build.getDuration(), DONT_STORE));
+            doc.add(new LongField(Field.START_TIME.fieldName, build.getStartTimeInMillis(), DONT_STORE));
+            doc.add(new TextField(Field.BUILT_ON.fieldName, build.getBuiltOnStr(), DONT_STORE));
             StringBuilder shortDescriptions = new StringBuilder();
             for (Cause cause : build.getCauses()) {
                 shortDescriptions.append(" ").append(cause.getShortDescription());
             }
-            doc.add(new TextField(Field.START_CAUSE.fieldName, shortDescriptions.toString(), NO));
-            doc.add(new StringField(Field.BALL_COLOR.fieldName, build.getIconColor().name(), YES));
+            doc.add(new TextField(Field.START_CAUSE.fieldName, shortDescriptions.toString(), DONT_STORE));
+            doc.add(new StringField(Field.BALL_COLOR.fieldName, build.getIconColor().name(), STORE));
             // TODO Add the following data
             // build.getChangeSet()
             // build.getCulprits()
@@ -250,11 +250,11 @@ public class LuceneSearchBackend extends SearchBackend {
             // build.get
             // build.getArtifacts()
 
-            doc.add(new TextField(Field.CONSOLE.fieldName, consoleOutput, YES));
+            doc.add(new TextField(Field.CONSOLE.fieldName, consoleOutput, STORE));
 
             for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
                 doc.add(new TextField(extension.getKeyword(), extension.getTextResult(build),
-                        (extension.isPersist()) ? YES : NO));
+                        (extension.isPersist()) ? STORE : DONT_STORE));
             }
 
             dbWriter.addDocument(doc);
