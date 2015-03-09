@@ -161,25 +161,7 @@ public class LuceneSearchBackend extends SearchBackend {
     public List<FreeTextSearchItemImplementation> getHits(String query, boolean includeHighlights) {
         List<FreeTextSearchItemImplementation> luceneSearchResultImpl = new ArrayList<FreeTextSearchItemImplementation>();
         try {
-            MultiFieldQueryParser queryParser = new MultiFieldQueryParser(LUCENE_VERSION,
-                    getAllDefaultSearchableFields(), analyzer) {
-                @Override
-                protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive,
-                                              boolean endInclusive) throws ParseException {
-                    if (field != null && getIndex(field).numeric) {
-                        Long min = getWithDefault(part1, null);
-                        Long max = getWithDefault(part2, null);
-                        return NumericRangeQuery.newLongRange(field, min, max, true, true);
-                    } else if (field != null) {
-                        return new TermQuery(new Term(field));
-                    }
-                    return super.getRangeQuery(null, part1, part2, startInclusive, endInclusive);
-                }
-            };
-            queryParser.setDefaultOperator(QueryParser.Operator.AND);
-            queryParser.setLocale(Locale.ENGLISH);
-            queryParser.setAnalyzeRangeTerms(true);
-            queryParser.setLowercaseExpandedTerms(true);
+            MultiFieldQueryParser queryParser = getQueryParser();
             Query q = queryParser.parse(query).rewrite(reader);
 
             IndexSearcher searcher = new IndexSearcher(reader);
@@ -219,6 +201,29 @@ public class LuceneSearchBackend extends SearchBackend {
             // Do nothing
         }
         return luceneSearchResultImpl;
+    }
+
+    private MultiFieldQueryParser getQueryParser() {
+        MultiFieldQueryParser queryParser = new MultiFieldQueryParser(LUCENE_VERSION,
+                getAllDefaultSearchableFields(), analyzer) {
+            @Override
+            protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive,
+                                          boolean endInclusive) throws ParseException {
+                if (field != null && getIndex(field).numeric) {
+                    Long min = getWithDefault(part1, null);
+                    Long max = getWithDefault(part2, null);
+                    return NumericRangeQuery.newLongRange(field, min, max, true, true);
+                } else if (field != null) {
+                    return new TermQuery(new Term(field));
+                }
+                return super.getRangeQuery(null, part1, part2, startInclusive, endInclusive);
+            }
+        };
+        queryParser.setDefaultOperator(QueryParser.Operator.AND);
+        queryParser.setLocale(Locale.ENGLISH);
+        queryParser.setAnalyzeRangeTerms(true);
+        queryParser.setLowercaseExpandedTerms(true);
+        return queryParser;
     }
 
     @Override
