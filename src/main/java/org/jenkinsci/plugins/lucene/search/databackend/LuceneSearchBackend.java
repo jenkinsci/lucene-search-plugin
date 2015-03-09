@@ -267,6 +267,7 @@ public class LuceneSearchBackend extends SearchBackend {
     public void removeBuild(final AbstractBuild<?, ?> build) {
         try {
             dbWriter.deleteDocuments(new Term(Field.ID.fieldName, build.getId()));
+            updateReader();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -291,6 +292,7 @@ public class LuceneSearchBackend extends SearchBackend {
                 }
             }
             progress.setSuccessfullyCompleted();
+            updateReader();
         } catch (IOException e) {
             progress.setError(e);
         } finally {
@@ -308,6 +310,7 @@ public class LuceneSearchBackend extends SearchBackend {
             for (String id : distinctCollector.getDistinctData()) {
                 dbWriter.deleteDocuments(new Term(ID.fieldName, id));
             }
+            updateReader();
         } catch (ParseException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -335,6 +338,7 @@ public class LuceneSearchBackend extends SearchBackend {
                 }
                 i++;
             }
+            updateReader();
             progress.setSuccessfullyCompleted();
         } catch (IOException e) {
             progress.setError(e);
