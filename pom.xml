@@ -7,7 +7,7 @@
 	</parent>
 
 	<artifactId>lucene-search</artifactId>
-	<version>1.7-SNAPSHOT</version>
+	<version>1.8-SNAPSHOT</version>
 	<packaging>hpi</packaging>
 	<properties>
 		<lucene.version>4.9.0</lucene.version>
@@ -39,6 +39,23 @@
 			<url>http://opensource.org/licenses/MIT</url>
 		</license>
 	</licenses>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.5.1</version>
+				<dependencies>
+					<dependency>
+						<groupId>org.apache.maven.scm</groupId>
+						<artifactId>maven-scm-provider-gitexe</artifactId>
+						<version>1.9.2</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+		</plugins>
+	</build>
 
 	<dependencies>
 		<dependency>
