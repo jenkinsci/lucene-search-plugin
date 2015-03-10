@@ -1,35 +1,56 @@
 <?jelly escape-by-default='false'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout">
     <j:set var="q" value="${request.getParameter('q')}"/>
-    <j:new var="h" className="hudson.Functions" /><!-- needed for printing title. -->
+    <j:new var="h" className="hudson.Functions"/>
+    <!-- needed for printing title. -->
     <l:layout title="${%Search for} '${q}'">
         <l:main-panel>
             <j:set var="hits" value="${it.hits}"/>
+            <j:set var="searchModelHits" value="${it.searchModelHits}"/>
             <h1>${%Search for} '${q}'</h1>
             <j:choose>
-                <j:when test="${hits.isEmpty()}">
+                <j:when test="${it.noResult}">
                     <div class='error'>
                         ${%Nothing seems to match.}
                     </div>
                 </j:when>
                 <j:otherwise>
                     <ol>
-                        <j:forEach var="hit" items="${hits}">
-                            <li>
-                            <span style="white-space: nowrap;">
-                                <img src="${rootURL}/images/16x16/${hit.iconFileName}"/>${" "}<a href="${hit.searchUrl}">${hit.searchName}</a>${" "}<a href="${hit.searchUrl}/console"><img src="${rootURL}/images/16x16/terminal.png"/></a>
-                                </span>
-                                <div class="collapsible">
-                                    <j:forEach var="fragment" items="${hit.bestFragments}">
-                                        <ul>
-                                            <li>
-                                                ${fragment}
-                                            </li>
-                                        </ul>
-                                    </j:forEach>
-                                </div>
-                            </li>
-                        </j:forEach>
+                        <j:if test="${! searchModelHits.isEmpty()}">
+                            <h2>${%SearchModel results}</h2>
+                            <j:forEach var="hit" items="${searchModelHits}">
+                                <li>
+                                    <span style="white-space: nowrap;">
+                                        <a href="${rootURL}${hit.searchUrl}">${hit.searchName}</a>
+                                    </span>
+                                </li>
+                            </j:forEach>
+                        </j:if>
+                    </ol>
+                    <ol>
+                        <j:if test="${! hits.isEmpty()}">
+                            <h2>${%FreeTextSearch results}</h2>
+                            <j:forEach var="hit" items="${hits}">
+                                <li>
+                                    <span style="white-space: nowrap;">
+                                        <img src="${rootURL}/images/16x16/${hit.iconFileName}"/>${" "}<a
+                                            href="${hit.searchUrl}">${hit.searchName}</a>${" "}<a
+                                            href="${hit.searchUrl}/console"><img
+                                            src="${rootURL}/images/16x16/terminal.png"/></a>
+                                    </span>
+
+                                    <div class="collapsible">
+                                        <j:forEach var="fragment" items="${hit.bestFragments}">
+                                            <ul>
+                                                <li>
+                                                    ${fragment}
+                                                </li>
+                                            </ul>
+                                        </j:forEach>
+                                    </div>
+                                </li>
+                            </j:forEach>
+                        </j:if>
                     </ol>
                 </j:otherwise>
             </j:choose>
