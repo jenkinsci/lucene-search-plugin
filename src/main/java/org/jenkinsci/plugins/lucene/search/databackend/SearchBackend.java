@@ -11,12 +11,35 @@ import java.util.Map;
 
 import jenkins.model.Jenkins;
 
+import org.apache.log4j.Logger;
 import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 
 public abstract class SearchBackend {
+
+    private static final Logger LOGGER = Logger.getLogger(SearchBackend.class);
+
+    private class RebuildBuildWorker implements RunWithArgument<AbstractBuild> {
+
+        private final Progress progress;
+
+        private RebuildBuildWorker(Progress progress) {
+            this.progress = progress;
+        }
+
+        @Override
+        public void run(AbstractBuild build) {
+            removeBuild(build);
+            try {
+                storeBuild(build);
+            } catch (IOException e) {
+                progress.setError(e);
+            }
+        }
+    }
+
 
     private final SearchBackendEngine engine;
 
@@ -44,12 +67,17 @@ public abstract class SearchBackend {
 
     @SuppressWarnings("rawtypes")
     public void rebuildJob(Progress progress, Job<?, ?> job) throws IOException {
+        BurstExecutor<AbstractBuild> burstExecutor = BurstExecutor.create(new RebuildBuildWorker(progress), 10).andStart();
         for (Run<?, ?> run : job.getBuilds()) {
             if (run instanceof AbstractBuild) {
                 AbstractBuild build = (AbstractBuild) run;
-                removeBuild(build);
-                storeBuild(build);
+                burstExecutor.add(build);
             }
+        }
+        try {
+            burstExecutor.waitForCompletion();
+        } catch (InterruptedException e) {
+            LOGGER.warn("Why was I interrupted?", e);
         }
     }
 
