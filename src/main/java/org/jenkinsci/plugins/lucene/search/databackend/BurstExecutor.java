@@ -9,10 +9,12 @@ import java.util.concurrent.TimeUnit;
 public class BurstExecutor<T> {
     private static final Logger LOGGER = Logger.getLogger(BurstExecutor.class);
     private final LinkedBlockingQueue<T> workQueue = new LinkedBlockingQueue<T>();
-    private final TreeSet<WorkerThread> activeThreads = new TreeSet<WorkerThread>();
+    private final HashSet<WorkerThread> activeThreads = new HashSet<WorkerThread>();
     private final RunWithArgument<T> worker;
     private final int maxThreads;
     private boolean started;
+    // Only for giving better names to threads
+    private static int threadIndex = 1;
 
     private BurstExecutor(RunWithArgument<T> worker, int maxThreads) {
         this.worker = worker;
@@ -39,33 +41,49 @@ public class BurstExecutor<T> {
     }
 
     private class WorkerThread extends Thread {
+        WorkerThread() {
+            super("WorkerThread-" + threadIndex++);
+        }
+
         @Override
         public void run() {
             try {
+                LOGGER.debug("Started thread " + getName());
                 while (!workQueue.isEmpty()) {
                     try {
                         T poll = workQueue.poll(1000, TimeUnit.MILLISECONDS);
                         if (poll != null) {
+                            LOGGER.debug("Procesing with thread " + getName());
                             worker.run(poll);
                         }
                     } catch (Exception e) {
-                        LOGGER.error("WorkerThread exception", e);
+                        LOGGER.error("WorkerThread " + getName() + " exception", e);
                     }
                 }
             } finally {
+                LOGGER.debug("Quit thread " + getName());
                 removeThread(this);
             }
         }
     }
 
-    public synchronized void waitForCompletion() throws InterruptedException {
+    public void waitForCompletion() throws InterruptedException {
         if (!started) {
             throw new IllegalStateException("Not started yet");
         }
         ensureEnoughThreadToFinishJob();
-        while(! activeThreads.isEmpty()) {
-            activeThreads.first().join();
+        WorkerThread workerThread;
+        while((workerThread = getFirstWorkerThread()) != null) {
+            workerThread.join();
         }
+    }
+
+    private synchronized WorkerThread getFirstWorkerThread() {
+        WorkerThread workerThread = null;
+        if (!activeThreads.isEmpty()) {
+            workerThread = activeThreads.iterator().next();
+        }
+        return workerThread;
     }
 
     public static<T> BurstExecutor<T> create(RunWithArgument<T> worker, int maxThreads) {
