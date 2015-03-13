@@ -2,10 +2,14 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.LinkedList;
+import java.util.List;
 
 public class ManagerProgress extends Progress {
 
-    private String currentProjectName = "";
+    private List<Progress> history = new LinkedList<Progress>();
+
+    private Progress currentProjet;
 
     private Progress deletedJobsCleanProgress;
     private Progress deletedBuildsCleanProgress;
@@ -14,11 +18,10 @@ public class ManagerProgress extends Progress {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-
         builder.append("Currently processing ");
-        builder.append(getCurrentProjectName());
+        builder.append(currentProjet.getName() + ". Parsing project ");
         builder.append(getCurrent());
-        builder.append('/');
+        builder.append(" out of ");
         builder.append(getMax());
         builder.append("<br />\n");
 
@@ -26,20 +29,43 @@ public class ManagerProgress extends Progress {
             builder.append("Cleaning projects ...");
             builder.append("<br />\n");
         }
-        // FIXME
 
         if (deletedBuildsCleanProgress != null && !deletedBuildsCleanProgress.isFinished()) {
             builder.append("Cleaning builds ...");
             builder.append("<br />\n");
         }
 
-        return builder.toString();
-        //Currently processing: Jenkins-Plugin X/Y
-        //cleaning ...
-        //rebuilding build X outof Y
-        //progress.setMaxProject(Jenkins.getInstance().getAllItems(Job.class).size())
+        if (rebuildProgress != null && !rebuildProgress.isFinished()) {
+            builder.append("Rebuilding ...");
+            builder.append("<br />\n");
+        }
 
-        //return String.format("Currently processing %s %d/%d ", );
+        for (Progress p : history) {
+            builder.append("<b>History</b><br/>\n");
+            builder.append(p.getName());
+            builder.append(" took ");
+            builder.append(p.elapsedTime());
+            builder.append(" ms to process");
+            if (p.getReason() != null) {
+                builder.append(" but exited with the error ");
+                builder.append(p.getReason().getMessage());
+            } else {
+                builder.append(" completed successfully");
+            }
+            builder.append("<br/>}n");
+        }
+
+        return builder.toString();
+    }
+
+    public void setComplete() {
+        if (this.currentProjet != null) {
+
+            currentProjet.setFinished();
+
+            this.history.add(currentProjet);
+
+        }
     }
 
     @Override
@@ -56,14 +82,6 @@ public class ManagerProgress extends Progress {
             rebuildProgress.assertNoErrors();
         }
 
-    }
-
-    public String getCurrentProjectName() {
-        return currentProjectName;
-    }
-
-    public void setCurrentProjectName(String currentProjectName) {
-        this.currentProjectName = currentProjectName;
     }
 
     public Progress getDeletedBuildsCleanProgress() {
@@ -91,6 +109,13 @@ public class ManagerProgress extends Progress {
         }
     }
 
+    @Override
+    public void setError(Throwable e) {
+        super.setError(e);
+        currentProjet.setFinished();
+        this.history.add(currentProjet);
+    }
+
     public Progress getDeletedJobsCleanProgress() {
         if (deletedJobsCleanProgress == null) {
             deletedJobsCleanProgress = new Progress();
@@ -109,5 +134,10 @@ public class ManagerProgress extends Progress {
     public void setNewIteration() {
         rebuildProgress = null;
         deletedBuildsCleanProgress = null;
+    }
+
+    public void next(String displayName) {
+        this.currentProjet = new Progress(displayName);
+        this.setCurrent(this.getCurrent() + 1);
     }
 }

@@ -49,25 +49,16 @@ public class LuceneManager extends ManagementLink {
         if (this.progress != null && !this.progress.isFinished()) {
             statement.message = "Currently working, wait for it ....";
             statement.code = 1;
+            statement.running = true;
             return statement;
         }
         return statement;
     }
 
     @JavaScriptMethod
-    public JSReturnCollection cleanDatabase() {
-        JSReturnCollection statement = new JSReturnCollection();
-        statement.message = "";
-        statement.code = 0;
-        return statement;
-    }
-
-    // add support for scheduled tasks!
-
-    @JavaScriptMethod
     public JSReturnCollection abort() throws Exception {
         JSReturnCollection statement = new JSReturnCollection();
-        statement.message = "Some message";
+        statement.message = "Not implemented";
         statement.code = 1;
         return statement;
     }
@@ -98,6 +89,7 @@ public class LuceneManager extends ManagementLink {
     public static class JSReturnCollection {
         public int code = 0;
         public String message = "";
+        public boolean running = false;
     }
 
 }

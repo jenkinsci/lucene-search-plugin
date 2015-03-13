@@ -13,6 +13,7 @@ public class Progress {
     private Throwable reason;
     private int max;
     private int current;
+    private String name;
 
     public void assertNoErrors() throws Throwable {
         if (getState() == ProgressState.COMPLETE_WITH_ERROR) {
@@ -21,6 +22,11 @@ public class Progress {
     }
 
     public Progress() {
+        startTime = System.currentTimeMillis();
+    }
+
+    public Progress(String name) {
+        this.setName(name);
         startTime = System.currentTimeMillis();
     }
 
@@ -77,5 +83,13 @@ public class Progress {
 
     public void setCurrent(int current) {
         this.current = current;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

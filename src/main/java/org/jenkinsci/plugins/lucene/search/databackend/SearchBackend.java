@@ -90,13 +90,15 @@ public abstract class SearchBackend {
             progress.assertNoErrors();
             for (Job job : allItems) {
                 progress.setNewIteration();
-                progress.setCurrentProjectName(job.getDisplayName());
-                progress.setCurrent(progress.getCurrent() + 1);
+                progress.next(job.getDisplayName());
+                //progress.setCurrentProjectName(job.getDisplayName());
+                //progress.setCurrent(progress.getCurrent() + 1);
 
                 cleanDeletedBuilds(progress.getDeletedBuildsCleanProgress(), job);
                 progress.assertNoErrors();
                 rebuildJob(progress.getRebuildProgress(), job);
                 progress.assertNoErrors();
+                progress.setComplete();
             }
             progress.setSuccessfullyCompleted();
         } catch (IOException e) {
