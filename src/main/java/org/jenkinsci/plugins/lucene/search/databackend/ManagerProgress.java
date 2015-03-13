@@ -9,7 +9,7 @@ public class ManagerProgress extends Progress {
 
     private List<Progress> history = new LinkedList<Progress>();
 
-    private Progress currentProjet;
+    private Progress currentProject;
 
     private Progress deletedJobsCleanProgress;
     private Progress deletedBuildsCleanProgress;
@@ -19,7 +19,7 @@ public class ManagerProgress extends Progress {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("Currently processing ");
-        builder.append(currentProjet.getName() + ". Parsing project ");
+        builder.append(currentProject.getName() + ". Parsing project ");
         builder.append(getCurrent());
         builder.append(" out of ");
         builder.append(getMax());
@@ -59,11 +59,11 @@ public class ManagerProgress extends Progress {
     }
 
     public void setComplete() {
-        if (this.currentProjet != null) {
+        if (this.currentProject != null) {
 
-            currentProjet.setFinished();
+            currentProject.setFinished();
 
-            this.history.add(currentProjet);
+            this.history.add(currentProject);
 
         }
     }
@@ -112,8 +112,8 @@ public class ManagerProgress extends Progress {
     @Override
     public void setError(Throwable e) {
         super.setError(e);
-        currentProjet.setFinished();
-        this.history.add(currentProjet);
+        currentProject.setFinished();
+        this.history.add(currentProject);
     }
 
     public Progress getDeletedJobsCleanProgress() {
@@ -137,7 +137,7 @@ public class ManagerProgress extends Progress {
     }
 
     public void next(String displayName) {
-        this.currentProjet = new Progress(displayName);
+        this.currentProject = new Progress(displayName);
         this.setCurrent(this.getCurrent() + 1);
     }
 }
