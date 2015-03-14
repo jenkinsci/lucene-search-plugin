@@ -349,7 +349,7 @@ public class SolrSearchBackend extends SearchBackend {
             QueryResponse queryResponse = httpSolrServer.query(query);
             for (FacetField ff : queryResponse.getFacetFields()) {
                 String jobName = ff.getName();
-                if (! jobNames.contains(jobName)) {
+                if (!jobNames.contains(jobName)) {
                     deleteJob(jobName);
                 }
             }

@@ -68,7 +68,7 @@ public class SearchBackendManager {
         getBackend().storeBuild(build);
     }
 
-    public void rebuildDatabase(ManagerProgress progress){
+    public void rebuildDatabase(ManagerProgress progress) {
         getBackend().rebuildDatabase(progress);
     }
 }

@@ -131,7 +131,6 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
         return items;
     }
 
-
     private URI makeSolrUrl(final String solrUrlX) throws IOException {
         IOException e = null;
         String solrUrl = solrUrlX.replaceAll("/*$", "");
@@ -159,7 +158,8 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
         }
     }
 
-    public FormValidation doCheckSolrCollection(@QueryParameter final String solrCollection, @QueryParameter String solrUrl) {
+    public FormValidation doCheckSolrCollection(@QueryParameter final String solrCollection,
+            @QueryParameter String solrUrl) {
         try {
             List<String> collections = getCollections(solrUrl);
             if (collections.contains(solrCollection)) {

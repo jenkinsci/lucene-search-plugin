@@ -91,7 +91,7 @@ public class LuceneManager extends ManagementLink {
         public int code = 0;
         public String message = "";
         public boolean running = false;
-        public ManagerProgress progress = null; 
+        public ManagerProgress progress = null;
     }
 
 }

@@ -73,7 +73,7 @@ public class BurstExecutor<T> {
         }
         ensureEnoughThreadToFinishJob();
         WorkerThread workerThread;
-        while((workerThread = getFirstWorkerThread()) != null) {
+        while ((workerThread = getFirstWorkerThread()) != null) {
             workerThread.join();
         }
     }
@@ -86,14 +86,14 @@ public class BurstExecutor<T> {
         return workerThread;
     }
 
-    public static<T> BurstExecutor<T> create(RunWithArgument<T> worker, int maxThreads) {
+    public static <T> BurstExecutor<T> create(RunWithArgument<T> worker, int maxThreads) {
         return new BurstExecutor<T>(worker, maxThreads);
     }
 
     public BurstExecutor<T> andStart() {
         started = true;
         int startThreads = Math.min(workQueue.size(), maxThreads);
-        for(int i = 0; i < startThreads; i++) {
+        for (int i = 0; i < startThreads; i++) {
             ensureEnoughThreadToFinishJob();
         }
         return this;

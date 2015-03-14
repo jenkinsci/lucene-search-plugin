@@ -17,7 +17,7 @@ public class ManagerProgress extends Progress {
 
     public void setComplete() {
         if (this.getCurrentProject() != null) {
-           getCurrentProject().setSuccessfullyCompleted();
+            getCurrentProject().setSuccessfullyCompleted();
             getCurrentProject().setFinished();
 
             this.getHistory().add(getCurrentProject());

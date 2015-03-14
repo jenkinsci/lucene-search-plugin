@@ -54,7 +54,8 @@ public class FreeTextSearch extends Search {
             if (a.getObject() instanceof SearchableModelObject) {
                 SearchableModelObject smo = (SearchableModelObject) a.getObject();
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine(String.format("smo.displayName=%s, searchName=%s", smo.getDisplayName(), smo.getSearchName()));
+                    LOGGER.fine(String.format("smo.displayName=%s, searchName=%s", smo.getDisplayName(),
+                            smo.getSearchName()));
                 }
 
                 SearchIndex index = smo.getSearchIndex();
