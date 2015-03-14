@@ -302,7 +302,7 @@ public class LuceneSearchBackend extends SearchBackend {
             progress.setSuccessfullyCompleted();
             updateReader();
         } catch (IOException e) {
-            progress.setError(e);
+            progress.completedWithErrors(e);
         } finally {
             progress.setFinished();
         }
@@ -342,7 +342,7 @@ public class LuceneSearchBackend extends SearchBackend {
             updateReader();
             progress.setSuccessfullyCompleted();
         } catch (IOException e) {
-            progress.setError(e);
+            progress.completedWithErrors(e);
         } finally {
             progress.setFinished();
         }

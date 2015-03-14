@@ -315,9 +315,9 @@ public class SolrSearchBackend extends SearchBackend {
             httpSolrServer.deleteById(idsToDelete);
             progress.setSuccessfullyCompleted();
         } catch (SolrServerException e) {
-            progress.setError(e);
+            progress.completedWithErrors(e);
         } catch (IOException e) {
-            progress.setError(e);
+            progress.completedWithErrors(e);
         } finally {
             progress.setFinished();
         }
@@ -354,7 +354,7 @@ public class SolrSearchBackend extends SearchBackend {
                 }
             }
         } catch (SolrServerException e) {
-            progress.setError(e);
+            progress.completedWithErrors(e);
         } finally {
             progress.setFinished();
         }

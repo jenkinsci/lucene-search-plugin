@@ -15,55 +15,12 @@ public class ManagerProgress extends Progress {
     private Progress deletedBuildsCleanProgress;
     private Progress rebuildProgress;
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Currently processing ");
-        builder.append(currentProject.getName() + ". Parsing project ");
-        builder.append(getCurrent());
-        builder.append(" out of ");
-        builder.append(getMax());
-        builder.append("<br />\n");
-
-        if (deletedJobsCleanProgress != null && !deletedJobsCleanProgress.isFinished()) {
-            builder.append("Cleaning projects ...");
-            builder.append("<br />\n");
-        }
-
-        if (deletedBuildsCleanProgress != null && !deletedBuildsCleanProgress.isFinished()) {
-            builder.append("Cleaning builds ...");
-            builder.append("<br />\n");
-        }
-
-        if (rebuildProgress != null && !rebuildProgress.isFinished()) {
-            builder.append("Rebuilding ...");
-            builder.append("<br />\n");
-        }
-
-        for (Progress p : history) {
-            builder.append("<b>History</b><br/>\n");
-            builder.append(p.getName());
-            builder.append(" took ");
-            builder.append(p.elapsedTime());
-            builder.append(" ms to process");
-            if (p.getReason() != null) {
-                builder.append(" but exited with the error ");
-                builder.append(p.getReason().getMessage());
-            } else {
-                builder.append(" completed successfully");
-            }
-            builder.append("<br/>}n");
-        }
-
-        return builder.toString();
-    }
-
     public void setComplete() {
-        if (this.currentProject != null) {
+        if (this.getCurrentProject() != null) {
+           getCurrentProject().setSuccessfullyCompleted();
+            getCurrentProject().setFinished();
 
-            currentProject.setFinished();
-
-            this.history.add(currentProject);
+            this.getHistory().add(getCurrentProject());
 
         }
     }
@@ -71,15 +28,15 @@ public class ManagerProgress extends Progress {
     @Override
     public void assertNoErrors() throws Throwable {
         super.assertNoErrors();
-        if (deletedJobsCleanProgress != null) {
-            deletedJobsCleanProgress.assertNoErrors();
+        if (getDeletedJobsCleanProgress() != null) {
+            getDeletedJobsCleanProgress().assertNoErrors();
         }
 
-        if (deletedBuildsCleanProgress != null) {
-            deletedBuildsCleanProgress.assertNoErrors();
+        if (getDeletedBuildsCleanProgress() != null) {
+            getDeletedBuildsCleanProgress().assertNoErrors();
         }
-        if (rebuildProgress != null) {
-            rebuildProgress.assertNoErrors();
+        if (getRebuildProgress() != null) {
+            getRebuildProgress().assertNoErrors();
         }
 
     }
@@ -110,10 +67,11 @@ public class ManagerProgress extends Progress {
     }
 
     @Override
-    public void setError(Throwable e) {
-        super.setError(e);
-        currentProject.setFinished();
-        this.history.add(currentProject);
+    public void completedWithErrors(Throwable e) {
+        super.completedWithErrors(e);
+        getCurrentProject().completedWithErrors(e);
+        getCurrentProject().setFinished();
+        this.getHistory().add(getCurrentProject());
     }
 
     public Progress getDeletedJobsCleanProgress() {
@@ -132,12 +90,40 @@ public class ManagerProgress extends Progress {
     }
 
     public void setNewIteration() {
-        rebuildProgress = null;
-        deletedBuildsCleanProgress = null;
+        setRebuildProgress(null);
+        setDeletedBuildsCleanProgress(null);
     }
 
     public void next(String displayName) {
-        this.currentProject = new Progress(displayName);
+        this.setCurrentProject(new Progress(displayName));
         this.setCurrent(this.getCurrent() + 1);
+    }
+
+    public List<Progress> getHistory() {
+        return history;
+    }
+
+    public void setHistory(List<Progress> history) {
+        this.history = history;
+    }
+
+    public Progress getCurrentProject() {
+        return currentProject;
+    }
+
+    public void setCurrentProject(Progress currentProject) {
+        this.currentProject = currentProject;
+    }
+
+    public void setDeletedJobsCleanProgress(Progress deletedJobsCleanProgress) {
+        this.deletedJobsCleanProgress = deletedJobsCleanProgress;
+    }
+
+    public void setDeletedBuildsCleanProgress(Progress deletedBuildsCleanProgress) {
+        this.deletedBuildsCleanProgress = deletedBuildsCleanProgress;
+    }
+
+    public void setRebuildProgress(Progress rebuildProgress) {
+        this.rebuildProgress = rebuildProgress;
     }
 }

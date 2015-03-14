@@ -35,11 +35,10 @@ public abstract class SearchBackend {
             try {
                 storeBuild(build);
             } catch (IOException e) {
-                progress.setError(e);
+                progress.completedWithErrors(e);
             }
         }
     }
-
 
     private final SearchBackendEngine engine;
 
@@ -67,7 +66,8 @@ public abstract class SearchBackend {
 
     @SuppressWarnings("rawtypes")
     public void rebuildJob(Progress progress, Job<?, ?> job) throws IOException {
-        BurstExecutor<AbstractBuild> burstExecutor = BurstExecutor.create(new RebuildBuildWorker(progress), 10).andStart();
+        BurstExecutor<AbstractBuild> burstExecutor = BurstExecutor.create(new RebuildBuildWorker(progress), 10)
+                .andStart();
         for (Run<?, ?> run : job.getBuilds()) {
             if (run instanceof AbstractBuild) {
                 AbstractBuild build = (AbstractBuild) run;
@@ -91,9 +91,6 @@ public abstract class SearchBackend {
             for (Job job : allItems) {
                 progress.setNewIteration();
                 progress.next(job.getDisplayName());
-                //progress.setCurrentProjectName(job.getDisplayName());
-                //progress.setCurrent(progress.getCurrent() + 1);
-
                 cleanDeletedBuilds(progress.getDeletedBuildsCleanProgress(), job);
                 progress.assertNoErrors();
                 rebuildJob(progress.getRebuildProgress(), job);
@@ -102,9 +99,9 @@ public abstract class SearchBackend {
             }
             progress.setSuccessfullyCompleted();
         } catch (IOException e) {
-            progress.setError(e);
+            progress.completedWithErrors(e);
         } catch (Throwable e) {
-            progress.setError(e);
+            progress.completedWithErrors(e);
         } finally {
             progress.setFinished();
         }

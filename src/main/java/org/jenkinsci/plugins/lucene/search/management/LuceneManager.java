@@ -67,6 +67,7 @@ public class LuceneManager extends ManagementLink {
     public JSReturnCollection getStatus() {
         JSReturnCollection statement = new JSReturnCollection();
         if (progress != null) {
+            statement.progress = progress;
             switch (progress.getState()) {
             case COMPLETE:
                 statement.message = "Completed without errors";
@@ -76,7 +77,7 @@ public class LuceneManager extends ManagementLink {
                 statement.code = 2;
                 break;
             case PROCESSING:
-                statement.message = progress.toString();
+                statement.message = "processing";
                 break;
             }
         } else {
@@ -90,6 +91,7 @@ public class LuceneManager extends ManagementLink {
         public int code = 0;
         public String message = "";
         public boolean running = false;
+        public ManagerProgress progress = null; 
     }
 
 }

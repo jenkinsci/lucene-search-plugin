@@ -6,11 +6,12 @@ public class Progress {
         PROCESSING, COMPLETE, COMPLETE_WITH_ERROR
     }
 
-    private long endTime;
     private long startTime;
+    private long elapsedTime;
 
     private ProgressState state = ProgressState.PROCESSING;
     private Throwable reason;
+    private String reasonMessage = "";
     private int max;
     private int current;
     private String name;
@@ -30,9 +31,10 @@ public class Progress {
         startTime = System.currentTimeMillis();
     }
 
-    public void setError(Throwable reason) {
+    public void completedWithErrors(Throwable reason) {
         state = ProgressState.COMPLETE_WITH_ERROR;
-        this.reason = reason;
+        this.setReason(reason);
+        reasonMessage = reason.getMessage();
     }
 
     /**
@@ -43,7 +45,7 @@ public class Progress {
         if (state == ProgressState.PROCESSING) {
             state = ProgressState.COMPLETE_WITH_ERROR;
         }
-        endTime = System.currentTimeMillis();
+        setElapsedTime(System.currentTimeMillis() - startTime);
     }
 
     /**
@@ -51,10 +53,6 @@ public class Progress {
      */
     public void setSuccessfullyCompleted() {
         state = ProgressState.COMPLETE;
-    }
-
-    public long elapsedTime() {
-        return endTime - startTime;
     }
 
     public Throwable getReason() {
@@ -91,5 +89,25 @@ public class Progress {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public long getElapsedTime() {
+        return elapsedTime;
+    }
+
+    public void setElapsedTime(long elapsedTime) {
+        this.elapsedTime = elapsedTime;
+    }
+
+    public void setReason(Throwable reason) {
+        this.reason = reason;
+    }
+
+    public String getReasonMessage() {
+        return reasonMessage;
+    }
+
+    public void setReasonMessage(String reasonMessage) {
+        this.reasonMessage = reasonMessage;
     }
 }
