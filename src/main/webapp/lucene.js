@@ -1,24 +1,61 @@
+function rebuildDatabase() {
+    var workers = txtWorkers = parseInt($("#txtWorkers").val());
+    if(workers < 1){
+        return;
+    }
+    luceneSearchManager.rebuildDatabase(workers, function(t) {
+        var statement = t.responseObject();
+        updateStatusFromResponse(statement);
+        getStatus();
+    });
+}
+
+function abort() {
+    luceneSearchManager.abort(function(t) {
+        var statement = t.responseObject();
+        updateStatusFromResponse(statement);
+    });
+}
+
+function getStatus() {
+    luceneSearchManager.getStatus(function(t) {
+        var statement = t.responseObject();
+        $(".running").toggle(statement.running);
+        $(".stopped").toggle(!statement.running);
+        updateStatusFromResponse(statement);
+    });
+}
+
+$(document).ready(function() {
+    getStatus();
+    window.setInterval(function (a, b) {
+        //getStatus();
+    }, 5000);
+});
+
 function updateStatusFromResponse(statement) {
     console.log(statement);
-    var html = statement.message;
-    if(statement.running){
-        html += "<br />Using " + statement.workers + " workers";
-    }
-    if(statement.progress != null) {
-        html += "<br />Currently processing " + statement.progress.name + " <b>" + statement.progress.currentProject.name + "</b>";
-        html += "<br />Project <b>" + statement.progress.current + "</b> out of <b>" + statement.progress.max + "</b>";
-        html += "<br /><b>Processed projects</b><br />";
-        html += "<ul>";
-        for (var historyIndex = 0; historyIndex < statement.progress.history.length; historyIndex++) {
+    $("#message").toggleClass("error", statement.code !== 0).text(statement.message);
+    if(statement.progress) {
+        $("#currentWorkers").text(statement.workers);
+        $("#history").empty();
+        $("#currentProgress").show();
+        var progress = statement.progress;
+        $("#currentlyProcessing").text(progress.name);
+        $("#currentlyProcessingIndex").text(progress.current);
+        $("#currentlyProcessingMax").text(progress.max);
+        for(var historyIndex = 0; historyIndex != progress.history.length; historyIndex++) {
             var hist = statement.progress.history[historyIndex];
-            var projectString = hist.name + " completed after " + (hist.elapsedTime/1000) + "s";
-            if(hist.reasonMessage != ""){
-                html += "<li><span style=\"error\">" + projectString + ": " + hist.reasonMessage + "</span></li>";
-            }else{
-                html += "<li><span style=\"success\">" +projectString+ "</span></li>";
+            var projectString = hist.name + " completed after " + (hist.elapsedTime/1000) + "s (" + hist.current + " elements processed)";
+            var node = $(document.createElement("li"));
+            if (hist.reasonMessage) {
+                node.addClass("error").text(projectString + ": " + hist.reasonMessage);
+            } else {
+                node.addClass("success").text(projectString);
             }
+            $("#history").append(node);
         }
-        html +="</ul>";
+    } else {
+        $("#currentProgress").hide();
     }
-    $("#jenkinsResponse").toggleClass("error", statement.code !== 0).html(html);
 }

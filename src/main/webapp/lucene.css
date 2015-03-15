@@ -9,3 +9,11 @@
 sectionHeader.{
 	font-style: bold;
 }
+
+#history {
+     list-style-type: none;
+}
+
+.running,.stopped{
+    display: none;
+}

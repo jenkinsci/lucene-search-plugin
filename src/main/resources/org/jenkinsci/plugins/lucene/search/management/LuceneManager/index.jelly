@@ -5,55 +5,35 @@
             <link rel="stylesheet" type="text/css" href="${rootURL}/plugin/lucene-search/lucene.css" media="screen"/>
             <script type="text/javascript" src="${rootURL}/plugin/lucene-search/jquery-2.1.3.min.js"></script>
             <script type="text/javascript" src="${rootURL}/plugin/lucene-search/lucene.js"></script>
-            <script src="${rootURL}/plugin/lucene-search/management.js"/>
             <st:bind var="luceneSearchManager" value="${it}"/>
             <script>
-
-            function rebuildDatabase() {
-                var workers = txtWorkers = parseInt($("#txtWorkers").val());
-                if(workers > 0){
-                }else{
-                    return;
-                }
-                console.log(workers);
-                luceneSearchManager.rebuildDatabase(workers,function(t) {
-                    var statement = t.responseObject();
-                    updateStatusFromResponse(statement);
-                    getStatus();
-                });
-            }
-
-            function getStatus() {
-                luceneSearchManager.getStatus(function(t) {
-                    var statement = t.responseObject();
-                    //$("#txtWorkers").val(statement.workers);
-                    $("#txtWorkers").toggle(!statement.running);
-				    $("#btnRebuild").toggle(!statement.running);
-                    updateStatusFromResponse(statement);
-                });
-            }
-
             $(document).ready(function() {
                 getStatus();
                 window.setInterval(function (a, b) {
                     getStatus();
                 }, 5000);
             });
-
             </script>
         </l:header>
         <l:main-panel>
-            <h1>Lucene Management</h1>
-
+            <h1>${Lucene Management}</h1>
             <p>
-                <span class="sectionHeader">Rebuild database</span><br/>
-                <span class="description">Rebuilds the database</span><br/>
-                <span class="warning">This is an expensive operations so we recommend that this is done when there is only a light load.</span><br/>
-                <button id="btnRebuild" onclick="rebuildDatabase()">Rebuild</button>
-                <input id="txtWorkers" value="20"></input> Parallel workers
+                <span class="sectionHeader">${%Rebuild database}</span><br/>
+                <span class="description">${%Rebuilds the database}</span><br/>
+                <span class="warning">${%This is an expensive operations so we recommend that this is done when there is only a light load. Searches will continue to work to during the rebuilding}</span><br/>
                 <br/>
+                <button id="btnAbort" class="running" onclick="abort()">${%Abort}</button><br/>
+                <button id="btnRebuild" class="stopped" onclick="rebuildDatabase()">${%Rebuild}</button>${% }
+                <input id="txtWorkers" class="stopped" value="5"/><label class="stopped" for="txtWorkers">${%parallel workers}</label><br/>
+                <br/>
+                <div id="message" class="success"></div>
 
-                <div id="jenkinsResponse" class="success"></div>
+                <div id="currentProgress" class="running">
+                    ${%Currently processing }<b id="currentlyProcessing"/>${% using }<b id="currentWorkers"/>${% workers}<br/>
+                    ${%Project }<b id="currentlyProcessingIndex"/>${% out of }<b id="currentlyProcessingMax"/><br/>
+                    <h5>${%Processed projects}</h5>
+                    <ul id="history" />
+                </div>
             </p>
         </l:main-panel>
     </l:layout>
