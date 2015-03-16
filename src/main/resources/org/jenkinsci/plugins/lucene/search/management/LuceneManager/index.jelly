@@ -9,27 +9,26 @@
             <st:bind var="luceneSearchManager" value="${it}"/>
             <script>
 
-
             function rebuildDatabase() {
-                luceneSearchManager.rebuildDatabase(function(t) {
+                var workers = txtWorkers = parseInt($("#txtWorkers").val());
+                if(workers > 0){
+                }else{
+                    return;
+                }
+                console.log(workers);
+                luceneSearchManager.rebuildDatabase(workers,function(t) {
                     var statement = t.responseObject();
                     updateStatusFromResponse(statement);
                     getStatus();
                 });
             }
 
-            function abort() {
-                luceneSearchManager.abort(function(t) {
-                    var statement = t.responseObject();
-                    updateStatusFromResponse(statement);
-                });
-            }
-
             function getStatus() {
                 luceneSearchManager.getStatus(function(t) {
                     var statement = t.responseObject();
+                    //$("#txtWorkers").val(statement.workers);
+                    $("#txtWorkers").toggle(!statement.running);
 				    $("#btnRebuild").toggle(!statement.running);
-				    $("#btnAbort").toggle(statement.running);
                     updateStatusFromResponse(statement);
                 });
             }
@@ -37,7 +36,7 @@
             $(document).ready(function() {
                 getStatus();
                 window.setInterval(function (a, b) {
-                    //getStatus();
+                    getStatus();
                 }, 5000);
             });
 
@@ -50,8 +49,8 @@
                 <span class="sectionHeader">Rebuild database</span><br/>
                 <span class="description">Rebuilds the database</span><br/>
                 <span class="warning">This is an expensive operations so we recommend that this is done when there is only a light load.</span><br/>
-                <button id="btnRebuild" style="display:none" onclick="rebuildDatabase()">Rebuild</button>
-                <button id="btnAbort" style="display:none" onclick="abort()">Abort</button>
+                <button id="btnRebuild" onclick="rebuildDatabase()">Rebuild</button>
+                <input id="txtWorkers" value="20"></input> Parallel workers
                 <br/>
 
                 <div id="jenkinsResponse" class="success"></div>

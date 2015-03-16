@@ -5,6 +5,8 @@ import hudson.model.ManagementLink;
 
 import javax.inject.Inject;
 
+import jenkins.model.Jenkins;
+
 import org.jenkinsci.plugins.lucene.search.SearchBackendManager;
 import org.jenkinsci.plugins.lucene.search.databackend.ManagerProgress;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
@@ -32,11 +34,11 @@ public class LuceneManager extends ManagementLink {
     }
 
     @JavaScriptMethod
-    public JSReturnCollection rebuildDatabase() {
+    public JSReturnCollection rebuildDatabase(int workers) {
         JSReturnCollection statement = verifyNotInProgress();
         if (statement.code == 0) {
             progress = new ManagerProgress();
-            backendManager.rebuildDatabase(progress);
+            backendManager.rebuildDatabase(progress, workers);
 
             statement.message = "Work started succesfully";
             statement.code = 0;
@@ -68,6 +70,7 @@ public class LuceneManager extends ManagementLink {
         JSReturnCollection statement = new JSReturnCollection();
         if (progress != null) {
             statement.progress = progress;
+            statement.workers = backendManager.getWorkers();
             switch (progress.getState()) {
             case COMPLETE:
                 statement.message = "Completed without errors";
@@ -77,6 +80,7 @@ public class LuceneManager extends ManagementLink {
                 statement.code = 2;
                 break;
             case PROCESSING:
+                statement.running = true;
                 statement.message = "processing";
                 break;
             }
@@ -92,6 +96,7 @@ public class LuceneManager extends ManagementLink {
         public String message = "";
         public boolean running = false;
         public ManagerProgress progress = null;
+        public int workers = 0;
     }
 
 }

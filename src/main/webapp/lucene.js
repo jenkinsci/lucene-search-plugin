@@ -1,6 +1,9 @@
 function updateStatusFromResponse(statement) {
     console.log(statement);
     var html = statement.message;
+    if(statement.running){
+        html += "<br />Using " + statement.workers + " workers";
+    }
     if(statement.progress != null) {
         html += "<br />Currently processing " + statement.progress.name + " <b>" + statement.progress.currentProject.name + "</b>";
         html += "<br />Project <b>" + statement.progress.current + "</b> out of <b>" + statement.progress.max + "</b>";
@@ -14,7 +17,6 @@ function updateStatusFromResponse(statement) {
             }else{
                 html += "<li><span style=\"success\">" +projectString+ "</span></li>";
             }
-            //html += "<br />";   
         }
         html +="</ul>";
     }

@@ -19,9 +19,7 @@ public class ManagerProgress extends Progress {
         if (this.getCurrentProject() != null) {
             getCurrentProject().setSuccessfullyCompleted();
             getCurrentProject().setFinished();
-
             this.getHistory().add(getCurrentProject());
-
         }
     }
 

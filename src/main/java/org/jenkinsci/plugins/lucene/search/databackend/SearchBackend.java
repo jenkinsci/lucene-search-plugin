@@ -16,6 +16,7 @@ import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
+import org.jenkinsci.plugins.lucene.search.management.LuceneManager;
 
 public abstract class SearchBackend {
 
@@ -65,8 +66,8 @@ public abstract class SearchBackend {
     public abstract void deleteJob(String jobName);
 
     @SuppressWarnings("rawtypes")
-    public void rebuildJob(Progress progress, Job<?, ?> job) throws IOException {
-        BurstExecutor<AbstractBuild> burstExecutor = BurstExecutor.create(new RebuildBuildWorker(progress), 10)
+    public void rebuildJob(Progress progress, Job<?, ?> job, int maxWorkers) throws IOException {
+        BurstExecutor<AbstractBuild> burstExecutor = BurstExecutor.create(new RebuildBuildWorker(progress), maxWorkers)
                 .andStart();
         for (Run<?, ?> run : job.getBuilds()) {
             if (run instanceof AbstractBuild) {
@@ -82,7 +83,7 @@ public abstract class SearchBackend {
     }
 
     @SuppressWarnings("rawtypes")
-    public void rebuildDatabase(ManagerProgress progress) {
+    public void rebuildDatabase(ManagerProgress progress, int maxWorkers) {
         List<Job> allItems = Jenkins.getInstance().getAllItems(Job.class);
         progress.setMax(allItems.size());
         try {
@@ -93,7 +94,7 @@ public abstract class SearchBackend {
                 progress.next(job.getDisplayName());
                 cleanDeletedBuilds(progress.getDeletedBuildsCleanProgress(), job);
                 progress.assertNoErrors();
-                rebuildJob(progress.getRebuildProgress(), job);
+                rebuildJob(progress.getRebuildProgress(), job, maxWorkers);
                 progress.assertNoErrors();
                 progress.setComplete();
             }
