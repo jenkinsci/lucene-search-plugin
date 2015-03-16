@@ -93,8 +93,8 @@ public abstract class SearchBackend {
             for (Job job : allItems) {
                 progress.setNewIteration();
                 progress.next(job.getDisplayName());
-                if (!job.getBuilds().isEmpty()) {
-                    cleanDeletedBuilds(progress.getDeletedBuildsCleanProgress(), job);
+                if (!job.getBuilds().isEmpty()) { // what happens if the job has run before but I've removed all the builds?
+                    cleanDeletedBuilds(progress.getDeletedBuildsCleanProgress(), job); //then this should run but, shold it not?
                     progress.assertNoErrors();
                     rebuildJob(progress.getRebuildProgress(), job, maxWorkers);
                     progress.assertNoErrors();
