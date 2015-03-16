@@ -78,6 +78,7 @@ public abstract class SearchBackend {
         try {
             burstExecutor.waitForCompletion();
         } catch (InterruptedException e) {
+            e.printStackTrace();
             LOGGER.warn("Why was I interrupted?", e);
         }
     }
@@ -92,16 +93,20 @@ public abstract class SearchBackend {
             for (Job job : allItems) {
                 progress.setNewIteration();
                 progress.next(job.getDisplayName());
-                cleanDeletedBuilds(progress.getDeletedBuildsCleanProgress(), job);
-                progress.assertNoErrors();
-                rebuildJob(progress.getRebuildProgress(), job, maxWorkers);
-                progress.assertNoErrors();
+                if (!job.getBuilds().isEmpty()) {
+                    cleanDeletedBuilds(progress.getDeletedBuildsCleanProgress(), job);
+                    progress.assertNoErrors();
+                    rebuildJob(progress.getRebuildProgress(), job, maxWorkers);
+                    progress.assertNoErrors();
+                }
                 progress.setComplete();
             }
             progress.setSuccessfullyCompleted();
         } catch (IOException e) {
+            e.printStackTrace();
             progress.completedWithErrors(e);
         } catch (Throwable e) {
+            e.printStackTrace();
             progress.completedWithErrors(e);
         } finally {
             progress.setFinished();

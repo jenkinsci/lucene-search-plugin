@@ -284,6 +284,9 @@ public class LuceneSearchBackend extends SearchBackend {
     public void cleanDeletedBuilds(Progress progress, Job job) {
         try {
             Integer firstBuildNumber = job.getFirstBuild().getNumber();
+            if (firstBuildNumber == null) {
+                return;
+            }
             IndexSearcher searcher = new IndexSearcher(reader);
             Term term = new Term(Field.PROJECT_NAME.fieldName, job.getName().toLowerCase(LOCALE));
             Query q = new TermQuery(term).rewrite(reader);
