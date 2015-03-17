@@ -21,7 +21,7 @@ import org.jenkinsci.plugins.lucene.search.databackend.SolrSearchBackend;
 @Extension
 public class SearchBackendManager {
     private int workers = 0;
-    
+
     private transient SearchBackend instance;
 
     @Inject
