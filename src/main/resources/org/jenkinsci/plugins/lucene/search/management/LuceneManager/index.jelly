@@ -16,7 +16,7 @@
             </script>
         </l:header>
         <l:main-panel>
-            <h1>${Lucene Management}</h1>
+            <h1>${%Lucene Management}</h1>
             <p>
                 <span class="sectionHeader">${%Rebuild database}</span><br/>
                 <span class="description">${%Rebuilds the database}</span><br/>
