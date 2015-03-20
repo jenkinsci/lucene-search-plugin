@@ -97,7 +97,7 @@ public class ManagerProgress extends Progress {
     public void next(Job project) {
         StringBuilder builder = new StringBuilder();
         if (!project.getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
-            builder.append(project.getParent().getFullName() + " - ");
+            builder.append(project.getParent().getFullName() + " >> ");
         }
         builder.append(project.getName());
         this.setCurrentProject(new Progress(builder.toString()));
