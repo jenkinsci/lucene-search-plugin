@@ -12,6 +12,7 @@ import java.util.Map;
 import jenkins.model.Jenkins;
 
 import org.apache.log4j.Logger;
+import org.apache.lucene.search.SearcherManager;
 import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
@@ -110,7 +111,7 @@ public abstract class SearchBackend {
             progress.assertNoErrors();
             for (Job job : allItems) {
                 progress.setNewIteration();
-                progress.next(job.getDisplayName());
+                progress.next(job);
                 if (job.getBuilds().isEmpty()) {
                     deleteJob(job.getName());
                 } else {

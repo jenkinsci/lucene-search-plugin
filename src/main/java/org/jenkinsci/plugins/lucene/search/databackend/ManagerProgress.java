@@ -1,5 +1,7 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
+import hudson.model.Job;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.LinkedList;
@@ -92,8 +94,13 @@ public class ManagerProgress extends Progress {
         setDeletedBuildsCleanProgress(null);
     }
 
-    public void next(String displayName) {
-        this.setCurrentProject(new Progress(displayName));
+    public void next(Job project) {
+        StringBuilder builder = new StringBuilder();
+        if (!project.getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
+            builder.append(project.getParent().getFullName() + " - ");
+        }
+        builder.append(project.getName());
+        this.setCurrentProject(new Progress(builder.toString()));
         this.setCurrent(this.getCurrent() + 1);
     }
 
