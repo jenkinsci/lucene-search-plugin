@@ -17,6 +17,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.lucene.document.TextField;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
@@ -201,8 +202,8 @@ public class SolrSearchBackend extends SearchBackend {
         try {
             SolrInputDocument doc = new SolrInputDocument();
             doc.addField(ID.fieldName, build.getId());
-            doc.addField(PROJECT_NAME.fieldName, build.getProject().getName());
-            doc.addField(PROJECT_DISPLAY_NAME.fieldName, build.getProject().getDisplayName());
+            doc.addField(PROJECT_NAME.fieldName, getFormatedProjectName(build));
+            doc.addField(PROJECT_DISPLAY_NAME.fieldName, getFormatedProjectDisplayName(build));
             doc.addField(BUILD_NUMBER.fieldName, build.getNumber());
             doc.addField(RESULT.fieldName, build.getResult().toString());
             doc.addField(DURATION.fieldName, build.getDuration());

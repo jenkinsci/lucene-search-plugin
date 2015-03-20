@@ -140,7 +140,6 @@ public class LuceneSearchBackend extends SearchBackend {
     public synchronized void close() {
         IOUtils.closeQuietly(dbWriter);
         IOUtils.closeQuietly(index);
-
     }
 
     private void updateReader() throws IOException {
@@ -236,13 +235,14 @@ public class LuceneSearchBackend extends SearchBackend {
         try {
             Document doc = new Document();
             doc.add(new StringField(Field.ID.fieldName, build.getId(), STORE));
-            doc.add(new TextField(Field.PROJECT_NAME.fieldName, build.getProject().getName(), STORE));
-            doc.add(new TextField(Field.PROJECT_DISPLAY_NAME.fieldName, build.getProject().getDisplayName(), STORE));
+            doc.add(new TextField(Field.PROJECT_NAME.fieldName, getFormatedProjectName(build), STORE));
+            doc.add(new TextField(Field.PROJECT_DISPLAY_NAME.fieldName, getFormatedProjectDisplayName(build), STORE));
             doc.add(new LongField(Field.BUILD_NUMBER.fieldName, build.getNumber(), STORE));
             doc.add(new TextField(Field.RESULT.fieldName, build.getResult().toString(), STORE));
             doc.add(new LongField(Field.DURATION.fieldName, build.getDuration(), DONT_STORE));
             doc.add(new LongField(Field.START_TIME.fieldName, build.getStartTimeInMillis(), STORE));
             doc.add(new TextField(Field.BUILT_ON.fieldName, build.getBuiltOnStr(), DONT_STORE));
+
             StringBuilder shortDescriptions = new StringBuilder();
             for (Cause cause : build.getCauses()) {
                 shortDescriptions.append(" ").append(cause.getShortDescription());
