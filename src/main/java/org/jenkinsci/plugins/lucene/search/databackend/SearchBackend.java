@@ -47,7 +47,7 @@ public abstract class SearchBackend {
     protected String getFormatedProjectDisplayName(final AbstractBuild<?, ?> build) {
         StringBuilder builder = new StringBuilder();
         if (!build.getProject().getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
-            builder.append(build.getProject().getParent().getDisplayName() + " >> ");
+            builder.append(build.getProject().getParent().getDisplayName() + "/");
         }
         builder.append(build.getProject().getDisplayName());
         return builder.toString();
@@ -56,7 +56,7 @@ public abstract class SearchBackend {
     protected String getFormatedProjectName(final AbstractBuild<?, ?> build) {
         StringBuilder builder = new StringBuilder();
         if (!build.getProject().getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
-            builder.append(build.getProject().getParent().getFullName() + " >> ");
+            builder.append(build.getProject().getParent().getFullName() + "/");
         }
         builder.append(build.getProject().getName());
         return builder.toString();
