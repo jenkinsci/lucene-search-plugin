@@ -4,12 +4,10 @@ import com.google.common.collect.TreeMultimap;
 
 import hudson.model.AbstractBuild;
 import hudson.model.BallColor;
-import hudson.model.Cause;
 import hudson.model.Job;
 import jenkins.model.Jenkins;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
@@ -43,13 +41,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.logging.Logger;
 
-import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
-import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
-import static org.jenkinsci.plugins.lucene.search.Field.CONSOLE;
-import static org.jenkinsci.plugins.lucene.search.Field.ID;
-import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
-import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
-import static org.jenkinsci.plugins.lucene.search.Field.getIndex;
+import static org.jenkinsci.plugins.lucene.search.Field.*;
 
 public class LuceneSearchBackend extends SearchBackend {
     private static final Logger LOGGER = Logger.getLogger(LuceneSearchBackend.class.getName());
@@ -60,6 +52,27 @@ public class LuceneSearchBackend extends SearchBackend {
 
     private static final org.apache.lucene.document.Field.Store DONT_STORE = org.apache.lucene.document.Field.Store.NO;
     private static final org.apache.lucene.document.Field.Store STORE = org.apache.lucene.document.Field.Store.YES;
+
+    private enum LuceneFieldType {
+        STRING, LONG, TEXT
+    }
+
+    private static final Map<Field, LuceneFieldType> FIELD_TYPE_MAP;
+    static {
+        Map<Field, LuceneFieldType> types = new HashMap<Field, LuceneFieldType>();
+        types.put(ID, LuceneFieldType.STRING);
+        types.put(PROJECT_NAME, LuceneFieldType.TEXT);
+        types.put(PROJECT_DISPLAY_NAME, LuceneFieldType.TEXT);
+        types.put(BUILD_NUMBER, LuceneFieldType.LONG);
+        types.put(RESULT, LuceneFieldType.TEXT);
+        types.put(DURATION, LuceneFieldType.LONG);
+        types.put(START_TIME, LuceneFieldType.LONG);
+        types.put(BUILT_ON, LuceneFieldType.TEXT);
+        types.put(START_CAUSE, LuceneFieldType.TEXT);
+        types.put(BALL_COLOR, LuceneFieldType.STRING);
+        types.put(CONSOLE, LuceneFieldType.TEXT);
+        FIELD_TYPE_MAP = Collections.unmodifiableMap(types);
+    }
 
     private static final Comparator<Float> FLOAT_COMPARATOR = new Comparator<Float>() {
         @Override
@@ -215,35 +228,28 @@ public class LuceneSearchBackend extends SearchBackend {
 
     @Override
     public void storeBuild(final AbstractBuild<?, ?> build) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        build.getLogText().writeLogTo(0, byteArrayOutputStream);
-        String consoleOutput = byteArrayOutputStream.toString();
-
         try {
             Document doc = new Document();
-            doc.add(new StringField(Field.ID.fieldName, build.getId(), STORE));
-            doc.add(new TextField(Field.PROJECT_NAME.fieldName, getFormatedProjectName(build), STORE));
-            doc.add(new TextField(Field.PROJECT_DISPLAY_NAME.fieldName, getFormatedProjectDisplayName(build), STORE));
-            doc.add(new LongField(Field.BUILD_NUMBER.fieldName, build.getNumber(), STORE));
-            doc.add(new TextField(Field.RESULT.fieldName, build.getResult().toString(), STORE));
-            doc.add(new LongField(Field.DURATION.fieldName, build.getDuration(), DONT_STORE));
-            doc.add(new LongField(Field.START_TIME.fieldName, build.getStartTimeInMillis(), STORE));
-            doc.add(new TextField(Field.BUILT_ON.fieldName, build.getBuiltOnStr(), DONT_STORE));
-
-            StringBuilder shortDescriptions = new StringBuilder();
-            for (Cause cause : build.getCauses()) {
-                shortDescriptions.append(" ").append(cause.getShortDescription());
+            for (Field field : Field.values()) {
+                org.apache.lucene.document.Field.Store store = field.persist ? STORE : DONT_STORE;
+                switch(FIELD_TYPE_MAP.get(field)) {
+                case LONG:
+                    doc.add(new LongField(field.fieldName, (Long) field.getValue(build), store));
+                    break;
+                case STRING:
+                    doc.add(new StringField(field.fieldName, field.getValue(build).toString(), store));
+                    break;
+                case TEXT:
+                    doc.add(new TextField(field.fieldName, field.getValue(build).toString(), store));
+                    break;
+                }
             }
-            doc.add(new TextField(Field.START_CAUSE.fieldName, shortDescriptions.toString(), DONT_STORE));
-            doc.add(new StringField(Field.BALL_COLOR.fieldName, build.getIconColor().name(), STORE));
             // TODO Add the following data
             // build.getChangeSet()
             // build.getCulprits()
             // EnvVars a = build.getEnvironment(listener);
             // build.get
             // build.getArtifacts()
-
-            doc.add(new TextField(Field.CONSOLE.fieldName, consoleOutput, STORE));
 
             for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
                 doc.add(new TextField(extension.getKeyword(), extension.getTextResult(build),

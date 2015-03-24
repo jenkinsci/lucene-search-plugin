@@ -1,23 +1,111 @@
 package org.jenkinsci.plugins.lucene.search;
 
+import hudson.model.AbstractBuild;
+import hudson.model.Cause;
+import hudson.model.Result;
+import org.apache.commons.io.output.ByteArrayOutputStream;
+
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public enum Field {
-    ID("id", DefaultSearchable.FALSE, Numeric.TRUE, Persist.TRUE), //
-    PROJECT_NAME("projectname", Persist.TRUE), //
-    PROJECT_DISPLAY_NAME("projectdisplayname", Persist.TRUE), //
-    BUILD_NUMBER("buildnumber", Numeric.TRUE, Persist.TRUE), //
-    RESULT("result", Persist.TRUE), //
-    DURATION("duration", DefaultSearchable.FALSE), //
-    START_TIME("starttime", DefaultSearchable.FALSE, Numeric.TRUE), //
-    BUILT_ON("builton"), //
-    START_CAUSE("startcause"), //
-    BALL_COLOR("color", DefaultSearchable.FALSE, Persist.TRUE), //
-    CONSOLE("console", Persist.TRUE); //
+    ID("id", DefaultSearchable.FALSE, Numeric.TRUE, Persist.TRUE) {
+        @Override
+        public String getValue(AbstractBuild<?, ?> build) {
+            return build.getId();
+        }
+    },
+    PROJECT_NAME("projectname", Persist.TRUE) {
+        public String getValue(final AbstractBuild<?, ?> build) {
+            StringBuilder builder = new StringBuilder();
+            if (!build.getProject().getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
+                builder.append(build.getProject().getParent().getFullName() + "/");
+            }
+            builder.append(build.getProject().getName());
+            return builder.toString();
+        }
+    },
 
+    PROJECT_DISPLAY_NAME("projectdisplayname", Persist.TRUE) {
+        @Override
+        public String getValue(AbstractBuild<?, ?> build) {
+            StringBuilder builder = new StringBuilder();
+            if (!build.getProject().getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
+                builder.append(build.getProject().getParent().getDisplayName() + "/");
+            }
+            builder.append(build.getProject().getDisplayName());
+            return builder.toString();
+        }
+    },
+
+    BUILD_NUMBER("buildnumber", Numeric.TRUE, Persist.TRUE) {
+        @Override
+        public Integer getValue(AbstractBuild<?, ?> build) {
+            return build.getNumber();
+        }
+    },
+
+    RESULT("result", Persist.TRUE) {
+        @Override public Result getValue(AbstractBuild<?, ?> build) {
+            return build.getResult();
+        }
+    },
+
+    DURATION("duration", DefaultSearchable.FALSE) {
+        @Override
+        public Long getValue(AbstractBuild<?, ?> build) {
+            return build.getDuration();
+        }
+    },
+
+    START_TIME("starttime", DefaultSearchable.FALSE, Numeric.TRUE, Persist.TRUE) {
+        @Override
+        public Long getValue(AbstractBuild<?, ?> build) {
+            return build.getStartTimeInMillis();
+        }
+    },
+    BUILT_ON("builton") {
+        @Override
+        public String getValue(AbstractBuild<?, ?> build) {
+            return build.getBuiltOnStr();
+        }
+    },
+    START_CAUSE("startcause") {
+        @Override
+        public String getValue(AbstractBuild<?, ?> build) {
+            StringBuilder shortDescriptions = new StringBuilder();
+            for (Cause cause : build.getCauses()) {
+                shortDescriptions.append(" ").append(cause.getShortDescription());
+            }
+            return shortDescriptions.toString();
+        }
+    },
+    BALL_COLOR("color", DefaultSearchable.FALSE, Persist.TRUE) {
+        @Override
+        public String getValue(AbstractBuild<?, ?> build) {
+            return build.getIconColor().name();
+        }
+    },
+
+    CONSOLE("console", Persist.TRUE) {
+        @Override
+        public String getValue(AbstractBuild<?, ?> build) {
+            try {
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                build.getLogText().writeLogTo(0, byteArrayOutputStream);
+                String consoleOutput = byteArrayOutputStream.toString();
+                return consoleOutput;
+            } catch (IOException e) {
+                // Probably won't happen, but don't silently swallow exceptions at least
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
+    };
+
+    private static Map<String, Field> index;
     public final String fieldName;
     public final boolean defaultSearchable;
     public final boolean numeric;
@@ -32,8 +120,6 @@ public enum Field {
         this.fieldName = fieldName;
     }
 
-    private static Map<String, Field> index;
-
     public static Field getIndex(String fieldName) {
         if (index == null) {
             Map<String, Field> indexReverseLookup = new HashMap<String, Field>();
@@ -44,6 +130,8 @@ public enum Field {
         }
         return index.get(fieldName);
     }
+
+    public abstract Object getValue(final AbstractBuild<?, ?> build);
 
     private enum Persist {
         TRUE;

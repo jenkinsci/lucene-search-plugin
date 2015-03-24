@@ -44,24 +44,6 @@ public abstract class SearchBackend {
 
     private final SearchBackendEngine engine;
 
-    protected String getFormatedProjectDisplayName(final AbstractBuild<?, ?> build) {
-        StringBuilder builder = new StringBuilder();
-        if (!build.getProject().getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
-            builder.append(build.getProject().getParent().getDisplayName() + "/");
-        }
-        builder.append(build.getProject().getDisplayName());
-        return builder.toString();
-    }
-
-    protected String getFormatedProjectName(final AbstractBuild<?, ?> build) {
-        StringBuilder builder = new StringBuilder();
-        if (!build.getProject().getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
-            builder.append(build.getProject().getParent().getFullName() + "/");
-        }
-        builder.append(build.getProject().getName());
-        return builder.toString();
-    }
-
     public SearchBackend(SearchBackendEngine engine) {
         this.engine = engine;
     }

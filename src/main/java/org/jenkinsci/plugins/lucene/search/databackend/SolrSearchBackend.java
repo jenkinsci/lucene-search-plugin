@@ -2,15 +2,12 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import hudson.model.AbstractBuild;
 import hudson.model.BallColor;
-import hudson.model.Cause;
 import hudson.model.Job;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -18,7 +15,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.lucene.document.TextField;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
@@ -42,14 +38,9 @@ import java.util.logging.Logger;
 
 import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
 import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
-import static org.jenkinsci.plugins.lucene.search.Field.BUILT_ON;
 import static org.jenkinsci.plugins.lucene.search.Field.CONSOLE;
-import static org.jenkinsci.plugins.lucene.search.Field.DURATION;
 import static org.jenkinsci.plugins.lucene.search.Field.ID;
-import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_DISPLAY_NAME;
 import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
-import static org.jenkinsci.plugins.lucene.search.Field.RESULT;
-import static org.jenkinsci.plugins.lucene.search.Field.START_CAUSE;
 import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
 
 public class SolrSearchBackend extends SearchBackend {
@@ -196,29 +187,11 @@ public class SolrSearchBackend extends SearchBackend {
 
     @Override
     public void storeBuild(AbstractBuild<?, ?> build) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        build.getLogText().writeLogTo(0, byteArrayOutputStream);
-        String consoleOutput = byteArrayOutputStream.toString();
-
         try {
             SolrInputDocument doc = new SolrInputDocument();
-            doc.addField(ID.fieldName, build.getId());
-            doc.addField(PROJECT_NAME.fieldName, getFormatedProjectName(build));
-            doc.addField(PROJECT_DISPLAY_NAME.fieldName, getFormatedProjectDisplayName(build));
-            doc.addField(BUILD_NUMBER.fieldName, build.getNumber());
-            doc.addField(RESULT.fieldName, build.getResult().toString());
-            doc.addField(DURATION.fieldName, build.getDuration());
-            doc.addField(START_TIME.fieldName, build.getStartTimeInMillis());
-            doc.addField(BUILT_ON.fieldName, build.getBuiltOnStr());
-
-            StringBuilder shortDescriptions = new StringBuilder();
-            for (Cause cause : build.getCauses()) {
-                shortDescriptions.append(" ").append(cause.getShortDescription());
+            for (Field field : Field.values()) {
+                doc.addField(field.fieldName, field.getValue(build));
             }
-            doc.addField(START_CAUSE.fieldName, shortDescriptions.toString());
-            doc.addField(BALL_COLOR.fieldName, build.getIconColor().name());
-            doc.addField(CONSOLE.fieldName, consoleOutput);
-
             for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
                 doc.addField(extension.getKeyword(), extension.getTextResult(build));
             }
