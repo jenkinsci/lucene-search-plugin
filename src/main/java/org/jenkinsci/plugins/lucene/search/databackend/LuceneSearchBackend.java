@@ -25,14 +25,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.TopScoreDocCollector;
+import org.apache.lucene.search.*;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
 import org.apache.lucene.search.highlight.QueryTermScorer;
@@ -47,14 +40,7 @@ import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
@@ -322,9 +308,28 @@ public class LuceneSearchBackend extends SearchBackend {
 
     @Override
     public List<SearchFieldDefinition> getAllFieldDefinitions() {
-        for(String fieldName: getAllFields()) {
-            reader.document(id, Collections.singleton(fieldName));
+        Map<String, Boolean> fieldNames = new LinkedHashMap<String, Boolean>();
+        for (Field field : Field.values()) {
+            fieldNames.put(field.fieldName, field.persist);
         }
+        for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
+            fieldNames.put(extension.getKeyword(), extension.isPersist());
+        }
+
+        List<SearchFieldDefinition> definitions = new ArrayList<SearchFieldDefinition>();
+        for(Map.Entry<String, Boolean> fieldEntry : fieldNames.entrySet()) {
+            if (fieldEntry.getValue()) {
+                // This is a persisted field (i.e. we can get values)
+                IndexSearcher searcher = new IndexSearcher(reader);
+                DistinctCollector collector = new LengthLimitedDistinctCollector(fieldEntry.getKey(), searcher, 30);
+                Set<String> distinctData = collector.getDistinctData();
+                String[] possibleValues = distinctData.toArray(new String[distinctData.size()]);
+                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), true, possibleValues));
+            } else {
+                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), false, new String[0]));
+            }
+        }
+        return definitions;
     }
 
     @SuppressWarnings("rawtypes")

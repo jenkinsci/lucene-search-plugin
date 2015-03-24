@@ -10,6 +10,7 @@ import net.sf.json.JSONObject;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -334,6 +335,11 @@ public class SolrSearchBackend extends SearchBackend {
         } catch (IOException e) {
             LOGGER.warning("Could not delete job: " + jobName + " from Solr: " + e);
         }
+    }
+
+    @Override
+    public List<SearchFieldDefinition> getAllFieldDefinitions() {
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @SuppressWarnings("rawtypes")
