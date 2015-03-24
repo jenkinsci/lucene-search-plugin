@@ -2,9 +2,6 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import org.apache.lucene.search.IndexSearcher;
 
-/**
-* Created by tobias on 3/24/15.
-*/
 class LengthLimitedDistinctCollector extends DistinctCollector {
 
     private final int maxLength;
