@@ -48,6 +48,7 @@ import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -316,6 +317,13 @@ public class LuceneSearchBackend extends SearchBackend {
             updateReader();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public List<SearchFieldDefinition> getAllFieldDefinitions() {
+        for(String fieldName: getAllFields()) {
+            reader.document(id, Collections.singleton(fieldName));
         }
     }
 
