@@ -242,6 +242,8 @@ public class LuceneSearchBackend extends SearchBackend {
                 case TEXT:
                     doc.add(new TextField(field.fieldName, field.getValue(build).toString(), store));
                     break;
+                default:
+                    throw new IllegalArgumentException("Don't know how to handle " + FIELD_TYPE_MAP.get(field));
                 }
             }
             // TODO Add the following data
