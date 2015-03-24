@@ -15,13 +15,13 @@
 
 	<!-- Jenkins plugin config -->
 	<name>Lucene-Search</name>
-	<url>https://wiki.jenkins-ci.org/display/JENKINS/Lucen-Search</url>
+	<url>https://wiki.jenkins-ci.org/display/JENKINS/Lucene-Search</url>
 	<scm>
-		<connection>scm:git:git://github.com/jenkinsci/lucene-search-plugin</connection>
-		<developerConnection>scm:git:git@github.com:jenkinsci/lucene-search-plugin</developerConnection>
-	  <tag>HEAD</tag>
-  </scm>
-	<developers>
+        <connection>scm:git:git://github.com/jenkinsci/lucene-search-plugin</connection>
+        <developerConnection>scm:git:git@github.com:jenkinsci/lucene-search-plugin</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+    <developers>
 		<developer>
 			<id>tobias-</id>
 			<name>Tobias Olsson</name>
@@ -109,5 +109,4 @@
 			<url>http://repo.jenkins-ci.org/public/</url>
 		</pluginRepository>
 	</pluginRepositories>
-
 </project>
