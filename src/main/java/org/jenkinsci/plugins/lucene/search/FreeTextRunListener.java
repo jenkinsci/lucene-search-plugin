@@ -4,6 +4,7 @@ import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
+import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;

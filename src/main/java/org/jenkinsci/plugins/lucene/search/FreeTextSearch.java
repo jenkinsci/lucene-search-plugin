@@ -6,6 +6,7 @@ import hudson.search.SearchItem;
 import hudson.search.SearchResult;
 import hudson.search.SearchableModelObject;
 import hudson.search.SuggestedItem;
+import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 import org.kohsuke.stapler.Ancestor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;

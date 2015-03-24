@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.lucene.search;
+package org.jenkinsci.plugins.lucene.search.databackend;
 
 import hudson.Extension;
 import hudson.model.AbstractBuild;
@@ -11,6 +11,8 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
+import org.jenkinsci.plugins.lucene.search.SearchResultImpl;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 import org.jenkinsci.plugins.lucene.search.databackend.LuceneSearchBackend;

@@ -5,9 +5,7 @@ import hudson.model.ManagementLink;
 
 import javax.inject.Inject;
 
-import jenkins.model.Jenkins;
-
-import org.jenkinsci.plugins.lucene.search.SearchBackendManager;
+import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 import org.jenkinsci.plugins.lucene.search.databackend.ManagerProgress;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
 

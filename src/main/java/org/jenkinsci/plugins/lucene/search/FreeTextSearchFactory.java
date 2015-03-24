@@ -5,6 +5,7 @@ import hudson.Extension;
 import hudson.search.Search;
 import hudson.search.SearchFactory;
 import hudson.search.SearchableModelObject;
+import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 
 @Extension
 public class FreeTextSearchFactory extends SearchFactory {
