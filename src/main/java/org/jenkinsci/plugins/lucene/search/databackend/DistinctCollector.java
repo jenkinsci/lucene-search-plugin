@@ -8,7 +8,7 @@ import org.apache.lucene.search.Scorer;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class DistinctCollector extends Collector {
@@ -16,7 +16,7 @@ public class DistinctCollector extends Collector {
     private final Set<String> field;
     private final String fieldName;
     private final IndexSearcher searcher;
-    private final Set<String> distinctData = new HashSet<String>();
+    private final Set<String> distinctData = new LinkedHashSet<String>();
 
     public DistinctCollector(String fieldName, IndexSearcher searcher) {
         this.searcher = searcher;
@@ -31,8 +31,12 @@ public class DistinctCollector extends Collector {
     @Override
     public void collect(int doc) throws IOException {
         Document document = searcher.doc(doc, field);
-        String projectName = document.get(fieldName);
-        distinctData.add(projectName);
+        String fieldValue = document.get(fieldName);
+        addData(fieldValue);
+    }
+
+    protected void addData(String fieldValue) {
+        distinctData.add(fieldValue);
     }
 
     @Override
