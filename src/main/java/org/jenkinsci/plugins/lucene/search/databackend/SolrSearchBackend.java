@@ -315,7 +315,7 @@ public class SolrSearchBackend extends SearchBackend {
     }
 
     @Override
-    public List<SearchFieldDefinition> getAllFieldDefinitions() {
+    public List<SearchFieldDefinition> getAllFieldDefinitions() throws IOException {
         Map<String, Boolean> fieldNames = new LinkedHashMap<String, Boolean>();
         for (Field field : Field.values()) {
             fieldNames.put(field.fieldName, field.persist);
@@ -328,24 +328,13 @@ public class SolrSearchBackend extends SearchBackend {
         for(Map.Entry<String, Boolean> fieldEntry : fieldNames.entrySet()) {
             if (fieldEntry.getValue()) {
                 // This is a persisted field (i.e. we can get values)
-                SolrQuery query = new SolrQuery("*:*");
-                query.addFacetField(fieldEntry.getKey());
-                query.setRows(0);
-                QueryResponse queryResponse = null;
                 try {
-                    queryResponse = httpSolrServer.query(query);
+                    Set<String> facets = getFacetsOfField(fieldEntry.getKey());
+                    String[] possibleValuesArray = facets.toArray(new String[facets.size()]);
+                    definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), true, possibleValuesArray));
                 } catch (SolrServerException e) {
-                    throw new RuntimeException(e);
+                    throw new IOException(e);
                 }
-                Set<String> possibleValues = new LinkedHashSet<String>();
-                for (FacetField ff : queryResponse.getFacetFields()) {
-                    List<FacetField.Count> countList = queryResponse.getFacetField(fieldEntry.getKey()).getValues();
-                    for (FacetField.Count count : countList) {
-                        possibleValues.add(count.getName())
-                    }
-                    String[] possibleValues = countList.toArray(new String[distinctData.size()]);
-                }
-                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), true, possibleValues));
             } else {
                 definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), false, new String[0]));
             }
