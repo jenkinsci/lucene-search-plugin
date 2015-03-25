@@ -12,13 +12,13 @@ import javax.jws.WebMethod;
 import java.io.IOException;
 import java.util.List;
 
-public class FreeTextSearchHelpPage extends AllView {
+public class FreeTextSearchHelp extends AllView {
 
     @Inject
     private SearchBackendManager searchBackendManager;
 
     @DataBoundConstructor
-    public FreeTextSearchHelpPage() {
+    public FreeTextSearchHelp() {
         super("/luceneSearchHelp");
     }
 
