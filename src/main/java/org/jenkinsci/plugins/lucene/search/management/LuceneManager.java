@@ -15,6 +15,7 @@ public class LuceneManager extends ManagementLink {
     @Inject
     private transient SearchBackendManager backendManager;
     private ManagerProgress progress;
+    private int workers = 0;
 
     @Override
     public String getDisplayName() {
@@ -33,6 +34,7 @@ public class LuceneManager extends ManagementLink {
 
     @JavaScriptMethod
     public JSReturnCollection rebuildDatabase(int workers) {
+        this.workers = workers;
         JSReturnCollection statement = verifyNotInProgress();
         if (statement.code == 0) {
             progress = new ManagerProgress();
@@ -68,7 +70,7 @@ public class LuceneManager extends ManagementLink {
         JSReturnCollection statement = new JSReturnCollection();
         if (progress != null) {
             statement.progress = progress;
-            statement.workers = backendManager.getWorkers();
+            statement.workers = workers;
             switch (progress.getState()) {
             case COMPLETE:
                 statement.message = "Completed without errors";

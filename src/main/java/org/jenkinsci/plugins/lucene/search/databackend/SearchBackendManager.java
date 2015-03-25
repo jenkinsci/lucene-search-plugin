@@ -22,7 +22,6 @@ import org.jenkinsci.plugins.lucene.search.databackend.SolrSearchBackend;
 
 @Extension
 public class SearchBackendManager {
-    private int workers = 0;
 
     private transient SearchBackend instance;
 
@@ -73,16 +72,8 @@ public class SearchBackendManager {
     }
 
     public void rebuildDatabase(ManagerProgress progress, int maxWorkers) {
-        this.setWorkers(maxWorkers);
         getBackend().rebuildDatabase(progress, maxWorkers);
     }
 
-    public int getWorkers() {
-        return workers;
-    }
-
-    public void setWorkers(int workers) {
-        this.workers = workers;
-    }
 
 }
