@@ -75,5 +75,8 @@ public class SearchBackendManager {
         getBackend().rebuildDatabase(progress, maxWorkers);
     }
 
+    public List<SearchFieldDefinition> getSearchFieldDefinitions() throws IOException {
+        return getBackend().getAllFieldDefinitions();
+    }
 
 }
