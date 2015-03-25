@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -312,7 +314,41 @@ public class SolrSearchBackend extends SearchBackend {
 
     @Override
     public List<SearchFieldDefinition> getAllFieldDefinitions() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Map<String, Boolean> fieldNames = new LinkedHashMap<String, Boolean>();
+        for (Field field : Field.values()) {
+            fieldNames.put(field.fieldName, field.persist);
+        }
+        for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
+            fieldNames.put(extension.getKeyword(), extension.isPersist());
+        }
+
+        List<SearchFieldDefinition> definitions = new ArrayList<SearchFieldDefinition>();
+        for(Map.Entry<String, Boolean> fieldEntry : fieldNames.entrySet()) {
+            if (fieldEntry.getValue()) {
+                // This is a persisted field (i.e. we can get values)
+                SolrQuery query = new SolrQuery("*:*");
+                query.addFacetField(fieldEntry.getKey());
+                query.setRows(0);
+                QueryResponse queryResponse = null;
+                try {
+                    queryResponse = httpSolrServer.query(query);
+                } catch (SolrServerException e) {
+                    throw new RuntimeException(e);
+                }
+                Set<String> possibleValues = new LinkedHashSet<String>();
+                for (FacetField ff : queryResponse.getFacetFields()) {
+                    List<FacetField.Count> countList = queryResponse.getFacetField(fieldEntry.getKey()).getValues();
+                    for (FacetField.Count count : countList) {
+                        possibleValues.add(count.getName())
+                    }
+                    String[] possibleValues = countList.toArray(new String[distinctData.size()]);
+                }
+                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), true, possibleValues));
+            } else {
+                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), false, new String[0]));
+            }
+        }
+        return definitions;
     }
 
     @SuppressWarnings("rawtypes")
