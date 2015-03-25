@@ -283,13 +283,15 @@ public class SolrSearchBackend extends SearchBackend {
             int i = 0;
             for (SolrDocument doc : queryResponse.getResults()) {
                 progress.setCurrent(i);
-                Integer buildNumber = (Integer) doc.get(BUILD_NUMBER.fieldName);
+                int buildNumber = ((Number) doc.get(BUILD_NUMBER.fieldName)).intValue();
                 if (firstBuildNumber > buildNumber) {
                     idsToDelete.add((String) doc.get(ID.fieldName));
                 }
                 i++;
             }
-            httpSolrServer.deleteById(idsToDelete);
+            if (!idsToDelete.isEmpty()) {
+                httpSolrServer.deleteById(idsToDelete);
+            }
             progress.setSuccessfullyCompleted();
         } catch (SolrServerException e) {
             progress.completedWithErrors(e);
@@ -355,25 +357,37 @@ public class SolrSearchBackend extends SearchBackend {
     @Override
     public void cleanDeletedJobs(Progress progress) {
         try {
-            Set<String> jobNames = new HashSet<String>();
+            Set<String> jobNames = new CaseInsensitiveHashSet();
             for (Job job : Jenkins.getInstance().getAllItems(Job.class)) {
                 jobNames.add(job.getName());
             }
-            SolrQuery query = new SolrQuery("*:*");
-            query.addFacetField(PROJECT_NAME.fieldName);
-            query.setRows(0);
-            QueryResponse queryResponse = httpSolrServer.query(query);
-            for (FacetField ff : queryResponse.getFacetFields()) {
-                String jobName = ff.getName();
+            String fieldName = PROJECT_NAME.fieldName;
+            Set<String> facets = getFacetsOfField(fieldName);
+            for (String jobName: facets) {
                 if (!jobNames.contains(jobName)) {
                     deleteJob(jobName);
                 }
             }
+            progress.setSuccessfullyCompleted();
         } catch (SolrServerException e) {
             progress.completedWithErrors(e);
         } finally {
             progress.setFinished();
         }
+    }
+
+    public Set<String> getFacetsOfField(String fieldName) throws SolrServerException {
+        SolrQuery query = new SolrQuery("*:*");
+        query.addFacetField(fieldName);
+        query.setRows(0);
+        QueryResponse queryResponse = httpSolrServer.query(query);
+        FacetField jobNamesField = queryResponse.getFacetField(fieldName);
+
+        Set<String> facets = new LinkedHashSet<String>();
+        for (FacetField.Count facetValue : jobNamesField.getValues()) {
+            facets.add(facetValue.getName());
+        }
+        return facets;
     }
 
 }
