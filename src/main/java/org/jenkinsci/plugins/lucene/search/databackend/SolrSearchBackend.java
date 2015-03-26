@@ -62,7 +62,7 @@ public class SolrSearchBackend extends SearchBackend {
             String[] defaultSearchableFields = getAllDefaultSearchableFields();
             defineCopyField(defaultSearchableFields);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Solr startup failed: " + e.getMessage(), e);
         }
     }
 

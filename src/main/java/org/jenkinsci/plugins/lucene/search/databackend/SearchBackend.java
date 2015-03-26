@@ -12,12 +12,10 @@ import java.util.Map;
 import jenkins.model.Jenkins;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.search.SearcherManager;
 import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
-import org.jenkinsci.plugins.lucene.search.management.LuceneManager;
 
 public abstract class SearchBackend {
 
@@ -38,6 +36,8 @@ public abstract class SearchBackend {
                 storeBuild(build);
             } catch (IOException e) {
                 progress.completedWithErrors(e);
+            } finally {
+                progress.incCurrent();
             }
         }
     }
@@ -70,8 +70,10 @@ public abstract class SearchBackend {
     public void rebuildJob(Progress progress, Job<?, ?> job, int maxWorkers) throws IOException {
         BurstExecutor<AbstractBuild> burstExecutor = BurstExecutor.create(new RebuildBuildWorker(progress), maxWorkers)
                 .andStart();
+        progress.setMax(0);
         for (Run<?, ?> run : job.getBuilds()) {
             if (run instanceof AbstractBuild) {
+                progress.setMax(progress.getMax() + 1);
                 AbstractBuild build = (AbstractBuild) run;
                 burstExecutor.add(build);
             }
@@ -89,20 +91,22 @@ public abstract class SearchBackend {
         List<Job> allItems = Jenkins.getInstance().getAllItems(Job.class);
         progress.setMax(allItems.size());
         try {
-            cleanDeletedJobs(progress.getDeletedJobsCleanProgress());
+            cleanDeletedJobs(progress);
             progress.assertNoErrors();
             for (Job job : allItems) {
-                progress.setNewIteration();
-                progress.next(job);
-                if (job.getBuilds().isEmpty()) {
-                    deleteJob(job.getName());
-                } else {
-                    cleanDeletedBuilds(progress.getDeletedBuildsCleanProgress(), job);
-                    progress.assertNoErrors();
-                    rebuildJob(progress.getRebuildProgress(), job, maxWorkers);
-                    progress.assertNoErrors();
+                Progress currentJobProgress = progress.beginJob(job);
+                try {
+                    if (job.getBuilds().isEmpty()) {
+                        deleteJob(job.getName());
+                    } else {
+                        cleanDeletedBuilds(currentJobProgress, job);
+                        progress.assertNoErrors();
+                        rebuildJob(currentJobProgress, job, maxWorkers);
+                        progress.assertNoErrors();
+                    }
+                } finally {
+                    progress.jobComplete();
                 }
-                progress.setComplete();
             }
             progress.setSuccessfullyCompleted();
         } catch (IOException e) {

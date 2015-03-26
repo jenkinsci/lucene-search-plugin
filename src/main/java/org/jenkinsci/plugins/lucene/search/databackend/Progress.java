@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
+
 public class Progress {
 
     public enum ProgressState {
@@ -10,15 +11,15 @@ public class Progress {
     private long elapsedTime;
 
     private ProgressState state = ProgressState.PROCESSING;
-    private Throwable reason;
+    private transient Throwable reason;
     private String reasonMessage = "";
     private int max;
-    private int current;
+    private volatile int current;
     private String name;
 
     public void assertNoErrors() throws Throwable {
         if (getState() == ProgressState.COMPLETE_WITH_ERROR) {
-            throw getReason();
+            throw reason;
         }
     }
 
@@ -33,7 +34,7 @@ public class Progress {
 
     public void completedWithErrors(Throwable reason) {
         state = ProgressState.COMPLETE_WITH_ERROR;
-        this.setReason(reason);
+        this.withReason(reason);
         reasonMessage = reason.getMessage();
     }
 
@@ -55,16 +56,16 @@ public class Progress {
         state = ProgressState.COMPLETE;
     }
 
-    public Throwable getReason() {
-        return reason;
-    }
-
     public ProgressState getState() {
         return state;
     }
 
     public boolean isFinished() {
         return state == ProgressState.COMPLETE || state == ProgressState.COMPLETE_WITH_ERROR;
+    }
+
+    public Throwable getReason() {
+        return reason;
     }
 
     public int getMax() {
@@ -83,6 +84,10 @@ public class Progress {
         this.current = current;
     }
 
+    public void incCurrent() {
+        this.current++;
+    }
+
     public String getName() {
         return name;
     }
@@ -99,7 +104,7 @@ public class Progress {
         this.elapsedTime = elapsedTime;
     }
 
-    public void setReason(Throwable reason) {
+    public void withReason(Throwable reason) {
         this.reason = reason;
     }
 

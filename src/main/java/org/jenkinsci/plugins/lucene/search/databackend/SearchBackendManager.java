@@ -2,25 +2,18 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import hudson.Extension;
 import hudson.model.AbstractBuild;
-import hudson.search.Search;
 import hudson.search.SearchResult;
 import hudson.search.SuggestedItem;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import javax.inject.Inject;
-
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.SearchResultImpl;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
-import org.jenkinsci.plugins.lucene.search.databackend.LuceneSearchBackend;
-import org.jenkinsci.plugins.lucene.search.databackend.ManagerProgress;
-import org.jenkinsci.plugins.lucene.search.databackend.SearchBackend;
-import org.jenkinsci.plugins.lucene.search.databackend.SolrSearchBackend;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @Extension
 public class SearchBackendManager {
@@ -75,7 +68,16 @@ public class SearchBackendManager {
     }
 
     public void rebuildDatabase(ManagerProgress progress, int maxWorkers) {
-        getBackend().rebuildDatabase(progress, maxWorkers);
+        try {
+            getBackend().rebuildDatabase(progress, maxWorkers);
+        } catch (RuntimeException e) {
+            progress.withReason(e);
+            progress.setReasonMessage(e.toString());
+            progress.setReasonMessage(e.toString());
+            throw e;
+        } finally {
+            progress.setFinished();
+        }
     }
 
     public List<SearchFieldDefinition> getSearchFieldDefinitions() throws IOException {
