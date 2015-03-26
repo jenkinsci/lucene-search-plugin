@@ -1,7 +1,0 @@
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <l:layout title="${%Visual}">
-        <l:main-panel>
-            <h1>Well done, you got the plugin working Have a ${it.type}. After wards you can change the index.jelly to what you want to show in this view.</h1>
-        </l:main-panel>
-    </l:layout>
-</j:jelly>

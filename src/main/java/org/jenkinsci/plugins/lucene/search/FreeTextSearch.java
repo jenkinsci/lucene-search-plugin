@@ -6,13 +6,16 @@ import hudson.search.SearchItem;
 import hudson.search.SearchResult;
 import hudson.search.SearchableModelObject;
 import hudson.search.SuggestedItem;
+
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
+import org.jenkinsci.plugins.lucene.search.databackend.SearchFieldDefinition;
 import org.kohsuke.stapler.Ancestor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
 import javax.servlet.ServletException;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -88,5 +91,9 @@ public class FreeTextSearch extends Search {
         SearchResult suggestedItems = super.getSuggestions(req, query);
         suggestedItems.addAll(manager.getSuggestedItems(query));
         return suggestedItems;
+    }
+
+    public List<SearchFieldDefinition> getSearchHelp() throws IOException {
+        return manager.getSearchFieldDefinitions();
     }
 }

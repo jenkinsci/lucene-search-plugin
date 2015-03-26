@@ -4,6 +4,25 @@
     <j:new var="h" className="hudson.Functions"/>
     <!-- needed for printing title. -->
     <l:layout title="${%Search for} '${q}'">
+        <l:side-panel>
+            <h2><img src="${rootURL}/images/16x16/help.png" /> Search help</h2>
+            <h3>Supported keywords</h3>
+            <j:forEach var="searchItem" items="${it.getSearchHelp()}">
+            	${searchItem.fieldName}: <j:if test="${searchItem.caseSensitive}">*</j:if><br />
+            </j:forEach>
+            * Case sensitive
+            <h3>Search examples</h3>
+            	projectname:LucenSearchPlugin<br/>
+            	console:"Something went wrong"<br/>
+            	result:FAILURE<br/>
+            	<br/>
+            	result:FAILURE AND console:"the build completed successfully" <br/>
+            <h3>Escaping</h3>
+            	Some chars needs to be escaped <br />
+            	"error\: something went wrong" <br />
+            	"plug\-in needs to be like this" <br />
+            	"c:\\ also needs to be escaped"
+        </l:side-panel>
         <l:main-panel>
             <j:set var="hits" value="${it.hits}"/>
             <j:set var="searchModelHits" value="${it.searchModelHits}"/>
