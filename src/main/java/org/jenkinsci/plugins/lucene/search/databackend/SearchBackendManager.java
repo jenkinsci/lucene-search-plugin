@@ -84,10 +84,8 @@ public class SearchBackendManager {
 
     public synchronized List<SearchFieldDefinition> getSearchFieldDefinitions(boolean forceRefresh) throws IOException {
         if (cachedFieldDefinitions == null || forceRefresh) {
-           cachedFieldDefinitions = Collections.unmodifiableList(getBackend().getAllFieldDefinitions());
+            cachedFieldDefinitions = Collections.unmodifiableList(getBackend().getAllFieldDefinitions());
         }
         return cachedFieldDefinitions;
     }
-
-
 }
