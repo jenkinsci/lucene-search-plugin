@@ -234,7 +234,7 @@ public class LuceneSearchBackend extends SearchBackend {
                 org.apache.lucene.document.Field.Store store = field.persist ? STORE : DONT_STORE;
                 switch (FIELD_TYPE_MAP.get(field)) {
                 case LONG:
-                    doc.add(new LongField(field.fieldName, (Long) field.getValue(build), store));
+                    doc.add(new LongField(field.fieldName, ((Number) field.getValue(build)).longValue(), store));
                     break;
                 case STRING:
                     doc.add(new StringField(field.fieldName, field.getValue(build).toString(), store));
