@@ -210,7 +210,7 @@ public class SolrSearchBackend extends SearchBackend {
         query.setFields(getAllFields());
         query.setQuery(queryString);
         query.setStart(0);
-        //query.set("defType", "edismax");
+        query.set("defType", "edismax");
         if (includeHighlights) {
             query.setHighlightSnippets(5);
             query.setHighlight(true);
