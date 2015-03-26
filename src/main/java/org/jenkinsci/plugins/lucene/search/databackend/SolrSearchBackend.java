@@ -6,7 +6,6 @@ import hudson.model.Job;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -30,6 +29,7 @@ import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -329,13 +329,12 @@ public class SolrSearchBackend extends SearchBackend {
                 // This is a persisted field (i.e. we can get values)
                 try {
                     Set<String> facets = getFacetsOfField(fieldEntry.getKey());
-                    String[] possibleValuesArray = facets.toArray(new String[facets.size()]);
-                    definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), true, possibleValuesArray));
+                    definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), true, facets));
                 } catch (SolrServerException e) {
                     throw new IOException(e);
                 }
             } else {
-                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), false, new String[0]));
+                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), false, Collections.EMPTY_LIST));
             }
         }
         return definitions;

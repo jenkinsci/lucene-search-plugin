@@ -332,10 +332,9 @@ public class LuceneSearchBackend extends SearchBackend {
                 DistinctCollector collector = new LengthLimitedDistinctCollector(fieldEntry.getKey(), searcher, 30);
                 searcher.search(new MatchAllDocsQuery(), collector);
                 Set<String> distinctData = collector.getDistinctData();
-                String[] possibleValues = distinctData.toArray(new String[distinctData.size()]);
-                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), true, possibleValues));
+                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), true, distinctData));
             } else {
-                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), false, new String[0]));
+                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), false, Collections.EMPTY_LIST));
             }
         }
         return definitions;
