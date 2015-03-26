@@ -49,7 +49,8 @@ public enum Field {
     },
 
     RESULT("result", Persist.TRUE) {
-        @Override public Result getValue(AbstractBuild<?, ?> build) {
+        @Override
+        public Result getValue(AbstractBuild<?, ?> build) {
             return build.getResult();
         }
     },

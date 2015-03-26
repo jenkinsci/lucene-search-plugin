@@ -232,7 +232,7 @@ public class LuceneSearchBackend extends SearchBackend {
             Document doc = new Document();
             for (Field field : Field.values()) {
                 org.apache.lucene.document.Field.Store store = field.persist ? STORE : DONT_STORE;
-                switch(FIELD_TYPE_MAP.get(field)) {
+                switch (FIELD_TYPE_MAP.get(field)) {
                 case LONG:
                     doc.add(new LongField(field.fieldName, (Long) field.getValue(build), store));
                     break;
@@ -325,7 +325,7 @@ public class LuceneSearchBackend extends SearchBackend {
         }
 
         List<SearchFieldDefinition> definitions = new ArrayList<SearchFieldDefinition>();
-        for(Map.Entry<String, Boolean> fieldEntry : fieldNames.entrySet()) {
+        for (Map.Entry<String, Boolean> fieldEntry : fieldNames.entrySet()) {
             if (fieldEntry.getValue()) {
                 // This is a persisted field (i.e. we can get values)
                 IndexSearcher searcher = new IndexSearcher(reader);

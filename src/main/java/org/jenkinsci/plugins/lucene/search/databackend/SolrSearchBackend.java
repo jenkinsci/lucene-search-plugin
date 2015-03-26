@@ -324,7 +324,7 @@ public class SolrSearchBackend extends SearchBackend {
         }
 
         List<SearchFieldDefinition> definitions = new ArrayList<SearchFieldDefinition>();
-        for(Map.Entry<String, Boolean> fieldEntry : fieldNames.entrySet()) {
+        for (Map.Entry<String, Boolean> fieldEntry : fieldNames.entrySet()) {
             if (fieldEntry.getValue()) {
                 // This is a persisted field (i.e. we can get values)
                 try {
@@ -351,7 +351,7 @@ public class SolrSearchBackend extends SearchBackend {
             }
             String fieldName = PROJECT_NAME.fieldName;
             Set<String> facets = getFacetsOfField(fieldName);
-            for (String jobName: facets) {
+            for (String jobName : facets) {
                 if (!jobNames.contains(jobName)) {
                     deleteJob(jobName);
                 }
