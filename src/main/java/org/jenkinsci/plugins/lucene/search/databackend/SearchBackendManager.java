@@ -2,10 +2,12 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import hudson.Extension;
 import hudson.model.AbstractBuild;
+import hudson.search.Search;
 import hudson.search.SearchResult;
 import hudson.search.SuggestedItem;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +26,7 @@ import org.jenkinsci.plugins.lucene.search.databackend.SolrSearchBackend;
 public class SearchBackendManager {
 
     private transient SearchBackend instance;
+    private transient List<SearchFieldDefinition> cachedFieldDefinitions;
 
     @Inject
     private transient SearchBackendConfiguration backendConfig;
@@ -76,7 +79,15 @@ public class SearchBackendManager {
     }
 
     public List<SearchFieldDefinition> getSearchFieldDefinitions() throws IOException {
-        return getBackend().getAllFieldDefinitions();
+        return getSearchFieldDefinitions(false);
     }
+
+    public synchronized List<SearchFieldDefinition> getSearchFieldDefinitions(boolean forceRefresh) throws IOException {
+        if (cachedFieldDefinitions == null || forceRefresh) {
+           cachedFieldDefinitions = Collections.unmodifiableList(getBackend().getAllFieldDefinitions());
+        }
+        return cachedFieldDefinitions;
+    }
+
 
 }
