@@ -214,6 +214,8 @@ public class SolrSearchBackend extends SearchBackend {
         if (includeHighlights) {
             query.setHighlightSnippets(5);
             query.setHighlight(true);
+            query.setHighlightSimplePre("<b>");
+            query.setHighlightSimplePost("</b>");
         }
         query.setSort("score", SolrQuery.ORDER.desc);
         query.addSort(START_TIME.fieldName, SolrQuery.ORDER.desc);
@@ -222,9 +224,10 @@ public class SolrSearchBackend extends SearchBackend {
             QueryResponse queryResponse = httpSolrServer.query(query);
             for (SolrDocument doc : queryResponse.getResults()) {
                 String[] bestFragments = EMPTY_ARRAY;
-                Map<String, List<String>> highlighting = queryResponse.getHighlighting().get(ID.fieldName);
+                String buildId = (String) doc.get(ID.fieldName);
+                Map<String, List<String>> highlighting = queryResponse.getHighlighting().get(buildId);
                 if (highlighting != null) {
-                    List<String> frags = highlighting.get(CONSOLE.fieldName);
+                    List<String> frags = highlighting.get(COMPOSITE_SEARCH_FIELD);
                     if (frags != null) {
                         bestFragments = frags.toArray(new String[frags.size()]);
                     }
