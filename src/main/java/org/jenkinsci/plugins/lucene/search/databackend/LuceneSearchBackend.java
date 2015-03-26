@@ -315,7 +315,7 @@ public class LuceneSearchBackend extends SearchBackend {
     }
 
     @Override
-    public List<SearchFieldDefinition> getAllFieldDefinitions() {
+    public List<SearchFieldDefinition> getAllFieldDefinitions() throws IOException {
         Map<String, Boolean> fieldNames = new LinkedHashMap<String, Boolean>();
         for (Field field : Field.values()) {
             fieldNames.put(field.fieldName, field.persist);
@@ -330,6 +330,7 @@ public class LuceneSearchBackend extends SearchBackend {
                 // This is a persisted field (i.e. we can get values)
                 IndexSearcher searcher = new IndexSearcher(reader);
                 DistinctCollector collector = new LengthLimitedDistinctCollector(fieldEntry.getKey(), searcher, 30);
+                searcher.search(new MatchAllDocsQuery(), collector);
                 Set<String> distinctData = collector.getDistinctData();
                 String[] possibleValues = distinctData.toArray(new String[distinctData.size()]);
                 definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), true, possibleValues));
