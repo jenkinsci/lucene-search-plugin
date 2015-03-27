@@ -28,7 +28,7 @@ public class SearchFieldDefinition {
     }
 
     public String getExamples(int nrExamples) {
-        if ( nrExamples < 1) {
+        if (nrExamples < 1) {
             throw new IllegalArgumentException("Cannot use so low number of examples");
         }
         int i = 0;

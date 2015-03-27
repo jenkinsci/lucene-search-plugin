@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
-
 public class Progress {
 
     public enum ProgressState {
