@@ -14,11 +14,15 @@ public class ManagerProgress extends Progress {
 
     private Progress currentProject;
 
+    private long processedItems = 0;
+
     public void jobComplete() {
         if (currentProject != null) {
             currentProject.setSuccessfullyCompleted();
             currentProject.setFinished();
             this.getHistory().add(currentProject);
+            setProcessedItems(getProcessedItems() + currentProject.getMax());
+            this.setElapsedTime(System.currentTimeMillis() - startTime);
         }
     }
 
@@ -31,7 +35,7 @@ public class ManagerProgress extends Progress {
     }
 
     public String getReasonsAsString() {
-        if (! TextUtils.isEmpty(super.getReasonMessage())) {
+        if (!TextUtils.isEmpty(super.getReasonMessage())) {
             return super.getReasonMessage();
         } else if (currentProject != null) {
             return currentProject.getReasonMessage();
@@ -47,7 +51,6 @@ public class ManagerProgress extends Progress {
         this.getHistory().add(currentProject);
     }
 
-
     public Progress beginJob(Job project) {
         StringBuilder builder = new StringBuilder();
         if (!project.getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
@@ -61,5 +64,13 @@ public class ManagerProgress extends Progress {
 
     public List<Progress> getHistory() {
         return history;
+    }
+
+    public long getProcessedItems() {
+        return processedItems;
+    }
+
+    public void setProcessedItems(long processedItems) {
+        this.processedItems = processedItems;
     }
 }

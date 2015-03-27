@@ -30,6 +30,7 @@
 
                 <div id="currentProgress" class="running">
                     ${%Currently processing }<b id="currentlyProcessing"/>${% using }<b id="currentWorkers"/>${% workers}<br/>
+                    ${%Total processed runs }<b id="totalProcessesedRun"/>${% took }<b id="currentElapsedTime"/><br/>
                     ${%Project }<b id="currentlyProcessingIndex"/>${% out of }<b id="currentlyProcessingMax"/><br/>
                     <h5>${%Processed projects}</h5>
                     <ul id="history" />

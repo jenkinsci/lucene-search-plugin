@@ -44,6 +44,9 @@ function updateStatusFromResponse(statement) {
         $("#currentlyProcessing").text(progress.name);
         $("#currentlyProcessingIndex").text(progress.current);
         $("#currentlyProcessingMax").text(progress.max);
+        $("#totalProcessesedRun").text(progress.processedItems);
+        $("#currentElapsedTime").text((progress.elapsedTime/1000) + "s");
+        
         for(var historyIndex = 0; historyIndex != progress.history.length; historyIndex++) {
             var hist = statement.progress.history[historyIndex];
             var projectString = hist.name + " completed after " + (hist.elapsedTime/1000) + "s (" + hist.current + " elements processed)";

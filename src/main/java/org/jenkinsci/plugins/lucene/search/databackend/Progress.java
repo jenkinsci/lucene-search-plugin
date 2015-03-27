@@ -7,7 +7,7 @@ public class Progress {
         PROCESSING, COMPLETE, COMPLETE_WITH_ERROR
     }
 
-    private long startTime;
+    protected long startTime;
     private long elapsedTime;
 
     private ProgressState state = ProgressState.PROCESSING;
