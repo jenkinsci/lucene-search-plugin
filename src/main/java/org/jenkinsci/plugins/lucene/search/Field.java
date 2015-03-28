@@ -1,10 +1,13 @@
 package org.jenkinsci.plugins.lucene.search;
 
 import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.Result;
 import hudson.scm.ChangeLogSet;
+import hudson.tasks.Publisher;
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.jenkinsci.plugins.lucene.search.artifact.ArtifactIndexer;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -116,15 +119,28 @@ public enum Field {
                     sb.append("author:").append(entry.getAuthor()).append('\n');
                     sb.append("commitid:").append(entry.getCommitId()).append('\n');
                     sb.append("message:").append(entry.getMsg()).append('\n');
-                    for(String path : entry.getAffectedPaths()) {
+                    for (String path : entry.getAffectedPaths()) {
                         sb.append(path).append('\n');
                     }
                 }
             }
             return sb.toString();
         }
-    };
+    },
 
+    ARTIFACTS("artifacts", Persist.TRUE) {
+        @Override public Object getValue(AbstractBuild<?, ?> build) {
+            StringBuilder sb = new StringBuilder();
+            AbstractProject<?, ?> p = build.getProject();
+            for (Publisher publisher : p.getPublishersList()) {
+                if (publisher instanceof ArtifactIndexer) {
+                    ArtifactIndexer ai = (ArtifactIndexer) publisher;
+                    return ai.getIndexableData(build);
+                }
+            }
+            return sb.toString();
+        }
+    };
 
     private static Map<String, Field> index;
     public final String fieldName;
