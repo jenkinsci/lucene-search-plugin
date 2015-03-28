@@ -16,7 +16,6 @@ import hudson.util.LogTaskListener;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
-import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
