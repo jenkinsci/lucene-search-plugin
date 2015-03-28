@@ -121,11 +121,6 @@ public class ArtifactIndexer extends Recorder {
             return r;
         }
 
-        @Override
-        public void checkRoles(RoleChecker checker) throws SecurityException {
-            // TODO Auto-generated method stub
-
-        }
     }
 
     @Extension
