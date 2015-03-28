@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.lucene.search;
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
 import hudson.model.Result;
+import hudson.scm.ChangeLogSet;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
 import java.io.IOException;
@@ -104,7 +105,26 @@ public enum Field {
                 throw new RuntimeException(e.getMessage(), e);
             }
         }
+    },
+
+    CHANGE_LOG("changelog", Persist.TRUE) {
+        @Override public Object getValue(AbstractBuild<?, ?> build) {
+            ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = build.getChangeSet();
+            StringBuilder sb = new StringBuilder();
+            if (changeSet != null) {
+                for (ChangeLogSet.Entry entry : build.getChangeSet()) {
+                    sb.append("author:").append(entry.getAuthor()).append('\n');
+                    sb.append("commitid:").append(entry.getCommitId()).append('\n');
+                    sb.append("message:").append(entry.getMsg()).append('\n');
+                    for(String path : entry.getAffectedPaths()) {
+                        sb.append(path).append('\n');
+                    }
+                }
+            }
+            return sb.toString();
+        }
     };
+
 
     private static Map<String, Field> index;
     public final String fieldName;
