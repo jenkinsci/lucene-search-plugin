@@ -90,9 +90,11 @@ public abstract class SearchBackend {
     @SuppressWarnings("rawtypes")
     public void rebuildDatabase(ManagerProgress progress, int maxWorkers) {
         List<Job> allItems = Jenkins.getInstance().getAllItems(Job.class);
-        progress.setMax(allItems.size());
+        progress.setMax(allItems.size() + 1);
         try {
-            cleanDeletedJobs(progress);
+            Progress cleanProgress = progress.beginCleanJob();
+            cleanDeletedJobs(cleanProgress);
+            progress.jobComplete();
             progress.assertNoErrors();
             for (Job job : allItems) {
                 Progress currentJobProgress = progress.beginJob(job);

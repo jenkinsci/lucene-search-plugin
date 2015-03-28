@@ -13,8 +13,10 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.LogTaskListener;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
@@ -114,6 +116,12 @@ public class ArtifactIndexer extends Recorder {
                 r.put(f, IOUtils.toString(new File(f).toURI(), Charset.forName(charset)));
             }
             return r;
+        }
+
+        @Override
+        public void checkRoles(RoleChecker checker) throws SecurityException {
+            // TODO Auto-generated method stub
+            
         }
     }
 

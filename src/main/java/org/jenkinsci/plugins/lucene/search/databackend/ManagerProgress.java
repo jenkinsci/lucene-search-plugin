@@ -50,7 +50,11 @@ public class ManagerProgress extends Progress {
         currentProject.setFinished();
         this.getHistory().add(currentProject);
     }
-
+    public Progress beginCleanJob() {
+        incCurrent();
+        currentProject = new Progress("main clean");
+        return currentProject;      
+    }
     public Progress beginJob(Job project) {
         StringBuilder builder = new StringBuilder();
         if (!project.getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
