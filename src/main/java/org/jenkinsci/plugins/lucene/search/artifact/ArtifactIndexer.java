@@ -80,7 +80,8 @@ public class ArtifactIndexer extends Recorder {
         if (ws != null) { // slave down?
             try {
                 StringBuilder sb = new StringBuilder();
-                LogTaskListener listener = new LogTaskListener(java.util.logging.Logger.getLogger(ArtifactIndexer.class.getName()), Level.INFO);
+                LogTaskListener listener = new LogTaskListener(java.util.logging.Logger.getLogger(ArtifactIndexer.class
+                        .getName()), Level.INFO);
                 String artifacts = build.getEnvironment(listener).expand(this.artifacts);
                 Map<String, String> fileData = ws.act(new DumpFiles(artifacts, excludes, charset));
                 for (Map.Entry<String, String> entry : fileData.entrySet()) {
@@ -109,7 +110,9 @@ public class ArtifactIndexer extends Recorder {
             this.charset = charset;
         }
 
-        @Override public Map<String, String> invoke(File basedir, VirtualChannel channel) throws IOException, InterruptedException {
+        @Override
+        public Map<String, String> invoke(File basedir, VirtualChannel channel) throws IOException,
+                InterruptedException {
             Map<String, String> r = new LinkedHashMap<String, String>();
             for (String f : Util.createFileSet(basedir, includes, excludes).getDirectoryScanner().getIncludedFiles()) {
                 f = f.replace(File.separatorChar, '/');
@@ -121,7 +124,7 @@ public class ArtifactIndexer extends Recorder {
         @Override
         public void checkRoles(RoleChecker checker) throws SecurityException {
             // TODO Auto-generated method stub
-            
+
         }
     }
 
@@ -132,7 +135,8 @@ public class ArtifactIndexer extends Recorder {
             return "Search artifact contents";
         }
 
-        @Override public boolean isApplicable(Class<? extends AbstractProject> jobType) {
+        @Override
+        public boolean isApplicable(Class<? extends AbstractProject> jobType) {
             return true;
         }
     }

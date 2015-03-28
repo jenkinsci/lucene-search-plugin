@@ -111,7 +111,8 @@ public enum Field {
     },
 
     CHANGE_LOG("changelog", Persist.TRUE) {
-        @Override public Object getValue(AbstractBuild<?, ?> build) {
+        @Override
+        public Object getValue(AbstractBuild<?, ?> build) {
             ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = build.getChangeSet();
             StringBuilder sb = new StringBuilder();
             if (changeSet != null) {
@@ -129,7 +130,8 @@ public enum Field {
     },
 
     ARTIFACTS("artifacts", Persist.TRUE) {
-        @Override public Object getValue(AbstractBuild<?, ?> build) {
+        @Override
+        public Object getValue(AbstractBuild<?, ?> build) {
             StringBuilder sb = new StringBuilder();
             AbstractProject<?, ?> p = build.getProject();
             for (Publisher publisher : p.getPublishersList()) {
