@@ -27,7 +27,7 @@ public class ManagerProgress extends Progress {
     }
 
     @Override
-    public void assertNoErrors() throws Throwable {
+    public void assertNoErrors() throws Exception {
         super.assertNoErrors();
         if (currentProject != null) {
             currentProject.assertNoErrors();
@@ -44,7 +44,7 @@ public class ManagerProgress extends Progress {
     }
 
     @Override
-    public void completedWithErrors(Throwable e) {
+    public void completedWithErrors(Exception e) {
         super.completedWithErrors(e);
         currentProject.completedWithErrors(e);
         currentProject.setFinished();

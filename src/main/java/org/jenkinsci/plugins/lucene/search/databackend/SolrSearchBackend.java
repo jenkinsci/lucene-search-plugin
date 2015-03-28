@@ -14,6 +14,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.log4j.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
@@ -35,7 +36,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
 import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
@@ -46,7 +46,7 @@ import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
 
 public class SolrSearchBackend extends SearchBackend {
 
-    private static final Logger LOGGER = Logger.getLogger(SolrSearchBackend.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(SolrSearchBackend.class);
     private static final String[] EMPTY_ARRAY = new String[0];
     public static final String COMPOSITE_SEARCH_FIELD = "text";
 
@@ -263,9 +263,9 @@ public class SolrSearchBackend extends SearchBackend {
         try {
             httpSolrServer.deleteById(build.getId());
         } catch (SolrServerException e) {
-            LOGGER.warning("Could not delete build from solr: " + e.getMessage());
+            LOGGER.warn("Could not delete build from solr: ", e);
         } catch (IOException e) {
-            LOGGER.warning("Could not delete build from solr: " + e.getMessage());
+            LOGGER.warn("Could not delete build from solr: ", e);
         }
     }
 
@@ -297,8 +297,10 @@ public class SolrSearchBackend extends SearchBackend {
             progress.setSuccessfullyCompleted();
         } catch (SolrServerException e) {
             progress.completedWithErrors(e);
+            LOGGER.error("Clean deleted jobs failed", e);
         } catch (IOException e) {
             progress.completedWithErrors(e);
+            LOGGER.error("Clean deleted jobs failed", e);
         } finally {
             progress.setFinished();
         }
@@ -310,9 +312,9 @@ public class SolrSearchBackend extends SearchBackend {
         try {
             httpSolrServer.deleteByQuery(queryString);
         } catch (SolrServerException e) {
-            LOGGER.warning("Could not delete job: " + jobName + " from Solr: " + e);
+            LOGGER.warn("Could not delete job: " + jobName + " from Solr: ", e);
         } catch (IOException e) {
-            LOGGER.warning("Could not delete job: " + jobName + " from Solr: " + e);
+            LOGGER.warn("Could not delete job: " + jobName + " from Solr: ", e);
         }
     }
 

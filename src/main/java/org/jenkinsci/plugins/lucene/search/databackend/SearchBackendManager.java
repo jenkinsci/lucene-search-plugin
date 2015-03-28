@@ -4,6 +4,7 @@ import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.search.SearchResult;
 import hudson.search.SuggestedItem;
+import org.apache.log4j.Logger;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.SearchResultImpl;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
@@ -17,6 +18,7 @@ import java.util.Map;
 
 @Extension
 public class SearchBackendManager {
+    private static final Logger LOG = Logger.getLogger(SearchBackendManager.class);
 
     private transient SearchBackend instance;
     private transient List<SearchFieldDefinition> cachedFieldDefinitions;
@@ -73,7 +75,7 @@ public class SearchBackendManager {
         } catch (RuntimeException e) {
             progress.withReason(e);
             progress.setReasonMessage(e.toString());
-            progress.setReasonMessage(e.toString());
+            LOG.error("Failed rebuilding search database", e);
             throw e;
         } finally {
             progress.setFinished();

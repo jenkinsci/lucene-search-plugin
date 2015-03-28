@@ -10,13 +10,13 @@ public class Progress {
     private long elapsedTime;
 
     private ProgressState state = ProgressState.PROCESSING;
-    private transient Throwable reason;
+    private transient Exception reason;
     private String reasonMessage = "";
     private int max;
     private volatile int current;
     private String name;
 
-    public void assertNoErrors() throws Throwable {
+    public void assertNoErrors() throws Exception {
         if (getState() == ProgressState.COMPLETE_WITH_ERROR) {
             throw reason;
         }
@@ -31,7 +31,7 @@ public class Progress {
         startTime = System.currentTimeMillis();
     }
 
-    public void completedWithErrors(Throwable reason) {
+    public void completedWithErrors(Exception reason) {
         state = ProgressState.COMPLETE_WITH_ERROR;
         this.withReason(reason);
         reasonMessage = reason.getMessage();
@@ -103,7 +103,7 @@ public class Progress {
         this.elapsedTime = elapsedTime;
     }
 
-    public void withReason(Throwable reason) {
+    public void withReason(Exception reason) {
         this.reason = reason;
     }
 

@@ -36,6 +36,7 @@ public abstract class SearchBackend {
                 storeBuild(build);
             } catch (IOException e) {
                 progress.completedWithErrors(e);
+                LOGGER.warn("Error rebuilding build", e);
             } finally {
                 progress.incCurrent();
             }
@@ -109,12 +110,9 @@ public abstract class SearchBackend {
                 }
             }
             progress.setSuccessfullyCompleted();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
             progress.completedWithErrors(e);
-        } catch (Throwable e) {
-            e.printStackTrace();
-            progress.completedWithErrors(e);
+            LOGGER.error("Rebuild database failed", e);
         } finally {
             progress.setFinished();
         }

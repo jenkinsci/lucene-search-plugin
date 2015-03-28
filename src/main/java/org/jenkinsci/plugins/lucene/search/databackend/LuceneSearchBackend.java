@@ -8,6 +8,7 @@ import hudson.model.Job;
 import jenkins.model.Jenkins;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
@@ -39,12 +40,11 @@ import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.logging.Logger;
 
 import static org.jenkinsci.plugins.lucene.search.Field.*;
 
 public class LuceneSearchBackend extends SearchBackend {
-    private static final Logger LOGGER = Logger.getLogger(LuceneSearchBackend.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(LuceneSearchBackend.class);
 
     private static final int MAX_NUM_FRAGMENTS = 5;
     private static final String[] EMPTY_ARRAY = new String[0];
@@ -183,7 +183,7 @@ public class LuceneSearchBackend extends SearchBackend {
                         bestFragments = highlighter.getBestFragments(analyzer, CONSOLE.fieldName,
                                 doc.get(CONSOLE.fieldName), MAX_NUM_FRAGMENTS);
                     } catch (InvalidTokenOffsetsException e) {
-                        LOGGER.warning("Failed to find bestFragments: " + e);
+                        LOGGER.warn("Failed to find bestFragments", e);
                     }
                 }
                 BallColor buildIcon = BallColor.GREY;
@@ -298,6 +298,7 @@ public class LuceneSearchBackend extends SearchBackend {
             updateReader();
         } catch (IOException e) {
             progress.completedWithErrors(e);
+            LOGGER.error("Failed to delete cleaned builds", e);
         } finally {
             progress.setFinished();
         }
@@ -364,6 +365,7 @@ public class LuceneSearchBackend extends SearchBackend {
             progress.setSuccessfullyCompleted();
         } catch (IOException e) {
             progress.completedWithErrors(e);
+            LOGGER.error("Failed to clean deleted jobs", e);
         } finally {
             progress.setFinished();
         }
