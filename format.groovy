@@ -11,20 +11,25 @@ import org.eclipse.jface.text.Document
 
 def settings =  new XmlSlurper().parse('codestyle.xml')
 def options = settings[0].children[0].children.collectEntries { [it.attributes.id, it.attributes.value] }
-def codeFormatter = ToolFactory.createCodeFormatter(options);
+def codeFormatter = ToolFactory.createCodeFormatter(options)
+
+boolean formattingChanged = false
 
 new File("src").eachFileRecurse(FileType.FILES) {
 	if (it.name =~ /^[^.]*\.java$/) {
 		def source = it.getText("utf-8")
 		def edit = codeFormatter.format(CodeFormatter.K_COMPILATION_UNIT, source, 0, source.length(), 0, '\n')
-		def document = new Document(source);
+		def document = new Document(source)
 		edit.apply(document)
 		def formattedSource = document.get()
 		if (formattedSource != source) {
 			new File(it.toString()).withWriter { it.write(document.get()) }
 			System.err.println("Changing formatting of ${it}")
-			//System.err.println("${it} is incorrectly formatted")
-			////System.exit(1)
+			formattingChanged = true
 		}
 	}
+}
+
+if (formattingChanged) {
+	System.exit(1)
 }
