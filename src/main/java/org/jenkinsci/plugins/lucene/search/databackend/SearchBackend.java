@@ -17,7 +17,7 @@ import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 
-public abstract class SearchBackend {
+public abstract class SearchBackend<T> {
 
     private static final Logger LOGGER = Logger.getLogger(SearchBackend.class);
 
@@ -31,9 +31,9 @@ public abstract class SearchBackend {
 
         @Override
         public void run(AbstractBuild build) {
-            removeBuild(build);
+            T oldValue = removeBuild(build);
             try {
-                storeBuild(build);
+                storeBuild(build, oldValue);
             } catch (IOException e) {
                 progress.completedWithErrors(e);
                 LOGGER.warn("Error rebuilding build", e);
@@ -49,7 +49,7 @@ public abstract class SearchBackend {
         this.engine = engine;
     }
 
-    public abstract void storeBuild(final AbstractBuild<?, ?> build) throws IOException;
+    public abstract void storeBuild(final AbstractBuild<?, ?> build, T oldValue) throws IOException;
 
     public abstract List<FreeTextSearchItemImplementation> getHits(final String query, final boolean includeHighlights);
 
@@ -59,7 +59,7 @@ public abstract class SearchBackend {
 
     public abstract SearchBackend reconfigure(Map<String, Object> config);
 
-    public abstract void removeBuild(AbstractBuild<?, ?> build);
+    public abstract T removeBuild(AbstractBuild<?, ?> build);
 
     public abstract void cleanDeletedBuilds(Progress progress, Job<?, ?> job);
 

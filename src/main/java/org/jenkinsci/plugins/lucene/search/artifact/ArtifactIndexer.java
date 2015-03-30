@@ -93,7 +93,7 @@ public class ArtifactIndexer extends Recorder {
                 LOGGER.error("Couldn't get artifacts for search database", e);
             }
         }
-        return "";
+        return null;
     }
 
     // The following class is mostly copy-paste from ArtifactArchiver

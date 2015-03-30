@@ -44,7 +44,7 @@ import static org.jenkinsci.plugins.lucene.search.Field.ID;
 import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
 import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
 
-public class SolrSearchBackend extends SearchBackend {
+public class SolrSearchBackend extends SearchBackend<SolrDocument> {
 
     private static final Logger LOGGER = Logger.getLogger(SolrSearchBackend.class);
     private static final String[] EMPTY_ARRAY = new String[0];
@@ -187,14 +187,26 @@ public class SolrSearchBackend extends SearchBackend {
     }
 
     @Override
-    public void storeBuild(AbstractBuild<?, ?> build) throws IOException {
+    public void storeBuild(AbstractBuild<?, ?> build, SolrDocument oldDoc) throws IOException {
         try {
             SolrInputDocument doc = new SolrInputDocument();
             for (Field field : Field.values()) {
-                doc.addField(field.fieldName, field.getValue(build));
+                Object fieldValue = field.getValue(build);
+                if (fieldValue == null && oldDoc != null) {
+                    fieldValue = oldDoc.get(field.fieldName);
+                }
+                if (fieldValue != null) {
+                    doc.addField(field.fieldName, field.getValue(build));
+                }
             }
             for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
-                doc.addField(extension.getKeyword(), extension.getTextResult(build));
+                String fieldValue = extension.getTextResult(build);
+                if (fieldValue == null && oldDoc != null) {
+                    fieldValue = (String) oldDoc.get(extension.getKeyword());
+                }
+                if (fieldValue != null) {
+                    doc.addField(extension.getKeyword(), fieldValue);
+                }
             }
             httpSolrServer.add(doc);
             httpSolrServer.commit();
@@ -259,14 +271,22 @@ public class SolrSearchBackend extends SearchBackend {
     }
 
     @Override
-    public void removeBuild(AbstractBuild<?, ?> build) {
+    public SolrDocument removeBuild(AbstractBuild<?, ?> build) {
         try {
-            httpSolrServer.deleteById(build.getId());
+            String queryString = String.format("%s:\"%s\"", ID.fieldName, build.getId());
+            SolrQuery query = new SolrQuery(queryString);
+            query.setTerms(true);
+            QueryResponse queryResponse = httpSolrServer.query(query);
+            if (!queryResponse.getResults().isEmpty()) {
+                httpSolrServer.deleteById(build.getId());
+                return queryResponse.getResults().get(0);
+            }
         } catch (SolrServerException e) {
             LOGGER.warn("Could not delete build from solr: ", e);
         } catch (IOException e) {
             LOGGER.warn("Could not delete build from solr: ", e);
         }
+        return null;
     }
 
     @SuppressWarnings("rawtypes")

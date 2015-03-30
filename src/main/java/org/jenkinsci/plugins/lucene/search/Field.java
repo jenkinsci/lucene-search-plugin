@@ -132,7 +132,6 @@ public enum Field {
     ARTIFACTS("artifacts", Persist.TRUE) {
         @Override
         public Object getValue(AbstractBuild<?, ?> build) {
-            StringBuilder sb = new StringBuilder();
             AbstractProject<?, ?> p = build.getProject();
             for (Publisher publisher : p.getPublishersList()) {
                 if (publisher instanceof ArtifactIndexer) {
@@ -140,7 +139,7 @@ public enum Field {
                     return ai.getIndexableData(build);
                 }
             }
-            return sb.toString();
+            return "";
         }
     };
 
@@ -151,7 +150,7 @@ public enum Field {
     public final boolean persist;
 
     @SuppressWarnings("rawtypes")
-    private Field(String fieldName, Enum... e) {
+    Field(String fieldName, Enum... e) {
         List<Enum> es = Arrays.asList(e);
         defaultSearchable = !es.contains(DefaultSearchable.FALSE);
         numeric = es.contains(Numeric.TRUE);

@@ -43,7 +43,7 @@ import java.util.*;
 
 import static org.jenkinsci.plugins.lucene.search.Field.*;
 
-public class LuceneSearchBackend extends SearchBackend {
+public class LuceneSearchBackend extends SearchBackend<Document> {
     private static final Logger LOGGER = Logger.getLogger(LuceneSearchBackend.class);
 
     private static final int MAX_NUM_FRAGMENTS = 5;
@@ -229,35 +229,45 @@ public class LuceneSearchBackend extends SearchBackend {
     }
 
     @Override
-    public void storeBuild(final AbstractBuild<?, ?> build) throws IOException {
+    public void storeBuild(final AbstractBuild<?, ?> build, Document oldDoc) throws IOException {
         try {
             Document doc = new Document();
             for (Field field : Field.values()) {
                 org.apache.lucene.document.Field.Store store = field.persist ? STORE : DONT_STORE;
-                switch (FIELD_TYPE_MAP.get(field)) {
-                case LONG:
-                    doc.add(new LongField(field.fieldName, ((Number) field.getValue(build)).longValue(), store));
-                    break;
-                case STRING:
-                    doc.add(new StringField(field.fieldName, field.getValue(build).toString(), store));
-                    break;
-                case TEXT:
-                    doc.add(new TextField(field.fieldName, field.getValue(build).toString(), store));
-                    break;
-                default:
-                    throw new IllegalArgumentException("Don't know how to handle " + FIELD_TYPE_MAP.get(field));
+                Object fieldValue = field.getValue(build);
+                if (fieldValue == null && oldDoc != null) {
+                    fieldValue = oldDoc.get(field.fieldName);
+                }
+                if (fieldValue != null) {
+                    switch (FIELD_TYPE_MAP.get(field)) {
+                    case LONG:
+                        doc.add(new LongField(field.fieldName,
+                                fieldValue == null ? 0 : ((Number) fieldValue).longValue(), store));
+                        break;
+                    case STRING:
+                        doc.add(new StringField(field.fieldName, fieldValue.toString(), store));
+                        break;
+                    case TEXT:
+                        doc.add(new TextField(field.fieldName, fieldValue.toString(), store));
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Don't know how to handle " + FIELD_TYPE_MAP.get(field));
+                    }
                 }
             }
             // TODO Add the following data
-            // build.getChangeSet()
             // build.getCulprits()
             // EnvVars a = build.getEnvironment(listener);
-            // build.get
-            // build.getArtifacts()
 
             for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
-                doc.add(new TextField(extension.getKeyword(), extension.getTextResult(build),
-                        (extension.isPersist()) ? STORE : DONT_STORE));
+                Object fieldValue = extension.getTextResult(build);
+                if (fieldValue == null && oldDoc != null) {
+                    fieldValue = oldDoc.get(extension.getKeyword());
+                }
+                if (fieldValue != null) {
+                    doc.add(new TextField(extension.getKeyword(), extension.getTextResult(build),
+                            (extension.isPersist()) ? STORE : DONT_STORE));
+                }
             }
 
             dbWriter.addDocument(doc);
@@ -267,10 +277,18 @@ public class LuceneSearchBackend extends SearchBackend {
     }
 
     @Override
-    public void removeBuild(final AbstractBuild<?, ?> build) {
+    public Document removeBuild(final AbstractBuild<?, ?> build) {
         try {
-            dbWriter.deleteDocuments(new Term(Field.ID.fieldName, build.getId()));
-            updateReader();
+            Term term = new Term(Field.ID.fieldName, build.getId());
+            IndexSearcher searcher = new IndexSearcher(reader);
+            TopDocs search = searcher.search(new TermQuery(term), 1);
+            Document doc = null;
+            if (search.scoreDocs.length > 0) {
+                doc = searcher.doc(search.scoreDocs[0].doc);
+                dbWriter.deleteDocuments(term);
+                updateReader();
+            }
+            return doc;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

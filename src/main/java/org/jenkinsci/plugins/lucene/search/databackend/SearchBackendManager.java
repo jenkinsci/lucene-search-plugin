@@ -66,7 +66,7 @@ public class SearchBackendManager {
     }
 
     public void storeBuild(AbstractBuild<?, ?> build) throws IOException {
-        getBackend().storeBuild(build);
+        getBackend().storeBuild(build, null);
     }
 
     public void rebuildDatabase(ManagerProgress progress, int maxWorkers) {
