@@ -57,7 +57,7 @@ public class LuceneSearchBackend extends SearchBackend {
         STRING, LONG, TEXT
     }
 
-    private static final Map<Field, LuceneFieldType> FIELD_TYPE_MAP;
+    static final Map<Field, LuceneFieldType> FIELD_TYPE_MAP;
     static {
         Map<Field, LuceneFieldType> types = new HashMap<Field, LuceneFieldType>();
         types.put(ID, LuceneFieldType.STRING);
@@ -71,6 +71,8 @@ public class LuceneSearchBackend extends SearchBackend {
         types.put(START_CAUSE, LuceneFieldType.TEXT);
         types.put(BALL_COLOR, LuceneFieldType.STRING);
         types.put(CONSOLE, LuceneFieldType.TEXT);
+        types.put(CHANGE_LOG, LuceneFieldType.TEXT);
+        types.put(ARTIFACTS, LuceneFieldType.TEXT);
         FIELD_TYPE_MAP = Collections.unmodifiableMap(types);
     }
 
