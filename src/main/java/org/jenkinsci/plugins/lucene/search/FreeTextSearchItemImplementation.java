@@ -38,6 +38,10 @@ public class FreeTextSearchItemImplementation implements SearchItem {
         return projectName + " #" + buildNumber;
     }
 
+    public String getProjectName() {
+        return projectName;
+    }
+
     public String[] getBestFragments() {
         return bestFragments;
     }

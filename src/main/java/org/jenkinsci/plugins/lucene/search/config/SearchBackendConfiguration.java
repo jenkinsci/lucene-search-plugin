@@ -35,6 +35,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     private static final String LUCENE_PATH = "lucenePath";
     private static final String SOLR_URL = "solrUrl";
     private static final String SOLR_COLLECTION = "solrCollection";
+    private static final String USE_SECURITY = "useSecurity";
 
     @Inject
     private transient SearchBackendManager backendManager;
@@ -43,10 +44,11 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     private File lucenePath = new File(Jenkins.getInstance().getRootDir(), "luceneIndex");
     private String solrCollection = "collection1";
     private SearchBackendEngine searchBackend = SearchBackendEngine.LUCENE;
+    private boolean useSecurity;
 
     @DataBoundConstructor
     public SearchBackendConfiguration(final String solrUrl, final String lucenePath, final String searchBackend,
-            final String solrCollection) {
+            final String solrCollection, boolean useSecurity) {
         this(URI.create(solrUrl), new File(lucenePath), SearchBackendEngine.valueOf(searchBackend), solrCollection);
     }
 
@@ -195,6 +197,9 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
             ensureNotError(doCheckLucenePath(lucenePath), LUCENE_PATH);
             setLucenePath(new File(lucenePath));
         }
+        if (json.containsKey(USE_SECURITY)) {
+            setUseSecurity(json.getBoolean(USE_SECURITY));
+        }
         setSearchBackend(SearchBackendEngine.valueOf(json.get("").toString()));
         backendManager.reconfigure(searchBackend, getConfig());
         save();
@@ -221,5 +226,13 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
 
     public void setSolrCollection(String solrCollection) {
         this.solrCollection = solrCollection;
+    }
+
+    public boolean isUseSecurity() {
+        return useSecurity;
+    }
+
+    public void setUseSecurity(boolean useSecurity) {
+        this.useSecurity = useSecurity;
     }
 }

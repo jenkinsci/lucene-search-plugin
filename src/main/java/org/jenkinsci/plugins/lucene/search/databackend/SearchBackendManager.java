@@ -2,8 +2,10 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import hudson.Extension;
 import hudson.model.AbstractBuild;
+import hudson.model.Item;
 import hudson.search.SearchResult;
 import hudson.search.SuggestedItem;
+import jenkins.model.Jenkins;
 import org.apache.log4j.Logger;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.SearchResultImpl;
@@ -13,6 +15,7 @@ import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -50,7 +53,19 @@ public class SearchBackendManager {
     }
 
     public List<FreeTextSearchItemImplementation> getHits(String query, boolean includeHighlights) {
-        return getBackend().getHits(query, includeHighlights);
+        List<FreeTextSearchItemImplementation> hits = getBackend().getHits(query, includeHighlights);
+        if (backendConfig.isUseSecurity()) {
+            Jenkins jenkins = Jenkins.getInstance();
+            Iterator<FreeTextSearchItemImplementation> iter = hits.iterator();
+            while (iter.hasNext()) {
+                FreeTextSearchItemImplementation searchItem = iter.next();
+                Item item = jenkins.getItem(searchItem.getProjectName());
+                if (item == null) {
+                    iter.remove();
+                }
+            }
+        }
+        return hits;
     }
 
     public SearchResult getSuggestedItems(String query) {
