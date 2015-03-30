@@ -313,7 +313,7 @@ public class LuceneSearchBackend extends SearchBackend {
             dbWriter.deleteDocuments(term);
             updateReader();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Could not delete job", e);
         }
     }
 
