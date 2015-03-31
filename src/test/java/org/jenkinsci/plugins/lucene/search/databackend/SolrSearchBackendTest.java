@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.fs.FileUtil;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -42,13 +43,13 @@ public class SolrSearchBackendTest {
     private JenkinsSearchBackend jenkinsSearchBackend;
     private EmbeddedSolrServer solrServer;
 
-
-
     @Before
     public void setup() throws Exception {
         solrPort = findFreePort();
 
-        SolrResourceLoader solrResourceLoader = new SolrResourceLoader(SolrResourceLoader.locateSolrHome());
+        FileUtils.copyDirectory(new File("src/main/resources/solr/"), new File("target/solr/"));
+
+        SolrResourceLoader solrResourceLoader = new SolrResourceLoader(new File("target/solr").getCanonicalPath());
         String configSolrXml = "<solr>"
                 + "  <solrcloud>"
                 + "    <str name=\"host\">${host:}</str>"
@@ -65,7 +66,7 @@ public class SolrSearchBackendTest {
                 + "</solr>";
         ConfigSolr config = ConfigSolr.fromString(solrResourceLoader, configSolrXml);
         CoreContainer container = new CoreContainer(solrResourceLoader, config);
-//        FileUtils.deleteQuietly(new File("testdata/solr"));
+        FileUtils.deleteQuietly(new File("testdata/solr/data"));
 //        CoreContainer container = new CoreContainer("testdata/solr");
         container.load();
         solrServer = new EmbeddedSolrServer(container, "collection1");
@@ -73,10 +74,6 @@ public class SolrSearchBackendTest {
 
         backgroundWorker = Executors.newFixedThreadPool(1);
         jenkinsSearchBackend = new JenkinsSearchBackend(rule, backgroundWorker);
-
-
-
-
     }
 
     @After
@@ -100,7 +97,7 @@ public class SolrSearchBackendTest {
     }
 
     @Test(timeout = 10000)
-    public void givenLuceneWhenJobsWithBuildsAreExecutedThenTheyShouldBeSearchable()
+    public void givenSolrWhenJobsWithBuildsAreExecutedThenTheyShouldBeSearchable()
             throws IOException, ExecutionException, InterruptedException, SAXException, URISyntaxException {
         jenkinsSearchBackend.setSolrBackend(false, solrPort);
         jenkinsSearchBackend.testBuildAndRebuild();
