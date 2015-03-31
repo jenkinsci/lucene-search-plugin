@@ -41,7 +41,7 @@ public class JenkinsSearchBackend {
         searchBackendConfiguration.setUseSecurity(useSecurity);
         searchBackendConfiguration.setSearchBackend(SearchBackendEngine.SOLR);
         searchBackendConfiguration.setSolrCollection("collection1");
-        searchBackendConfiguration.setSolrUrl(URI.create("http://127.0.0.1:" + port + "/src/test/resources/solr"));
+        searchBackendConfiguration.setSolrUrl(searchBackendConfiguration.makeSolrUrl("http://127.0.0.1:" + port));
         searchBackendConfiguration.reconfigure();
     }
 
