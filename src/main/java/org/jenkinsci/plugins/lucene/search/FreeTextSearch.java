@@ -45,12 +45,7 @@ public class FreeTextSearch extends Search {
     }
 
     private List<SearchItem> normalSearch(StaplerRequest req, String query) {
-        List<SearchItem> searchResults = new ArrayList<SearchItem>() {
-            @Override
-            public Iterator<SearchItem> iterator() {
-                return super.iterator();
-            }
-        };
+        List<SearchItem> searchResults = new ArrayList<SearchItem>();
 
         List<Ancestor> l = req.getAncestors();
         for (int i = l.size() - 1; i >= 0; i--) {
