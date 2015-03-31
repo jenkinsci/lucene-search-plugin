@@ -2,12 +2,18 @@ package org.jenkinsci.plugins.lucene.search.management;
 
 import hudson.Extension;
 import hudson.model.ManagementLink;
+import net.sf.json.JSONSerializer;
+import org.jenkinsci.plugins.lucene.search.databackend.ManagerProgress;
+import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.bind.JavaScriptMethod;
 
 import javax.inject.Inject;
-
-import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
-import org.jenkinsci.plugins.lucene.search.databackend.ManagerProgress;
-import org.kohsuke.stapler.bind.JavaScriptMethod;
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.io.Writer;
 
 @Extension
 public class LuceneManager extends ManagementLink {
@@ -44,6 +50,10 @@ public class LuceneManager extends ManagementLink {
             statement.code = 0;
         }
         return statement;
+    }
+
+    public void doRebuildDatabase(StaplerRequest req, StaplerResponse rsp, @QueryParameter int workers) throws IOException, ServletException {
+        writeStatus(rsp, rebuildDatabase(workers));
     }
 
     private JSReturnCollection verifyNotInProgress() {
@@ -88,8 +98,20 @@ public class LuceneManager extends ManagementLink {
             statement.message = "Never started";
             statement.neverStarted = true;
         }
-
         return statement;
+    }
+
+    // Primarily for testing
+    public void doStatus(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
+        JSReturnCollection status = getStatus();
+        writeStatus(rsp, status);
+    }
+
+    public void writeStatus(StaplerResponse rsp, JSReturnCollection status) throws IOException {
+        Writer compressedWriter = rsp.getWriter();
+        JSONSerializer.toJSON(status).write(compressedWriter);
+        rsp.setStatus(200);
+        compressedWriter.flush();
     }
 
     public static class JSReturnCollection {
