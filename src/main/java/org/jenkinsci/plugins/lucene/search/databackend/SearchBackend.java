@@ -87,6 +87,22 @@ public abstract class SearchBackend<T> {
         }
     }
 
+    // Caching this method might be dangerous
+    protected String[] getAllDefaultSearchableFields() {
+        List<String> fieldNames = new LinkedList<String>();
+        for (Field field : Field.values()) {
+            if (field.defaultSearchable) {
+                fieldNames.add(field.fieldName);
+            }
+        }
+        for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
+            if (extension.isDefaultSearchable()) {
+                fieldNames.add(extension.getKeyword());
+            }
+        }
+        return fieldNames.toArray(new String[fieldNames.size()]);
+    }
+
     @SuppressWarnings("rawtypes")
     public void rebuildDatabase(ManagerProgress progress, int maxWorkers) {
         List<Job> allItems = Jenkins.getInstance().getAllItems(Job.class);
@@ -118,22 +134,6 @@ public abstract class SearchBackend<T> {
         } finally {
             progress.setFinished();
         }
-    }
-
-    // Caching this method might be dangerous
-    protected String[] getAllDefaultSearchableFields() {
-        List<String> fieldNames = new LinkedList<String>();
-        for (Field field : Field.values()) {
-            if (field.defaultSearchable) {
-                fieldNames.add(field.fieldName);
-            }
-        }
-        for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
-            if (extension.isDefaultSearchable()) {
-                fieldNames.add(extension.getKeyword());
-            }
-        }
-        return fieldNames.toArray(new String[fieldNames.size()]);
     }
 
     protected String[] getAllFields() {
