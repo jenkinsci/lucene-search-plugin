@@ -87,6 +87,7 @@ public class SearchBackendManager {
     public void rebuildDatabase(ManagerProgress progress, int maxWorkers) {
         try {
             getBackend().rebuildDatabase(progress, maxWorkers);
+            progress.jobComplete();
         } catch (RuntimeException e) {
             progress.withReason(e);
             progress.setReasonMessage(e.toString());
