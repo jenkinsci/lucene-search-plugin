@@ -40,7 +40,7 @@ public class LuceneManager extends ManagementLink {
             progress = new ManagerProgress();
             backendManager.rebuildDatabase(progress, workers);
 
-            statement.message = "Work started succesfully";
+            statement.message = "Work completed succesfully";
             statement.code = 0;
         }
         return statement;
