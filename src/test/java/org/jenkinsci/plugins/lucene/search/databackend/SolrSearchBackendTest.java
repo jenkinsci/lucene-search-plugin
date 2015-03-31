@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
+import jenkins.model.GlobalConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.http.NameValuePair;
@@ -47,6 +48,7 @@ public class SolrSearchBackendTest {
     public void setup() throws Exception {
         solrPort = findFreePort();
 
+        FileUtils.deleteQuietly(new File("target/solr/"));
         FileUtils.copyDirectory(new File("src/main/resources/solr/"), new File("target/solr/"));
 
         SolrResourceLoader solrResourceLoader = new SolrResourceLoader(new File("target/solr").getCanonicalPath());
@@ -66,7 +68,6 @@ public class SolrSearchBackendTest {
                 + "</solr>";
         ConfigSolr config = ConfigSolr.fromString(solrResourceLoader, configSolrXml);
         CoreContainer container = new CoreContainer(solrResourceLoader, config);
-        FileUtils.deleteQuietly(new File("testdata/solr/data"));
 //        CoreContainer container = new CoreContainer("testdata/solr");
         container.load();
         solrServer = new EmbeddedSolrServer(container, "collection1");

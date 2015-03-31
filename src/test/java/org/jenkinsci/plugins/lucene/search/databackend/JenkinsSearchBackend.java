@@ -4,27 +4,19 @@ import com.google.common.io.Resources;
 import hudson.model.FreeStyleProject;
 import hudson.search.Search;
 import hudson.tasks.Shell;
+import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
+import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 import org.jenkinsci.plugins.lucene.search.management.LuceneManager;
-import org.junit.After;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -37,7 +29,6 @@ public class JenkinsSearchBackend {
 
     private final JenkinsRule rule;
     private final ExecutorService backgroundWorker;
-    private final HttpClient httpClient = HttpClients.createDefault();
 
     JenkinsSearchBackend(JenkinsRule rule, ExecutorService backgroundWorker) {
         this.rule = rule;
@@ -45,48 +36,22 @@ public class JenkinsSearchBackend {
     }
 
     public void setSolrBackend(boolean useSecurity, int port) throws IOException, URISyntaxException {
-        JSONObject searchBackend = new JSONObject();
-        searchBackend.put("solrUrl", "http://127.0.0.1:"+port+"/solr");
-        searchBackend.put("solrCollection", "collection1");
-
-        JSONObject configNode = new JSONObject();
-        configNode.put("searchBackend", searchBackend);
-        configNode.put("useSecurity", useSecurity);
-        configNode.put("", SearchBackendEngine.SOLR.name());
-
-        JSONObject result = new JSONObject();
-        result.put("org-jenkinsci-plugins-lucene-search-config-SearchBackendConfiguration", configNode);
-
-        URL statusUrl = new URL(rule.getURL(), "configSubmit");
-        HttpPost post = new HttpPost(statusUrl.toURI());
-        List<NameValuePair> params = new ArrayList<NameValuePair>(2);
-        params.add(new BasicNameValuePair("json", result.toString()));
-        //params.add(new BasicNameValuePair("configSubmit", "save"));
-        post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-        //configure Jenkins to use Solr here
-
+        SearchBackendConfiguration searchBackendConfiguration = GlobalConfiguration.all().get(
+                SearchBackendConfiguration.class);
+        searchBackendConfiguration.setUseSecurity(useSecurity);
+        searchBackendConfiguration.setSearchBackend(SearchBackendEngine.SOLR);
+        searchBackendConfiguration.setSolrCollection("collection1");
+        searchBackendConfiguration.setSolrUrl(URI.create("http://127.0.0.1:" + port + "/src/test/resources/solr"));
+        searchBackendConfiguration.reconfigure();
     }
 
-    public void setLuceneBackend(boolean useSecurity) throws IOException, URISyntaxException {
-        JSONObject configNode = new JSONObject();
-        configNode.put("useSecurity", useSecurity);
-        configNode.put("", SearchBackendEngine.LUCENE.name());
-
-        JSONObject result = new JSONObject();
-        result.put("org-jenkinsci-plugins-lucene-search-config-SearchBackendConfiguration", configNode);
-
-        URL statusUrl = new URL(rule.getURL(), "configSubmit");
-        HttpPost post = new HttpPost(statusUrl.toURI());
-        List<NameValuePair> params = new ArrayList<NameValuePair>(2);
-        params.add(new BasicNameValuePair("json", result.toString()));
-        //params.add(new BasicNameValuePair("configSubmit", "save"));
-        post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-        //configure Jenkins to use Solr here
-        HttpResponse execute = httpClient.execute(post);
-
+    public void setLuceneBackend(boolean useSecurity) throws IOException, URISyntaxException, SAXException {
+        SearchBackendConfiguration searchBackendConfiguration = GlobalConfiguration.all()
+                .get(SearchBackendConfiguration.class);
+        searchBackendConfiguration.setUseSecurity(useSecurity);
+        searchBackendConfiguration.setSearchBackend(SearchBackendEngine.LUCENE);
+        searchBackendConfiguration.reconfigure();
     }
-
-
 
     public Search.Result search(String query) throws IOException, SAXException {
         URL status = new URL(rule.getURL(), "search/suggest?query=" + query);

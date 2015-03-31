@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.lucene.search.config;
 
+import com.google.common.annotations.VisibleForTesting;
 import hudson.Extension;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -136,7 +137,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     private URI makeSolrUrl(final String solrUrlX) throws IOException {
         IOException e = null;
         String solrUrl = solrUrlX.replaceAll("/*$", "");
-        for (String s : new String[] { solrUrl + "/solr", solrUrl }) {
+        for (String s : new String[] { solrUrl + "/src/test/resources/solr", solrUrl }) {
             try {
                 getCollections(s);
                 return URI.create(s);
@@ -201,9 +202,14 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
             setUseSecurity(json.getBoolean(USE_SECURITY));
         }
         setSearchBackend(SearchBackendEngine.valueOf(json.get("").toString()));
+        reconfigure();
+        return super.configure(req, json);
+    }
+
+    @VisibleForTesting
+    public void reconfigure() {
         backendManager.reconfigure(searchBackend, getConfig());
         save();
-        return super.configure(req, json);
     }
 
     private void ensureNotError(FormValidation formValidation, String field) throws FormException {
