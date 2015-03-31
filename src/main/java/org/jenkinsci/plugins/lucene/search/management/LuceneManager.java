@@ -86,17 +86,19 @@ public class LuceneManager extends ManagementLink {
             }
         } else {
             statement.message = "Never started";
+            statement.neverStarted = true;
         }
 
         return statement;
     }
 
     public static class JSReturnCollection {
-        public int code = 0;
+        public int code;
         public String message = "";
-        public boolean running = false;
-        public ManagerProgress progress = null;
-        public int workers = 0;
+        public boolean running;
+        public ManagerProgress progress;
+        public int workers;
+        public boolean neverStarted;
     }
 
 }
