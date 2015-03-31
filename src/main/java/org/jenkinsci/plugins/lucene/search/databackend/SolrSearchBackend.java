@@ -237,9 +237,9 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
             for (SolrDocument doc : queryResponse.getResults()) {
                 String[] bestFragments = EMPTY_ARRAY;
                 String buildId = (String) doc.get(ID.fieldName);
-                Map<String, List<String>> highlighting = queryResponse.getHighlighting().get(buildId);
-                if (highlighting != null) {
-                    List<String> frags = highlighting.get(COMPOSITE_SEARCH_FIELD);
+                Map<String, Map<String, List<String>>> highlighting = queryResponse.getHighlighting();
+                if (highlighting != null && highlighting.get(buildId) != null) {
+                    List<String> frags = highlighting.get(buildId).get(COMPOSITE_SEARCH_FIELD);
                     if (frags != null) {
                         bestFragments = frags.toArray(new String[frags.size()]);
                     }
