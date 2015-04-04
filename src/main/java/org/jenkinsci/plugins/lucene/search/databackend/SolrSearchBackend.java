@@ -39,7 +39,6 @@ import java.util.Set;
 
 import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
 import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
-import static org.jenkinsci.plugins.lucene.search.Field.CONSOLE;
 import static org.jenkinsci.plugins.lucene.search.Field.ID;
 import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
 import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;

@@ -18,15 +18,15 @@
 	<name>Lucene-Search</name>
 	<url>https://wiki.jenkins-ci.org/display/JENKINS/Lucene-Search</url>
 	<scm>
-        <connection>scm:git:git://github.com/jenkinsci/lucene-search-plugin</connection>
-        <developerConnection>scm:git:git@github.com:jenkinsci/lucene-search-plugin</developerConnection>
-        <tag>HEAD</tag>
-    </scm>
-    <developers>
+		<connection>scm:git:git://github.com/jenkinsci/lucene-search-plugin</connection>
+		<developerConnection>scm:git:git@github.com:jenkinsci/lucene-search-plugin</developerConnection>
+		<tag>HEAD</tag>
+	</scm>
+	<developers>
 		<developer>
 			<id>tobias-</id>
 			<name>Tobias Olsson</name>
-			<email />
+			<email>tobias@olsson.be</email>
 		</developer>
 		<developer>
 			<id>hanabishi</id>
@@ -70,6 +70,15 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.solr</groupId>
+			<artifactId>solr</artifactId>
+			<version>${solr.version}</version>
+			<scope>test</scope>
+			<type>war</type>
+		</dependency>
+		<dependency>
+			<!-- Solr core REALLY shouldn't be necessary with the war added above, but since I can't get it to work without running
+			ClassLoader tricks, it's here...  -->
+			<groupId>org.apache.solr</groupId>
 			<artifactId>solr-core</artifactId>
 			<version>${solr.version}</version>
 			<scope>test</scope>
@@ -98,10 +107,17 @@
 					</dependency>
 				</dependencies>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<forkCount>1</forkCount>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
-	<!-- get every artifact through repo.jenkins-ci.org, which proxies all the 
+	<!-- get every artifact through repo.jenkins-ci.org, which proxies all the
 		artifacts that we need -->
 	<repositories>
 		<repository>
