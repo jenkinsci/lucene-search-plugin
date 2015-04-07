@@ -4,6 +4,10 @@ import hudson.ExtensionPoint;
 import hudson.model.AbstractBuild;
 import jenkins.model.Jenkins;
 
+/**
+ * Extend this {@link ExtensionPoint} to add more data that can be searched.
+ * @see <a href="https://wiki.jenkins-ci.org/display/JENKINS/Lucene-Search#Lucene-Search-Example">Lucene-Search-Example</a> for an example.
+ */
 public abstract class FreeTextSearchExtension implements ExtensionPoint {
 
     public static hudson.ExtensionList<FreeTextSearchExtension> all() {
@@ -13,6 +17,8 @@ public abstract class FreeTextSearchExtension implements ExtensionPoint {
     /**
      * Specifies the keyword that lucene stores the data as. This keyword is the same as the user can use to search for.
      * E.g. with keyword = "foo", the following query "foo:bar" will look for "bar" in the textresult for this extension.
+     *
+     * Care must be taken to make sure this does not collide with any fieldName in {@link Field}.
      *
      * @return the keyword, the word must be lower case
      */
