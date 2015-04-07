@@ -1,9 +1,6 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
-import hudson.FilePath;
 import org.apache.commons.io.FileUtils;
-import org.apache.lucene.analysis.util.ResourceLoader;
-import org.apache.solr.core.SolrResourceLoader;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -11,19 +8,15 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.mortbay.jetty.Server;
-import org.mortbay.jetty.webapp.WebAppClassLoader;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.xml.sax.SAXException;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
