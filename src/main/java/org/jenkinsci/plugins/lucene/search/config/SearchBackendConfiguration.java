@@ -125,7 +125,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     public ListBoxModel doFillSolrCollectionItems(@QueryParameter String solrUrl) {
         ListBoxModel items = new ListBoxModel();
         try {
-            for (String collection : getCollections(getSolrUrl())) {
+            for (String collection : getCollections(solrUrl)) {
                 items.add(collection);
             }
         } catch (IOException e) {
