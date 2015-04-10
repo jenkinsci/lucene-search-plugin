@@ -49,6 +49,8 @@ public abstract class SearchBackend<T> {
         this.engine = engine;
     }
 
+    public abstract void close();
+
     public abstract void storeBuild(final AbstractBuild<?, ?> build, T oldValue) throws IOException;
 
     public abstract List<FreeTextSearchItemImplementation> getHits(final String query, final boolean includeHighlights);

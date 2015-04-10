@@ -55,6 +55,9 @@ public class SearchBackendManager {
             if (instance instanceof LuceneSearchBackend && instance != null) {
                 instance.reconfigure(config);
             } else {
+                if (instance != null) {
+                    instance.close();
+                }
                 instance = LuceneSearchBackend.create(backendConfig.getConfig());
             }
 
@@ -63,6 +66,10 @@ public class SearchBackendManager {
             if (instance instanceof SolrSearchBackend && instance != null) {
                 instance.reconfigure(config);
             } else {
+                if (instance != null) {
+                    instance.close();
+                }
+
                 instance = SolrSearchBackend.create(backendConfig.getConfig());
             }
             break;

@@ -110,6 +110,9 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
         }
     }
 
+    public synchronized void close() {
+    }
+
     private JSONObject getJson(HttpResponse response) throws IOException {
         String json = IOUtils.toString(response.getEntity().getContent());
         return JSONObject.fromObject(json);
