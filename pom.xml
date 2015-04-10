@@ -70,15 +70,6 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.solr</groupId>
-			<artifactId>solr</artifactId>
-			<version>${solr.version}</version>
-			<scope>test</scope>
-			<type>war</type>
-		</dependency>
-		<dependency>
-			<!-- Solr core REALLY shouldn't be necessary with the war added above, but since I can't get it to work without running
-			ClassLoader tricks, it's here...  -->
-			<groupId>org.apache.solr</groupId>
 			<artifactId>solr-core</artifactId>
 			<version>${solr.version}</version>
 			<scope>test</scope>

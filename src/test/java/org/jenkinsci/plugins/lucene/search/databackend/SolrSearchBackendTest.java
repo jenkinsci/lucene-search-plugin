@@ -33,30 +33,6 @@ public class SolrSearchBackendTest {
     private static JenkinsSearchBackend jenkinsSearchBackend;
     private Server server;
 
-    public static File getSolrWar() {
-        if (true) {
-            return new File("/home/tobias/.m2/repository/org/apache/solr/solr/4.9.0/solr-4.9.0.war");
-        }
-        for (final String path : System.getProperty("java.class.path").split(File.pathSeparator)) {
-            final File file = new File(path);
-            if (file.isFile() && file.getName().matches("solr-.*\\.war")) {
-                return file.getAbsoluteFile();
-            }
-        }
-        throw new AssertionError("Couldn't find solr-*.war in classpath");
-    }
-
-    private static String getSlf4jClassPaths() {
-        StringBuilder sb = new StringBuilder();
-        for (final String path : System.getProperty("java.class.path").split(File.pathSeparator)) {
-            final File file = new File(path);
-            if (file.isFile() && file.getName().matches(".*slf4j.*\\.jar")) {
-                sb.append(';').append(file.getPath());
-            }
-        }
-        return sb.substring(1);
-    }
-
     @BeforeClass
     public static void setup() throws Exception {
         solrPort = findFreePort();
@@ -81,7 +57,7 @@ public class SolrSearchBackendTest {
         server = new Server(solrPort);
 
         final WebAppContext context = new WebAppContext();
-        context.setWar(getSolrWar().getPath());
+        context.setResourceBase(SOLR_WORK_DIR.getPath());
         context.setContextPath("/");
         context.setClassLoader(Thread.currentThread().getContextClassLoader());
         System.setProperty("solr.solr.home", SOLR_WORK_DIR.getPath());
