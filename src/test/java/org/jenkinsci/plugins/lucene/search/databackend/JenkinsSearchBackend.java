@@ -46,8 +46,8 @@ public class JenkinsSearchBackend {
     }
 
     public void setLuceneBackend(boolean useSecurity) throws IOException, URISyntaxException, SAXException {
-        SearchBackendConfiguration searchBackendConfiguration = GlobalConfiguration.all()
-                .get(SearchBackendConfiguration.class);
+        SearchBackendConfiguration searchBackendConfiguration = GlobalConfiguration.all().get(
+                SearchBackendConfiguration.class);
         searchBackendConfiguration.setUseSecurity(useSecurity);
         searchBackendConfiguration.setSearchBackend(SearchBackendEngine.LUCENE);
         searchBackendConfiguration.reconfigure();
@@ -83,11 +83,11 @@ public class JenkinsSearchBackend {
 
     public LuceneManager.JSReturnCollection getRebuildStatus(URL url) throws IOException {
         String jsonString = Resources.toString(url, Charset.defaultCharset());
-        return (LuceneManager.JSReturnCollection) JSONObject.fromObject(jsonString).toBean(LuceneManager.JSReturnCollection.class);
+        return (LuceneManager.JSReturnCollection) JSONObject.fromObject(jsonString).toBean(
+                LuceneManager.JSReturnCollection.class);
     }
 
-    public void testBuildAndRebuild()
-            throws IOException, ExecutionException, InterruptedException, SAXException {
+    public void testBuildAndRebuild() throws IOException, ExecutionException, InterruptedException, SAXException {
         assertEquals(0, search("echo").suggestions.size());
         FreeStyleProject project1 = rule.createFreeStyleProject("project1");
         project1.getBuildersList().add(new Shell("echo $BUILD_TAG\n"));

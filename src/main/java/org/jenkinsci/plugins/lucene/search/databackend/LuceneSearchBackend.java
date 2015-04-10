@@ -241,8 +241,8 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                 if (fieldValue != null) {
                     switch (FIELD_TYPE_MAP.get(field)) {
                     case LONG:
-                        doc.add(new LongField(field.fieldName,
-                                fieldValue == null ? 0 : ((Number) fieldValue).longValue(), store));
+                        doc.add(new LongField(field.fieldName, fieldValue == null ? 0 : ((Number) fieldValue)
+                                .longValue(), store));
                         break;
                     case STRING:
                         doc.add(new StringField(field.fieldName, fieldValue.toString(), store));
@@ -265,8 +265,8 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                     fieldValue = oldDoc.get(extension.getKeyword());
                 }
                 if (fieldValue != null) {
-                    doc.add(new TextField(extension.getKeyword(), extension.getTextResult(build),
-                            (extension.isPersist()) ? STORE : DONT_STORE));
+                    doc.add(new TextField(extension.getKeyword(), extension.getTextResult(build), (extension
+                            .isPersist()) ? STORE : DONT_STORE));
                 }
             }
 

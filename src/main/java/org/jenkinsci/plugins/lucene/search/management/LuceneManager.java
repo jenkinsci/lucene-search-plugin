@@ -52,7 +52,8 @@ public class LuceneManager extends ManagementLink {
         return statement;
     }
 
-    public void doRebuildDatabase(StaplerRequest req, StaplerResponse rsp, @QueryParameter int workers) throws IOException, ServletException {
+    public void doRebuildDatabase(StaplerRequest req, StaplerResponse rsp, @QueryParameter int workers)
+            throws IOException, ServletException {
         writeStatus(rsp, rebuildDatabase(workers));
     }
 

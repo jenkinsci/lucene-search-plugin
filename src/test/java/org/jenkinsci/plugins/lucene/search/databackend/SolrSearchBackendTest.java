@@ -66,20 +66,14 @@ public class SolrSearchBackendTest {
     private void setupSolr() throws Exception {
         FileUtils.deleteQuietly(SOLR_WORK_DIR);
         FileUtils.copyDirectory(new File("src/test/resources/solr/"), SOLR_WORK_DIR);
-        String configSolrXml = "<solr>"
-                + "  <solrcloud>"
-                + "    <str name=\"host\">${host:}</str>"
+        String configSolrXml = "<solr>" + "  <solrcloud>" + "    <str name=\"host\">${host:}</str>"
                 + "    <int name=\"hostPort\">" + solrPort + "</int>"
                 + "    <str name=\"hostContext\">${hostContext:solr}</str>"
                 + "    <int name=\"zkClientTimeout\">${zkClientTimeout:30000}</int>"
-                + "    <bool name=\"genericCoreNodeNames\">${genericCoreNodeNames:true}</bool>"
-                + "  </solrcloud>"
-                + "  <shardHandlerFactory name=\"shardHandlerFactory\""
-                + "    class=\"HttpShardHandlerFactory\">"
+                + "    <bool name=\"genericCoreNodeNames\">${genericCoreNodeNames:true}</bool>" + "  </solrcloud>"
+                + "  <shardHandlerFactory name=\"shardHandlerFactory\"" + "    class=\"HttpShardHandlerFactory\">"
                 + "    <int name=\"socketTimeout\">${socketTimeout:0}</int>"
-                + "    <int name=\"connTimeout\">${connTimeout:0}</int>"
-                + "  </shardHandlerFactory>"
-                + "</solr>";
+                + "    <int name=\"connTimeout\">${connTimeout:0}</int>" + "  </shardHandlerFactory>" + "</solr>";
         File solrConfig = new File(SOLR_WORK_DIR, "solr.xml");
         OutputStream out = new FileOutputStream(solrConfig);
         out.write(configSolrXml.getBytes("UTF-8"));
@@ -123,8 +117,8 @@ public class SolrSearchBackendTest {
     }
 
     @Test(timeout = 20000)
-    public void givenSolrWhenJobsWithBuildsAreExecutedThenTheyShouldBeSearchable()
-            throws IOException, ExecutionException, InterruptedException, SAXException, URISyntaxException {
+    public void givenSolrWhenJobsWithBuildsAreExecutedThenTheyShouldBeSearchable() throws IOException,
+            ExecutionException, InterruptedException, SAXException, URISyntaxException {
         jenkinsSearchBackend.testBuildAndRebuild();
     }
 }
