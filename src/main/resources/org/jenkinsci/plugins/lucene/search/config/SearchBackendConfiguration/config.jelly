@@ -2,28 +2,22 @@
          xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form"
          xmlns:html="jelly:html">
     <f:section title="${%Free Text Search}">
-        <f:dropdownList name="searchBackend" field="searchBackend" title="${%Select Search Backend}"
-                        help="${%Select the type of backend to use when searching. Lucene is just a directory locally, while Solr is an external service that needs to be set up. When in doubt, use Lucene. Migration between the two is not supported.}">
+        <f:dropdownList name="searchBackend" field="searchBackend" title="${%Select Search Backend}">
             <f:dropdownListBlock value="LUCENE" title="${%Lucene}"
                                  selected="${descriptor.searchBackend.equals('LUCENE')}">
-                <f:entry title="${%Lucene directory}" field="lucenePath"
-                         description="${%The path to the lucene search index}">
+                <f:entry title="${%Lucene directory}" field="lucenePath">
                     <f:textbox name="lucenePath"/>
                 </f:entry>
             </f:dropdownListBlock>
             <f:dropdownListBlock value="SOLR" title="${%Solr}"
                                  selected="${descriptor.searchBackend.equals('SOLR')}">
-                <f:entry title="${%Solr host url}" field="solrUrl" description="${%The url to the Solr service}">
+                <f:entry title="${%Solr host url}" field="solrUrl">
                     <f:textbox name="solrUrl"/>
                 </f:entry>
-                <f:entry title="${%Solr collection}" field="solrCollection"
-                         description="${%The collection on the Solr server that will store the data}">
+                <f:entry title="${%Solr collection}" field="solrCollection">
                     <f:select/>
                 </f:entry>
             </f:dropdownListBlock>
         </f:dropdownList>
-        <f:entry title="${%Use user security}" field="useSecurity" description="${%Only show search results the user may read to show up. Will slow down searches _considerably_.}">
-            <f:checkbox/>
-        </f:entry>
     </f:section>
 </j:jelly>
