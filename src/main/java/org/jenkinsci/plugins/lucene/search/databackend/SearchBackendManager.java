@@ -6,6 +6,7 @@ import hudson.model.Item;
 import hudson.search.SearchResult;
 import hudson.search.SuggestedItem;
 import jenkins.model.Jenkins;
+
 import org.apache.log4j.Logger;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.SearchResultImpl;
@@ -13,6 +14,7 @@ import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 
 import javax.inject.Inject;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
@@ -23,12 +25,13 @@ import java.util.Map;
 public class SearchBackendManager {
     private static final Logger LOG = Logger.getLogger(SearchBackendManager.class);
 
-    private transient SearchBackend instance;
+    private transient SearchBackend<?> instance;
     private transient List<SearchFieldDefinition> cachedFieldDefinitions;
 
     @Inject
     private transient SearchBackendConfiguration backendConfig;
 
+    @SuppressWarnings("rawtypes")
     private synchronized SearchBackend getBackend() {
         if (instance == null) {
             SearchBackendEngine engine = backendConfig.getSearchBackendEngine();
@@ -47,11 +50,28 @@ public class SearchBackendManager {
     }
 
     public synchronized void reconfigure(final SearchBackendEngine searchBackend, final Map<String, Object> config) {
-        if (searchBackend == getBackend().getEngine()) {
-            instance = instance.reconfigure(config);
+        switch (searchBackend) {
+        case LUCENE:
+            if (instance instanceof LuceneSearchBackend && instance != null) {
+                instance.reconfigure(config);
+            } else {
+                instance = LuceneSearchBackend.create(backendConfig.getConfig());
+            }
+
+            break;
+        case SOLR:
+            if (instance instanceof SolrSearchBackend && instance != null) {
+                instance.reconfigure(config);
+            } else {
+                instance = SolrSearchBackend.create(backendConfig.getConfig());
+            }
+            break;
+        default:
+            throw new IllegalArgumentException("Can't instantiate " + searchBackend);
         }
     }
 
+    @SuppressWarnings("unchecked")
     public List<FreeTextSearchItemImplementation> getHits(String query, boolean includeHighlights) {
         List<FreeTextSearchItemImplementation> hits = getBackend().getHits(query, includeHighlights);
         if (backendConfig.isUseSecurity()) {
