@@ -383,7 +383,6 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
             progress.setSuccessfullyCompleted();
         } catch (Exception e) {
             progress.completedWithErrors(e);
-            throw e;
         } finally {
             progress.setFinished();
         }
