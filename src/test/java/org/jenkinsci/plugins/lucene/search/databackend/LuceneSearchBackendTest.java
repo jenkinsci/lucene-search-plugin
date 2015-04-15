@@ -44,6 +44,14 @@ public class LuceneSearchBackendTest {
     public void givenLuceneWhenJobsWithBuildsAreExecutedThenTheyShouldBeSearchable() throws IOException,
             ExecutionException, InterruptedException, SAXException, URISyntaxException {
         jenkinsSearchBackend.setLuceneBackend(false);
-        jenkinsSearchBackend.testBuildAndRebuild();
+        CommonTestCases.givenSearchWhenJobsWithBuildsAreExecutedThenTheyShouldBeSearchable(jenkinsSearchBackend, rule);
     }
+
+    @Test(timeout = 10000)
+    public void givenLuceneWhenIsNewItShouldSupportRebuildFromClean() throws IOException, ExecutionException,
+            InterruptedException, SAXException, URISyntaxException {
+        jenkinsSearchBackend.setLuceneBackend(false);
+        CommonTestCases.givenSearchWhenIsNewItShouldSupportRebuildFromClean(jenkinsSearchBackend, rule);
+    }
+
 }

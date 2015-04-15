@@ -86,22 +86,4 @@ public class JenkinsSearchBackend {
         return (LuceneManager.JSReturnCollection) JSONObject.fromObject(jsonString).toBean(
                 LuceneManager.JSReturnCollection.class);
     }
-
-    public void testBuildAndRebuild() throws IOException, ExecutionException, InterruptedException, SAXException {
-        assertEquals(0, search("echo").suggestions.size());
-        FreeStyleProject project1 = rule.createFreeStyleProject("project1");
-        project1.getBuildersList().add(new Shell("echo $BUILD_TAG\n"));
-        // Building
-        project1.scheduleBuild2(0).get();
-        project1.scheduleBuild2(0).get();
-        project1.scheduleBuild2(0).get();
-
-        rule.createFreeStyleProject("project2");
-
-        FreeStyleProject project3 = rule.createFreeStyleProject("project3");
-        project3.getBuildersList().add(new Shell("cat $BUILD_TAG\n"));
-        assertEquals(3, search("echo").suggestions.size());
-        rebuildDatabase();
-        assertEquals(3, search("echo").suggestions.size());
-    }
 }
