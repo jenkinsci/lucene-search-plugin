@@ -1,7 +1,5 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
-import static org.junit.Assert.assertEquals;
-
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -12,9 +10,6 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.xml.sax.SAXException;
-
-import hudson.model.FreeStyleProject;
-import hudson.tasks.Shell;
 
 import java.io.File;
 import java.io.FileOutputStream;
