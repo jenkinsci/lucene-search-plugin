@@ -6,6 +6,7 @@ import hudson.model.Job;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -50,12 +51,10 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
     public static final String COMPOSITE_SEARCH_FIELD = "text";
 
     private final HttpSolrServer httpSolrServer;
-    private final String solrCollection;
 
     public SolrSearchBackend(URI url, String solrCollection) {
         super(SearchBackendEngine.SOLR);
-        httpSolrServer = new HttpSolrServer(url.toString());
-        this.solrCollection = solrCollection;
+        httpSolrServer = new HttpSolrServer(url.toString() + "/" + solrCollection);
         try {
             definedSolrFields();
             String[] defaultSearchableFields = getAllDefaultSearchableFields();
@@ -80,7 +79,7 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
     private void defineField(String fieldName, boolean numeric, boolean stored, boolean multiValued) throws IOException {
         HttpClient httpClient = httpSolrServer.getHttpClient();
 
-        String url = httpSolrServer.getBaseURL() + "/" + solrCollection + "/schema/fields/" + fieldName;
+        String url = httpSolrServer.getBaseURL() + "/schema/fields/" + fieldName;
         HttpGet httpGet = new HttpGet(url);
         httpGet.addHeader("Accept", ContentType.APPLICATION_JSON.getMimeType());
         HttpResponse response = httpClient.execute(httpGet);
@@ -121,7 +120,7 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
     private void defineCopyField(String[] defaultSearchable) throws IOException {
         HttpClient httpClient = httpSolrServer.getHttpClient();
 
-        String url = httpSolrServer.getBaseURL() + "/" + solrCollection + "/schema/copyfields/?wt=json";
+        String url = httpSolrServer.getBaseURL() + "/schema/copyfields/?wt=json";
         HttpGet httpGet = new HttpGet(url);
         HttpResponse response = httpClient.execute(httpGet);
         if (response.getStatusLine().getStatusCode() != 200) {
@@ -169,7 +168,7 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
         if (changedCopyField) {
             String jsonString = copyFields.toString(4);
             StringEntity stringEntity = new StringEntity(jsonString, ContentType.APPLICATION_JSON);
-            HttpPost post = new HttpPost(httpSolrServer.getBaseURL() + "/" + solrCollection + "/schema/copyfields");
+            HttpPost post = new HttpPost(httpSolrServer.getBaseURL() + "/schema/copyfields");
             post.setEntity(stringEntity);
             response = httpClient.execute(post);
         }
@@ -262,10 +261,11 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
         }
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public SearchBackend reconfigure(Map<String, Object> config) {
-        if (getUrl(config).toString().equals(httpSolrServer.getBaseURL())
-                && solrCollection.equals(getSolrCollection(config))) {
+        HttpSolrServer newSolrServer = new HttpSolrServer(getUrl(config).toString() + "/" + getSolrCollection(config));
+        if (newSolrServer.getBaseURL().equals(httpSolrServer.getBaseURL())) {
             return this;
         } else {
             return new SolrSearchBackend(getUrl(config), getSolrCollection(config));
@@ -293,7 +293,7 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
 
     @SuppressWarnings("rawtypes")
     @Override
-    public void cleanDeletedBuilds(Progress progress, Job job) {
+    public void cleanDeletedBuilds(Progress progress, Job job) throws Exception {
         int firstBuildNumber = job.getFirstBuild().getNumber();
         List<String> idsToDelete = new ArrayList<String>();
         try {
@@ -317,12 +317,10 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
                 httpSolrServer.deleteById(idsToDelete);
             }
             progress.setSuccessfullyCompleted();
-        } catch (SolrServerException e) {
+        } catch (Exception e) {
             progress.completedWithErrors(e);
             LOGGER.error("Clean deleted jobs failed", e);
-        } catch (IOException e) {
-            progress.completedWithErrors(e);
-            LOGGER.error("Clean deleted jobs failed", e);
+            throw e;
         } finally {
             progress.setFinished();
         }
@@ -369,7 +367,7 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
 
     @SuppressWarnings("rawtypes")
     @Override
-    public void cleanDeletedJobs(Progress progress) {
+    public void cleanDeletedJobs(Progress progress) throws Exception {
         try {
             Set<String> jobNames = new CaseInsensitiveHashSet();
             for (Job job : Jenkins.getInstance().getAllItems(Job.class)) {
@@ -383,8 +381,9 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
                 }
             }
             progress.setSuccessfullyCompleted();
-        } catch (SolrServerException e) {
+        } catch (Exception e) {
             progress.completedWithErrors(e);
+            throw e;
         } finally {
             progress.setFinished();
         }

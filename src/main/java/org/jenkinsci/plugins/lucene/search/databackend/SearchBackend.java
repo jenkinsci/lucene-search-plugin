@@ -16,6 +16,7 @@ import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
+import org.jenkinsci.plugins.lucene.search.databackend.Progress.ProgressState;
 
 public abstract class SearchBackend<T> {
 
@@ -63,9 +64,9 @@ public abstract class SearchBackend<T> {
 
     public abstract T removeBuild(AbstractBuild<?, ?> build);
 
-    public abstract void cleanDeletedBuilds(Progress progress, Job<?, ?> job);
+    public abstract void cleanDeletedBuilds(Progress progress, Job<?, ?> job) throws Exception;
 
-    public abstract void cleanDeletedJobs(Progress progress);
+    public abstract void cleanDeletedJobs(Progress progress) throws Exception;
 
     public abstract void deleteJob(String jobName);
 

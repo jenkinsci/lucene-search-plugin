@@ -296,10 +296,11 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     @SuppressWarnings("rawtypes")
     @Override
-    public void cleanDeletedBuilds(Progress progress, Job job) {
+    public void cleanDeletedBuilds(Progress progress, Job job) throws Exception {
         try {
             int firstBuildNumber = job.getFirstBuild().getNumber();
             IndexSearcher searcher = new IndexSearcher(reader);
+
             Term term = new Term(Field.PROJECT_NAME.fieldName, job.getName().toLowerCase(LOCALE));
             Query q = new TermQuery(term).rewrite(reader);
             TopDocs topDocs = searcher.search(q, 9999999);
@@ -316,9 +317,10 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             }
             progress.setSuccessfullyCompleted();
             updateReader();
-        } catch (IOException e) {
+        } catch (Exception e) {
             progress.completedWithErrors(e);
             LOGGER.error("Failed to delete cleaned builds", e);
+            throw e;
         } finally {
             progress.setFinished();
         }
@@ -363,7 +365,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     @SuppressWarnings("rawtypes")
     @Override
-    public void cleanDeletedJobs(Progress progress) {
+    public void cleanDeletedJobs(Progress progress) throws Exception {
         try {
             Set<String> jobNames = new HashSet<String>();
             for (Job job : Jenkins.getInstance().getAllItems(Job.class)) {
@@ -383,9 +385,10 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             }
             updateReader();
             progress.setSuccessfullyCompleted();
-        } catch (IOException e) {
+        } catch (Exception e) {
             progress.completedWithErrors(e);
             LOGGER.error("Failed to clean deleted jobs", e);
+            throw e;
         } finally {
             progress.setFinished();
         }
