@@ -264,8 +264,8 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
     @SuppressWarnings("rawtypes")
     @Override
     public SearchBackend reconfigure(Map<String, Object> config) {
-        HttpSolrServer newSolrServer = new HttpSolrServer(getUrl(config).toString() + "/" + getSolrCollection(config));
-        if (newSolrServer.getBaseURL().equals(httpSolrServer.getBaseURL())) {
+        String fullUrl = getUrl(config).toString() + "/" + getSolrCollection(config);
+        if (fullUrl.equals(httpSolrServer.getBaseURL())) {
             return this;
         } else {
             return new SolrSearchBackend(getUrl(config), getSolrCollection(config));
