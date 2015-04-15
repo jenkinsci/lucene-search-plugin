@@ -2,6 +2,9 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import hudson.model.FreeStyleProject;
 import hudson.tasks.Shell;
 
@@ -18,6 +21,8 @@ import org.xml.sax.SAXException;
 
 public class CommonTestCases {
 
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
     public static void rebuildDatabase(final JenkinsSearchBackend jenkinsSearchBackend, JenkinsRule rule)
             throws IOException, SAXException, InterruptedException, ExecutionException {
         URL statusUrl = new URL(rule.getURL(), "lucenesearchmanager/status");
@@ -28,7 +33,7 @@ public class CommonTestCases {
             @Override
             public Boolean call() throws Exception {
                 LuceneManager.JSReturnCollection jsonObject = jenkinsSearchBackend.getRebuildStatus(rebuildUrl);
-                assertEquals(0, jsonObject.code);
+                assertEquals(GSON.toJson(jsonObject), 0, jsonObject.code);
                 return true;
             }
         });
@@ -37,7 +42,7 @@ public class CommonTestCases {
             Thread.sleep(1000);
             jsonObject = jenkinsSearchBackend.getRebuildStatus(statusUrl);
         }
-        assertEquals(0, jsonObject.code);
+        assertEquals(GSON.toJson(jsonObject), 0, jsonObject.code);
         assertTrue("Something went wrong with rebuilding database", databaseRebuild.get());
     }
 
