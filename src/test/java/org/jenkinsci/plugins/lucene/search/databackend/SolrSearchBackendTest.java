@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -72,9 +73,13 @@ public class SolrSearchBackendTest {
         setupSolr();
     }
 
+    @AfterClass
+    public static void tearDownClass() {
+        backgroundWorker.shutdownNow();
+    }
+
     @After
     public void tearDown() throws Exception {
-        backgroundWorker.shutdownNow();
         server.stop();
     }
 
