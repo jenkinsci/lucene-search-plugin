@@ -3,6 +3,7 @@ function rebuildDatabase() {
     if(workers < 1){
         return;
     }
+    console.log(workers);
     luceneSearchManager.rebuildDatabase(workers, function(t) {
         var statement = t.responseObject();
         updateStatusFromResponse(statement);
