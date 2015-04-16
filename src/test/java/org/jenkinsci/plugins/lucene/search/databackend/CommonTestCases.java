@@ -27,7 +27,7 @@ public class CommonTestCases {
             throws IOException, SAXException, InterruptedException, ExecutionException {
         URL statusUrl = new URL(rule.getURL(), "lucenesearchmanager/status");
         final URL rebuildUrl = new URL(rule.getURL(), "lucenesearchmanager/postRebuildDatabase");
-        
+
         Future<Boolean> databaseRebuild = jenkinsSearchBackend.getBackgroundWorker().submit(new Callable<Boolean>() {
 
             @Override
