@@ -39,9 +39,9 @@ public class LuceneManager extends ManagementLink {
     }
 
     @JavaScriptMethod
-    public JSReturnCollection rebuildDatabase(String workers) {
+    public JSReturnCollection rebuildDatabase(int workers) {
         JSReturnCollection statement = verifyNotInProgress();
-        this.workers = Integer.parseInt(workers);
+        this.workers = workers;
         if (this.workers <= 0) {
             statement.message = "Invalid number of workers";
             statement.code = 1;
@@ -60,7 +60,7 @@ public class LuceneManager extends ManagementLink {
 
     public void doPostRebuildDatabase(StaplerRequest req, StaplerResponse rsp, @QueryParameter int workers)
             throws IOException, ServletException {
-        writeStatus(rsp, rebuildDatabase(workers + ""));
+        writeStatus(rsp, rebuildDatabase(workers));
     }
 
     private JSReturnCollection verifyNotInProgress() {
