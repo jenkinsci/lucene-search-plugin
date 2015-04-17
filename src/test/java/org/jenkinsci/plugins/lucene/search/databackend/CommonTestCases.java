@@ -30,7 +30,7 @@ public class CommonTestCases {
     public static void rebuildDatabase(final JenkinsSearchBackend jenkinsSearchBackend, JenkinsRule rule)
             throws IOException, SAXException, InterruptedException, ExecutionException, TimeoutException {
         URL statusUrl = new URL(rule.getURL(), "lucenesearchmanager/status");
-        final URL rebuildUrl = new URL(rule.getURL(), "lucenesearchmanager/postRebuildDatabase");
+        final URL rebuildUrl = new URL(rule.getURL(), "lucenesearchmanager/postRebuildDatabase?workers=5");
 
         Future<Throwable> databaseRebuild = jenkinsSearchBackend.getBackgroundWorker().submit(new Callable<Throwable>() {
 
