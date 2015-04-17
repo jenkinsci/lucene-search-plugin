@@ -22,6 +22,7 @@ import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
 
 public class SolrSearchBackendTest {
     private static final File SOLR_WORK_DIR = new File("target/solr-for-test/").getAbsoluteFile();
@@ -99,7 +100,7 @@ public class SolrSearchBackendTest {
 
     @Test
     public void givenSolrWhenJobsWithBuildsAreExecutedThenTheyShouldBeSearchable() throws IOException,
-            ExecutionException, InterruptedException, SAXException, URISyntaxException {
+            ExecutionException, InterruptedException, SAXException, URISyntaxException, TimeoutException {
         CommonTestCases.givenSearchWhenJobsWithBuildsAreExecutedThenTheyShouldBeSearchable(jenkinsSearchBackend, rule);
     }
 

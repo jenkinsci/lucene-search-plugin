@@ -13,6 +13,7 @@ import java.net.URISyntaxException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertTrue;
 
@@ -42,7 +43,7 @@ public class LuceneSearchBackendTest {
 
     @Test(timeout = 10000)
     public void givenLuceneWhenJobsWithBuildsAreExecutedThenTheyShouldBeSearchable() throws IOException,
-            ExecutionException, InterruptedException, SAXException, URISyntaxException {
+            ExecutionException, InterruptedException, SAXException, URISyntaxException, TimeoutException {
         jenkinsSearchBackend.setLuceneBackend(false);
         CommonTestCases.givenSearchWhenJobsWithBuildsAreExecutedThenTheyShouldBeSearchable(jenkinsSearchBackend, rule);
     }
