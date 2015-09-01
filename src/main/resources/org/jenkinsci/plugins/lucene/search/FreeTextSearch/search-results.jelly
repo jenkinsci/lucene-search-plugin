@@ -46,7 +46,7 @@
                             <j:forEach var="hit" items="${searchModelHits}">
                                 <li>
                                     <span style="white-space: nowrap;">
-                                        <a href="${rootURL}${hit.searchUrl}">${hit.searchName}</a>
+                                        <a href="${rootURL}/${hit.searchUrl}">${hit.searchName}</a>
                                     </span>
                                 </li>
                             </j:forEach>
