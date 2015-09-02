@@ -41,39 +41,30 @@
                 </j:when>
                 <j:otherwise>
                     <ol>
-                        <j:if test="${! searchModelHits.isEmpty()}">
-                            <h2>${%SearchModel results}</h2>
-                            <j:forEach var="hit" items="${searchModelHits}">
-                                <li>
-                                    <span style="white-space: nowrap;">
-                                        <a href="${rootURL}${hit.searchUrl}">${hit.searchName}</a>
-                                    </span>
-                                </li>
-                            </j:forEach>
-                        </j:if>
-                    </ol>
-                    <ol>
                         <j:if test="${! hits.isEmpty()}">
-                            <h2>${%FreeTextSearch results}</h2>
                             <j:forEach var="hit" items="${hits}">
                                 <li>
                                     <span style="white-space: nowrap;">
-                                        <img src="${rootURL}/images/24x24/${hit.iconFileName}"/>${" "}<a
-                                            href="${hit.searchUrl}">${hit.searchName}</a>${" "}<a
-                                            href="${hit.searchUrl}consoleFull"><img
-                                            src="${rootURL}/images/24x24/terminal.png"/></a>${" "}<a
-                                            href="${hit.searchUrl}consoleText"><img
-                                            src="${rootURL}/images/24x24/document.png"/></a>
+                                        <img src="${rootURL}/images/16x16/${hit.iconFileName}"/>${" "}
+                                        <a href="${hit.absoluteURL}">${hit.searchName}</a>
                                     </span>
-                                    <div class="collapsible">
-                                        <j:forEach var="fragment" items="${hit.bestFragments}">
-                                            <ul>
-                                                <li>
-                                                    ${fragment}
-                                                </li>
-                                            </ul>
-                                        </j:forEach>
-                                    </div>
+                                    <j:if test="${!hit.showConsole}">
+                                        ${" "}
+                                        <a href="${hit.absoluteURL}/consoleFull"><img src="${rootURL}/images/16x16/terminal.png"/></a>
+                                        ${" "}
+                                        <a href="${hit.absoluteURL}/consoleText">
+                                        ${" "}
+                                        <img src="${rootURL}/images/16x16/document.png"/></a>
+                                        <div class="collapsible">
+                                            <j:forEach var="fragment" items="${hit.bestFragments}">
+                                                <ul>
+                                                    <li>
+                                                        ${fragment}
+                                                    </li>
+                                                </ul>
+                                            </j:forEach>
+                                        </div>
+                                    </j:if>
                                 </li>
                             </j:forEach>
                         </j:if>
