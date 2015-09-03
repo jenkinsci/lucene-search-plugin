@@ -5,16 +5,23 @@ import jenkins.model.Jenkins;
 
 public abstract class FreeTextSearchItem implements SearchItem {
 
-    public String getAbsoluteURL() {
+    /**
+     * Turns the searchUrl into a url or path depending on if the
+     * searchUrl starts with a '/'.
+     *
+     * @return something suitable for inserting into an href
+     */
+    public String getUrl() {
         String root = Jenkins.getInstance().getRootUrl();
-        boolean needsExtraSlash = !root.endsWith("/");
-        boolean hasExtraSlash = getSearchUrl().startsWith("/");
-        if (needsExtraSlash && !hasExtraSlash) {
-            return root + "/" + getSearchUrl();
-        } else if (!needsExtraSlash && hasExtraSlash) {
-            return root + getSearchUrl().substring(1);
+        boolean rootHasSlash = !root.endsWith("/");
+        boolean absolutePath = getSearchUrl().startsWith("/");
+        if (absolutePath) {
+            if (!rootHasSlash) {
+                return root + getSearchUrl().substring(1);
+            }
+            return root + getSearchUrl();
         }
-        return root + getSearchUrl();
+        return getSearchUrl();
     }
 
     public abstract String getIconFileName();
