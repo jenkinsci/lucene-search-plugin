@@ -48,13 +48,13 @@
                                         <img src="${rootURL}/images/16x16/${hit.iconFileName}"/>${" "}
                                         <a href="${hit.absoluteURL}">${hit.searchName}</a>
                                     </span>
-                                    <j:if test="${!hit.showConsole}">
+                                    <j:if test="${hit.showConsole}">
                                         ${" "}
-                                        <a href="${hit.absoluteURL}/consoleFull"><img src="${rootURL}/images/16x16/terminal.png"/></a>
+                                        <a href="${hit.absoluteURL}consoleFull"><img src="${rootURL}/images/16x16/terminal.png"/></a>
                                         ${" "}
-                                        <a href="${hit.absoluteURL}/consoleText">
+                                        <a href="${hit.absoluteURL}consoleText">
                                         ${" "}
-                                        <img src="${rootURL}/images/16x16/document.png"/></a>
+                                        <img src="${rootURL}/images/16x16/text.png"/></a>
                                         <div class="collapsible">
                                             <j:forEach var="fragment" items="${hit.bestFragments}">
                                                 <ul>
