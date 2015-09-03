@@ -119,7 +119,6 @@ public class ArtifactIndexer extends Recorder {
             }
             return r;
         }
-
     }
 
     @Extension

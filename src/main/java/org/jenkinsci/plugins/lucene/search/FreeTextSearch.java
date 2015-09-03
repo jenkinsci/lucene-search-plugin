@@ -1,12 +1,6 @@
 package org.jenkinsci.plugins.lucene.search;
 
-import hudson.search.Search;
-import hudson.search.SearchIndex;
-import hudson.search.SearchItem;
-import hudson.search.SearchResult;
-import hudson.search.SearchableModelObject;
-import hudson.search.SuggestedItem;
-
+import hudson.search.*;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchFieldDefinition;
 import org.kohsuke.stapler.Ancestor;
@@ -15,11 +9,9 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
 import javax.servlet.ServletException;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,23 +21,18 @@ public class FreeTextSearch extends Search {
 
     private final SearchBackendManager manager;
 
-    private List<FreeTextSearchItemImplementation> hits = Collections.emptyList();
-    private List<SearchItem> searchModelHits = Collections.emptyList();
+    private List<FreeTextSearchItem> hits = Collections.emptyList();
 
     public FreeTextSearch(final SearchBackendManager manager) {
         this.manager = manager;
     }
 
-    public List<FreeTextSearchItemImplementation> getHits() {
+    public List<FreeTextSearchItem> getHits() {
         return hits;
     }
 
-    public List<SearchItem> getSearchModelHits() {
-        return searchModelHits;
-    }
-
-    private List<SearchItem> normalSearch(StaplerRequest req, String query) {
-        List<SearchItem> searchResults = new ArrayList<SearchItem>();
+    private List<FreeTextSearchItem> normalSearch(StaplerRequest req, String query) {
+        List<FreeTextSearchItem> searchResults = new ArrayList<FreeTextSearchItem>();
 
         List<Ancestor> l = req.getAncestors();
         for (int i = l.size() - 1; i >= 0; i--) {
@@ -60,7 +47,7 @@ public class FreeTextSearch extends Search {
                 SearchIndex index = smo.getSearchIndex();
                 SuggestedItem target = find(index, query, smo);
                 if (target != null) {
-                    searchResults.add(target.item);
+                    searchResults.add(new SearchItemWrapper(target.item));
                 }
             }
         }
@@ -68,15 +55,15 @@ public class FreeTextSearch extends Search {
     }
 
     public boolean isEmptyResult() {
-        return hits.isEmpty() && searchModelHits.isEmpty();
+        return hits.isEmpty();
     }
 
     @Override
     public void doIndex(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
         String query = req.getParameter("q");
         if (query != null) {
-            searchModelHits = normalSearch(req, query);
-            hits = manager.getHits(query, true);
+            hits = normalSearch(req, query);
+            hits.addAll(manager.getHits(query, true));
         }
         req.getView(this, "search-results.jelly").forward(req, rsp);
     }

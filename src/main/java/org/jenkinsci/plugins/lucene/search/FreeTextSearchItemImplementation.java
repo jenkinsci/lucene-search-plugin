@@ -2,12 +2,11 @@ package org.jenkinsci.plugins.lucene.search;
 
 import hudson.search.SearchIndex;
 import hudson.search.SearchItem;
-import jenkins.model.Jenkins;
 
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class FreeTextSearchItemImplementation implements SearchItem {
+public class FreeTextSearchItemImplementation extends FreeTextSearchItem {
 
     private static final Pattern LINE_ENDINGS = Pattern.compile("(\\r\\n|\\n|\\r)");
 
@@ -30,7 +29,7 @@ public class FreeTextSearchItemImplementation implements SearchItem {
 
     @Override
     public String getSearchUrl() {
-        return Jenkins.getInstance().getRootUrl() + "/job/" + projectName + "/" + buildNumber + "/";
+        return "/job/" + projectName + "/" + buildNumber + "/";
     }
 
     @Override
@@ -51,19 +50,20 @@ public class FreeTextSearchItemImplementation implements SearchItem {
     }
 
     @Override
+    public boolean isShowConsole() {
+        return true;
+    }
+
+    @Override
     public SearchIndex getSearchIndex() {
         return new SearchIndex() {
 
             @Override
             public void suggest(final String token, final List<SearchItem> result) {
-                // TODO Auto-generated method stub
-
             }
 
             @Override
             public void find(final String token, final List<SearchItem> result) {
-                // TODO Auto-generated method stub
-
             }
         };
     }
