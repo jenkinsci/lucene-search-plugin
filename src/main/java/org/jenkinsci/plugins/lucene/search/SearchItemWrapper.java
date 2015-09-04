@@ -33,6 +33,6 @@ public class SearchItemWrapper extends FreeTextSearchItem {
 
     @Override
     public boolean isShowConsole() {
-        return item.getSearchUrl().contains("job/");
+        return false;
     }
 }
