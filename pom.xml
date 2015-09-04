@@ -10,8 +10,8 @@
 	<version>1.16-SNAPSHOT</version>
 	<packaging>hpi</packaging>
 	<properties>
-		<lucene.version>4.9.0</lucene.version>
-		<solr.version>4.9.0</solr.version>
+		<lucene.version>4.10.4</lucene.version>
+		<solr.version>4.10.4</solr.version>
 	</properties>
 
 	<!-- Jenkins plugin config -->
