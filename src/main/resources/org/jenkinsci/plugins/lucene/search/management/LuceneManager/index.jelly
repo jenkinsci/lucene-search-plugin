@@ -3,11 +3,13 @@
         <st:include it="${app}" page="sidepanel.jelly"/>
         <l:header>
             <link rel="stylesheet" type="text/css" href="${rootURL}/plugin/lucene-search/lucene.css" media="screen"/>
-            <script type="text/javascript" src="${rootURL}/plugin/lucene-search/jquery-2.1.3.min.js"></script>
+			<script type="text/javascript" src="${rootURL}/plugin/lucene-search/jquery-2.1.3.min.js"></script>
             <script type="text/javascript" src="${rootURL}/plugin/lucene-search/lucene.js"></script>
             <st:bind var="luceneSearchManager" value="${it}"/>
+            <script>var Q=jQuery.noConflict()</script>
             <script>
-            $(document).ready(function() {
+            
+            Q.ready(function() {
                 getStatus();
                 window.setInterval(function (a, b) {
                     getStatus();

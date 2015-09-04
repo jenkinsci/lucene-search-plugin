@@ -1,5 +1,5 @@
 function rebuildDatabase() {
-    var workers = txtWorkers = parseInt($("#txtWorkers").val());
+    var workers = txtWorkers = parseInt(Q("#txtWorkers").val());
     if(workers < 1){
         return;
     }
@@ -21,8 +21,8 @@ function abort() {
 function getStatus() {
     luceneSearchManager.getStatus(function(t) {
         var statement = t.responseObject();
-        $(".running").toggle(statement.running);
-        $(".stopped").toggle(!statement.running);
+        Q(".running").toggle(statement.running);
+        Q(".stopped").toggle(!statement.running);
         updateStatusFromResponse(statement);
     });
 }
@@ -36,17 +36,17 @@ $(document).ready(function() {
 
 function updateStatusFromResponse(statement) {
     console.log(statement);
-    $("#message").toggleClass("error", statement.code !== 0).text(statement.message);
+    Q("#message").toggleClass("error", statement.code !== 0).text(statement.message);
     if(statement.progress) {
-        $("#currentWorkers").text(statement.workers);
-        $("#history").empty();
-        $("#currentProgress").show();
+        Q("#currentWorkers").text(statement.workers);
+        Q("#history").empty();
+        Q("#currentProgress").show();
         var progress = statement.progress;
-        $("#currentlyProcessing").text(progress.name);
-        $("#currentlyProcessingIndex").text(progress.current);
-        $("#currentlyProcessingMax").text(progress.max);
-        $("#totalProcessesedRun").text(progress.processedItems);
-        $("#currentElapsedTime").text((progress.elapsedTime/1000) + "s");
+        Q("#currentlyProcessing").text(progress.name);
+        Q("#currentlyProcessingIndex").text(progress.current);
+        Q("#currentlyProcessingMax").text(progress.max);
+        Q("#totalProcessesedRun").text(progress.processedItems);
+        Q("#currentElapsedTime").text((progress.elapsedTime/1000) + "s");
         
         for(var historyIndex = 0; historyIndex != progress.history.length; historyIndex++) {
             var hist = statement.progress.history[historyIndex];
@@ -60,6 +60,6 @@ function updateStatusFromResponse(statement) {
             $("#history").append(node);
         }
     } else {
-        $("#currentProgress").hide();
+        Q("#currentProgress").hide();
     }
 }
