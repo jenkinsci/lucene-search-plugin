@@ -52,7 +52,7 @@ public class SearchBackendManager {
     public synchronized void reconfigure(final SearchBackendEngine searchBackend, final Map<String, Object> config) {
         switch (searchBackend) {
         case LUCENE:
-            if (instance instanceof LuceneSearchBackend && instance != null) {
+            if (instance instanceof LuceneSearchBackend) {
                 instance.reconfigure(config);
             } else {
                 if (instance != null) {
@@ -63,7 +63,7 @@ public class SearchBackendManager {
 
             break;
         case SOLR:
-            if (instance instanceof SolrSearchBackend && instance != null) {
+            if (instance instanceof SolrSearchBackend) {
                 instance.reconfigure(config);
             } else {
                 if (instance != null) {
