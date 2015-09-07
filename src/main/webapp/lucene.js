@@ -27,13 +27,6 @@ function getStatus() {
     });
 }
 
-$(document).ready(function() {
-    getStatus();
-    window.setInterval(function (a, b) {
-        //getStatus();
-    }, 5000);
-});
-
 function updateStatusFromResponse(statement) {
     console.log(statement);
     Q("#message").toggleClass("error", statement.code !== 0).text(statement.message);
