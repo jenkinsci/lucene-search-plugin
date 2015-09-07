@@ -14,7 +14,6 @@ import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.LogTaskListener;
 
-import jenkins.MasterToSlaveFileCallable;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -98,7 +97,7 @@ public class ArtifactIndexer extends Recorder {
     }
 
     // The following class is mostly copy-paste from ArtifactArchiver
-    private static final class DumpFiles extends MasterToSlaveFileCallable<Map<String, String>> {
+    private static final class DumpFiles implements FilePath.FileCallable<Map<String, String>> {
         private static final long serialVersionUID = 1;
         private final String includes;
         private final String excludes;
