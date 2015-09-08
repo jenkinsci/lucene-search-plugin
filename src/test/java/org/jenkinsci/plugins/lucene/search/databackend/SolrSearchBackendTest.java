@@ -47,7 +47,7 @@ public class SolrSearchBackendTest {
         String configSolrXml = "<solr>" + "  <solrcloud>" + "    <str name=\"host\">${host:}</str>"
                 + "    <int name=\"hostPort\">" + solrPort + "</int>"
                 + "    <str name=\"hostContext\">${hostContext:solr}</str>"
-                + "    <int name=\"zkClientTimeout\">${zkClientTimeout:30000}</int>"
+                + "    <int name=\"zkClientTimeout\">${zkClientTimeout:300000}</int>"
                 + "    <bool name=\"genericCoreNodeNames\">${genericCoreNodeNames:true}</bool>" + "  </solrcloud>"
                 + "  <shardHandlerFactory name=\"shardHandlerFactory\"" + "    class=\"HttpShardHandlerFactory\">"
                 + "    <int name=\"socketTimeout\">${socketTimeout:0}</int>"
