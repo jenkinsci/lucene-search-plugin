@@ -1,7 +1,7 @@
 package org.jenkinsci.plugins.lucene.search;
 
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
+import hudson.model.Run;
+import hudson.model.Job;
 import hudson.model.Cause;
 import hudson.model.Result;
 import hudson.scm.ChangeLogSet;
@@ -18,69 +18,69 @@ import java.util.Map;
 public enum Field {
     ID("id", DefaultSearchable.FALSE, Numeric.TRUE, Persist.TRUE) {
         @Override
-        public String getValue(AbstractBuild<?, ?> build) {
+        public String getValue(Run<?, ?> build) {
             return build.getId();
         }
     },
     PROJECT_NAME("projectname", Persist.TRUE) {
-        public String getValue(final AbstractBuild<?, ?> build) {
+        public String getValue(final Run<?, ?> build) {
             StringBuilder builder = new StringBuilder();
-            if (!build.getProject().getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
-                builder.append(build.getProject().getParent().getFullName() + "/");
+            if (!build.getParent().getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
+                builder.append(build.getParent().getParent().getFullName() + "/");
             }
-            builder.append(build.getProject().getName());
+            builder.append(build.getParent().getName());
             return builder.toString();
         }
     },
 
     PROJECT_DISPLAY_NAME("projectdisplayname", Persist.TRUE) {
         @Override
-        public String getValue(AbstractBuild<?, ?> build) {
+        public String getValue(Run<?, ?> build) {
             StringBuilder builder = new StringBuilder();
-            if (!build.getProject().getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
-                builder.append(build.getProject().getParent().getDisplayName() + "/");
+            if (!build.getParent().getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
+                builder.append(build.getParent().getParent().getDisplayName() + "/");
             }
-            builder.append(build.getProject().getDisplayName());
+            builder.append(build.getParent().getDisplayName());
             return builder.toString();
         }
     },
 
     BUILD_NUMBER("buildnumber", Numeric.TRUE, Persist.TRUE) {
         @Override
-        public Integer getValue(AbstractBuild<?, ?> build) {
+        public Integer getValue(Run<?, ?> build) {
             return build.getNumber();
         }
     },
 
     RESULT("result", Persist.TRUE) {
         @Override
-        public Result getValue(AbstractBuild<?, ?> build) {
+        public Result getValue(Run<?, ?> build) {
             return build.getResult();
         }
     },
 
     DURATION("duration", DefaultSearchable.FALSE) {
         @Override
-        public Long getValue(AbstractBuild<?, ?> build) {
+        public Long getValue(Run<?, ?> build) {
             return build.getDuration();
         }
     },
 
     START_TIME("starttime", DefaultSearchable.FALSE, Numeric.TRUE, Persist.TRUE) {
         @Override
-        public Long getValue(AbstractBuild<?, ?> build) {
+        public Long getValue(Run<?, ?> build) {
             return build.getStartTimeInMillis();
         }
     },
     BUILT_ON("builton") {
         @Override
-        public String getValue(AbstractBuild<?, ?> build) {
-            return build.getBuiltOnStr();
+        public String getValue(Run<?, ?> build) {
+            return build.getExecutor().getDisplayName();
         }
     },
     START_CAUSE("startcause") {
         @Override
-        public String getValue(AbstractBuild<?, ?> build) {
+        public String getValue(Run<?, ?> build) {
             StringBuilder shortDescriptions = new StringBuilder();
             for (Cause cause : build.getCauses()) {
                 shortDescriptions.append(" ").append(cause.getShortDescription());
@@ -90,14 +90,14 @@ public enum Field {
     },
     BALL_COLOR("color", DefaultSearchable.FALSE, Persist.TRUE) {
         @Override
-        public String getValue(AbstractBuild<?, ?> build) {
+        public String getValue(Run<?, ?> build) {
             return build.getIconColor().name();
         }
     },
 
     CONSOLE("console", Persist.TRUE) {
         @Override
-        public String getValue(AbstractBuild<?, ?> build) {
+        public String getValue(Run<?, ?> build) {
             try {
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                 build.getLogText().writeLogTo(0, byteArrayOutputStream);
@@ -112,33 +112,34 @@ public enum Field {
 
     CHANGE_LOG("changelog", Persist.TRUE) {
         @Override
-        public Object getValue(AbstractBuild<?, ?> build) {
-            ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = build.getChangeSet();
-            StringBuilder sb = new StringBuilder();
-            if (changeSet != null) {
-                for (ChangeLogSet.Entry entry : build.getChangeSet()) {
-                    sb.append("author:").append(entry.getAuthor()).append('\n');
-                    sb.append("commitid:").append(entry.getCommitId()).append('\n');
-                    sb.append("message:").append(entry.getMsg()).append('\n');
-                    for (String path : entry.getAffectedPaths()) {
-                        sb.append(path).append('\n');
-                    }
-                }
-            }
-            return sb.toString();
+        public Object getValue(Run<?, ?> build) {
+            //            ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = build.getChangeSet();
+            //            StringBuilder sb = new StringBuilder();
+            //            if (changeSet != null) {
+            //                for (ChangeLogSet.Entry entry : build.getChangeSet()) {
+            //                    sb.append("author:").append(entry.getAuthor()).append('\n');
+            //                    sb.append("commitid:").append(entry.getCommitId()).append('\n');
+            //                    sb.append("message:").append(entry.getMsg()).append('\n');
+            //                    for (String path : entry.getAffectedPaths()) {
+            //                        sb.append(path).append('\n');
+            //                    }
+            //                }
+            //            }
+            //            return sb.toString();
+            return "";
         }
     },
 
     ARTIFACTS("artifacts", Persist.TRUE) {
         @Override
-        public Object getValue(AbstractBuild<?, ?> build) {
-            AbstractProject<?, ?> p = build.getProject();
-            for (Publisher publisher : p.getPublishersList()) {
-                if (publisher instanceof ArtifactIndexer) {
-                    ArtifactIndexer ai = (ArtifactIndexer) publisher;
-                    return ai.getIndexableData(build);
-                }
-            }
+        public Object getValue(Run<?, ?> build) {
+            //            Job<?, ?> p = build.getParent();
+            //            for (Publisher publisher : p.getPublishersList()) {
+            //                if (publisher instanceof ArtifactIndexer) {
+            //                    ArtifactIndexer ai = (ArtifactIndexer) publisher;
+            //                    return ai.getIndexableData(build);
+            //                }
+            //            }
             return "";
         }
     };
@@ -169,7 +170,7 @@ public enum Field {
         return index.get(fieldName);
     }
 
-    public abstract Object getValue(final AbstractBuild<?, ?> build);
+    public abstract Object getValue(final Run<?, ?> build);
 
     private enum Persist {
         TRUE;
