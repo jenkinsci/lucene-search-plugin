@@ -12,6 +12,7 @@
 	<properties>
 		<lucene.version>4.10.4</lucene.version>
 		<solr.version>4.10.4</solr.version>
+		<junit.version>1.9</junit.version>
 	</properties>
 
 	<!-- Jenkins plugin config -->
@@ -43,6 +44,12 @@
 	</licenses>
 
 	<dependencies>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <optional>false</optional>
+        </dependency>
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-core</artifactId>
