@@ -1,8 +1,24 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
-import hudson.model.AbstractBuild;
+import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
+import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
+import static org.jenkinsci.plugins.lucene.search.Field.ID;
+import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
+import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
 import hudson.model.BallColor;
 import hudson.model.Job;
+import hudson.model.Run;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -27,22 +43,6 @@ import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
-import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
-import static org.jenkinsci.plugins.lucene.search.Field.ID;
-import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
-import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
 
 public class SolrSearchBackend extends SearchBackend<SolrDocument> {
 
@@ -188,20 +188,20 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
     }
 
     @Override
-    public void storeBuild(AbstractBuild<?, ?> build, SolrDocument oldDoc) throws IOException {
+    public void storeBuild(Run<?, ?> run, SolrDocument oldDoc) throws IOException {
         try {
             SolrInputDocument doc = new SolrInputDocument();
             for (Field field : Field.values()) {
-                Object fieldValue = field.getValue(build);
+                Object fieldValue = field.getValue(run);
                 if (fieldValue == null && oldDoc != null) {
                     fieldValue = oldDoc.get(field.fieldName);
                 }
                 if (fieldValue != null) {
-                    doc.addField(field.fieldName, field.getValue(build));
+                    doc.addField(field.fieldName, field.getValue(run));
                 }
             }
             for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
-                String fieldValue = extension.getTextResult(build);
+                String fieldValue = extension.getTextResult(run);
                 if (fieldValue == null && oldDoc != null) {
                     fieldValue = (String) oldDoc.get(extension.getKeyword());
                 }
@@ -273,14 +273,14 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
     }
 
     @Override
-    public SolrDocument removeBuild(AbstractBuild<?, ?> build) {
+    public SolrDocument removeBuild(Run<?, ?> run) {
         try {
-            String queryString = String.format("%s:\"%s\"", ID.fieldName, build.getId());
+            String queryString = String.format("%s:\"%s\"", ID.fieldName, run.getId());
             SolrQuery query = new SolrQuery(queryString);
             query.setTerms(true);
             QueryResponse queryResponse = httpSolrServer.query(query);
             if (!queryResponse.getResults().isEmpty()) {
-                httpSolrServer.deleteById(build.getId());
+                httpSolrServer.deleteById(run.getId());
                 return queryResponse.getResults().get(0);
             }
         } catch (SolrServerException e) {
