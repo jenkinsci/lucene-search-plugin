@@ -1,11 +1,14 @@
 package org.jenkinsci.plugins.lucene.search;
 
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
 import hudson.model.Run;
 import hudson.model.Job;
 import hudson.model.Cause;
 import hudson.model.Result;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.Publisher;
+
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.jenkinsci.plugins.lucene.search.artifact.ArtifactIndexer;
 
@@ -112,34 +115,48 @@ public enum Field {
 
     CHANGE_LOG("changelog", Persist.TRUE) {
         @Override
-        public Object getValue(Run<?, ?> build) {
-            //            ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = build.getChangeSet();
-            //            StringBuilder sb = new StringBuilder();
-            //            if (changeSet != null) {
-            //                for (ChangeLogSet.Entry entry : build.getChangeSet()) {
-            //                    sb.append("author:").append(entry.getAuthor()).append('\n');
-            //                    sb.append("commitid:").append(entry.getCommitId()).append('\n');
-            //                    sb.append("message:").append(entry.getMsg()).append('\n');
-            //                    for (String path : entry.getAffectedPaths()) {
-            //                        sb.append(path).append('\n');
-            //                    }
-            //                }
-            //            }
-            //            return sb.toString();
-            return "";
+        public Object getValue(Run<?, ?> run) {
+            StringBuilder sb = new StringBuilder();
+            if (run instanceof AbstractBuild) {
+                //To add support for workflow this function needs to take a Run instead of AbstractBuild. 
+                // However I can't find the equivalent functions using the abstract form so will use instance of until I find a more permanent fix 
+
+                AbstractBuild<?, ?> build = (AbstractBuild) run;
+
+                ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = build.getChangeSet();
+
+                if (changeSet != null) {
+                    for (ChangeLogSet.Entry entry : build.getChangeSet()) {
+                        sb.append("author:").append(entry.getAuthor()).append('\n');
+                        sb.append("commitid:").append(entry.getCommitId()).append('\n');
+                        sb.append("message:").append(entry.getMsg()).append('\n');
+                        for (String path : entry.getAffectedPaths()) {
+                            sb.append(path).append('\n');
+                        }
+                    }
+                }
+            }
+            return sb.toString();
         }
     },
 
     ARTIFACTS("artifacts", Persist.TRUE) {
         @Override
         public Object getValue(Run<?, ?> build) {
-            //            Job<?, ?> p = build.getParent();
-            //            for (Publisher publisher : p.getPublishersList()) {
-            //                if (publisher instanceof ArtifactIndexer) {
-            //                    ArtifactIndexer ai = (ArtifactIndexer) publisher;
-            //                    return ai.getIndexableData(build);
-            //                }
-            //            }
+            Job<?, ?> p = build.getParent();
+            //To add support for workflow this function needs to take a Run instead of AbstractBuild. 
+            // However I can't find the equivalent functions using the abstract form so will use instance of until I find a more permanent fix 
+
+            if (p instanceof AbstractProject && build instanceof AbstractBuild<?, ?>) {
+                AbstractProject<?, ?> proj = (AbstractProject) p;
+                for (Publisher publisher : proj.getPublishersList()) {
+                    if (publisher instanceof ArtifactIndexer) {
+                        ArtifactIndexer ai = (ArtifactIndexer) publisher;
+                        return ai.getIndexableData((AbstractBuild) build);
+                    }
+                }
+
+            }
             return "";
         }
     };
