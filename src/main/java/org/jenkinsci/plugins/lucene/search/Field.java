@@ -104,8 +104,7 @@ public enum Field {
             try {
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                 build.getLogText().writeLogTo(0, byteArrayOutputStream);
-                String consoleOutput = byteArrayOutputStream.toString();
-                return consoleOutput;
+                return byteArrayOutputStream.toString();
             } catch (IOException e) {
                 // Probably won't happen, but don't silently swallow exceptions at least
                 throw new RuntimeException(e.getMessage(), e);
