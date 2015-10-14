@@ -78,7 +78,11 @@ public enum Field {
     BUILT_ON("builton") {
         @Override
         public String getValue(Run<?, ?> build) {
-            return build.getExecutor().getDisplayName();
+            if (build.getExecutor() != null) {
+                return build.getExecutor().getDisplayName();
+            } else {
+                return "Unknown";
+            }
         }
     },
     START_CAUSE("startcause") {
