@@ -93,8 +93,7 @@ public class CommonTestCases {
             rebuildDatabase(jenkinsSearchBackend, rule);
             assertEquals(3, jenkinsSearchBackend.search("echo").suggestions.size());
         } catch (Exception e) {
-            e.printStackTrace();
-            assertTrue(false);
+            throw new AssertionError(e);
         }
     }
 
