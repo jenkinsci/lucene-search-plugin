@@ -1,7 +1,7 @@
 package org.jenkinsci.plugins.lucene.search;
 
 import hudson.ExtensionPoint;
-import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import jenkins.model.Jenkins;
 
 /**
@@ -27,7 +27,7 @@ public abstract class FreeTextSearchExtension implements ExtensionPoint {
     /**
      * The text that will be searchable.
      */
-    public abstract String getTextResult(AbstractBuild<?, ?> build);
+    public abstract String getTextResult(Run<?, ?> run);
 
     /**
      * If the original data should be stored in the index. This is necessary if the data should be displayed with

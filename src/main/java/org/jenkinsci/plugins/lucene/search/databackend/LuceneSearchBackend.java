@@ -5,6 +5,7 @@ import com.google.common.collect.TreeMultimap;
 import hudson.model.AbstractBuild;
 import hudson.model.BallColor;
 import hudson.model.Job;
+import hudson.model.Run;
 import jenkins.model.Jenkins;
 
 import org.apache.commons.io.IOUtils;
@@ -229,12 +230,12 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     }
 
     @Override
-    public void storeBuild(final AbstractBuild<?, ?> build, Document oldDoc) throws IOException {
+    public void storeBuild(final Run<?, ?> run, Document oldDoc) throws IOException {
         try {
             Document doc = new Document();
             for (Field field : Field.values()) {
                 org.apache.lucene.document.Field.Store store = field.persist ? STORE : DONT_STORE;
-                Object fieldValue = field.getValue(build);
+                Object fieldValue = field.getValue(run);
                 if (fieldValue == null && oldDoc != null) {
                     fieldValue = oldDoc.get(field.fieldName);
                 }
@@ -260,12 +261,12 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             // EnvVars a = build.getEnvironment(listener);
 
             for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
-                Object fieldValue = extension.getTextResult(build);
+                Object fieldValue = extension.getTextResult(run);
                 if (fieldValue == null && oldDoc != null) {
                     fieldValue = oldDoc.get(extension.getKeyword());
                 }
                 if (fieldValue != null) {
-                    doc.add(new TextField(extension.getKeyword(), extension.getTextResult(build), (extension
+                    doc.add(new TextField(extension.getKeyword(), extension.getTextResult(run), (extension
                             .isPersist()) ? STORE : DONT_STORE));
                 }
             }
@@ -277,9 +278,9 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     }
 
     @Override
-    public Document removeBuild(final AbstractBuild<?, ?> build) {
+    public Document removeBuild(final Run<?, ?> run) {
         try {
-            Term term = new Term(Field.ID.fieldName, build.getId());
+            Term term = new Term(Field.ID.fieldName, run.getId());
             IndexSearcher searcher = new IndexSearcher(reader);
             TopDocs search = searcher.search(new TermQuery(term), 1);
             Document doc = null;
