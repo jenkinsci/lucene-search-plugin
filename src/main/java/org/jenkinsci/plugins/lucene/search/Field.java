@@ -81,7 +81,7 @@ public enum Field {
             if (build.getExecutor() != null) {
                 return build.getExecutor().getDisplayName();
             } else {
-                return "Unknown";
+                return "null";
             }
         }
     },
