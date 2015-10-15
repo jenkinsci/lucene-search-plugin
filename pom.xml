@@ -7,7 +7,7 @@
 	</parent>
 
 	<artifactId>lucene-search</artifactId>
-	<version>3.0-SNAPSHOT</version>
+	<version>3.0</version>
 	<packaging>hpi</packaging>
 	<properties>
 		<lucene.version>4.10.4</lucene.version>
@@ -21,7 +21,7 @@
 	<scm>
 		<connection>scm:git:git://github.com/jenkinsci/lucene-search-plugin</connection>
 		<developerConnection>scm:git:git@github.com:jenkinsci/lucene-search-plugin</developerConnection>
-		<tag>HEAD</tag>
+		<tag>lucene-search-3.0</tag>
 	</scm>
 	<developers>
 		<developer>
