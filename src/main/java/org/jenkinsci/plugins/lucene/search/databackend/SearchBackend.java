@@ -22,7 +22,7 @@ public abstract class SearchBackend<T> {
 
     private static final Logger LOGGER = Logger.getLogger(SearchBackend.class);
 
-    private class RebuildBuildWorker implements RunWithArgument<AbstractBuild> {
+    private class RebuildBuildWorker implements RunWithArgument<Run> {
 
         private final Progress progress;
 
@@ -31,10 +31,10 @@ public abstract class SearchBackend<T> {
         }
 
         @Override
-        public void run(AbstractBuild build) {
-            T oldValue = removeBuild(build);
+        public void run(Run run) {
+            T oldValue = removeBuild(run);
             try {
-                storeBuild(build, oldValue);
+                storeBuild(run, oldValue);
             } catch (IOException e) {
                 progress.completedWithErrors(e);
                 LOGGER.warn("Error rebuilding build", e);
@@ -52,7 +52,7 @@ public abstract class SearchBackend<T> {
 
     public abstract void close();
 
-    public abstract void storeBuild(final AbstractBuild<?, ?> build, T oldValue) throws IOException;
+    public abstract void storeBuild(final Run<?, ?> run, T oldValue) throws IOException;
 
     public abstract List<FreeTextSearchItemImplementation> getHits(final String query, final boolean includeHighlights);
 
@@ -62,7 +62,7 @@ public abstract class SearchBackend<T> {
 
     public abstract SearchBackend reconfigure(Map<String, Object> config);
 
-    public abstract T removeBuild(AbstractBuild<?, ?> build);
+    public abstract T removeBuild(Run<?, ?> run);
 
     public abstract void cleanDeletedBuilds(Progress progress, Job<?, ?> job) throws Exception;
 
@@ -72,7 +72,7 @@ public abstract class SearchBackend<T> {
 
     @SuppressWarnings("rawtypes")
     public void rebuildJob(Progress progress, Job<?, ?> job, int maxWorkers) throws IOException {
-        BurstExecutor<AbstractBuild> burstExecutor = BurstExecutor.create(new RebuildBuildWorker(progress), maxWorkers)
+        BurstExecutor<Run> burstExecutor = BurstExecutor.create(new RebuildBuildWorker(progress), maxWorkers)
                 .andStart();
         progress.setMax(0);
         for (Run<?, ?> run : job.getBuilds()) {
