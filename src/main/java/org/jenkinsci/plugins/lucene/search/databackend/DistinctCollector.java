@@ -35,12 +35,19 @@ public class DistinctCollector implements Collector {
 
     @Override
     public LeafCollector getLeafCollector(LeafReaderContext context) throws IOException {
-        //Document document = searcher.doc(doc, field);
-        //String fieldValue = document.get(fieldName);
-        //addData(fieldValue);
+        return new LeafCollector() {
 
-        // TODO Auto-generated method stub
-        return null;
+            // ignore scorer
+            public void setScorer(Scorer scorer) throws IOException {
+            }
+
+            public void collect(int doc) throws IOException {
+                Document document = searcher.doc(doc, field);
+                String fieldValue = document.get(fieldName);
+                addData(fieldValue);
+            }
+
+        };
     }
 
     @Override
