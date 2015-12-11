@@ -7,7 +7,7 @@ import hudson.model.BallColor;
 import hudson.model.Job;
 import hudson.model.Run;
 import jenkins.model.Jenkins;
-
+import java.nio.file.Path;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -99,21 +99,20 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         }
     };
 
-    private static final Version LUCENE_VERSION = Version.LUCENE_4_9;
     private static final int MAX_HITS_PER_PAGE = 100;
 
     private final Directory index;
     private final Analyzer analyzer;
     private final IndexWriter dbWriter;
-    private final File indexPath;
+    private final Path indexPath;
     private DirectoryReader reader;
 
-    public LuceneSearchBackend(final File indexPath) throws IOException {
+    public LuceneSearchBackend(final Path indexPath) throws IOException {
         super(SearchBackendEngine.LUCENE);
         this.indexPath = indexPath;
-        analyzer = new StandardAnalyzer(LUCENE_VERSION, CharArraySet.EMPTY_SET);
+        analyzer = new StandardAnalyzer(CharArraySet.EMPTY_SET);
         index = FSDirectory.open(indexPath);
-        IndexWriterConfig config = new IndexWriterConfig(LUCENE_VERSION, analyzer);
+        IndexWriterConfig config = new IndexWriterConfig(analyzer);
         dbWriter = new IndexWriter(index, config);
         updateReader();
     }
@@ -126,8 +125,8 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         }
     }
 
-    private static File getIndexPath(final Map<String, Object> config) {
-        return (File) config.get("lucenePath");
+    private static Path getIndexPath(final Map<String, Object> config) {
+        return (Path) config.get("lucenePath");
     }
 
     @Override
@@ -168,7 +167,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             Query q = queryParser.parse(query).rewrite(reader);
 
             IndexSearcher searcher = new IndexSearcher(reader);
-            TopScoreDocCollector collector = TopScoreDocCollector.create(MAX_HITS_PER_PAGE, true);
+            TopScoreDocCollector collector = TopScoreDocCollector.create(MAX_HITS_PER_PAGE);
             QueryTermScorer scorer = new QueryTermScorer(q);
             Highlighter highlighter = new Highlighter(new SimpleHTMLFormatter(), scorer);
             searcher.search(q, collector);
@@ -207,8 +206,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     }
 
     private MultiFieldQueryParser getQueryParser() {
-        MultiFieldQueryParser queryParser = new MultiFieldQueryParser(LUCENE_VERSION, getAllDefaultSearchableFields(),
-                analyzer) {
+        MultiFieldQueryParser queryParser = new MultiFieldQueryParser(getAllDefaultSearchableFields(), analyzer) {
             @Override
             protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive,
                     boolean endInclusive) throws ParseException {
@@ -266,8 +264,8 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                     fieldValue = oldDoc.get(extension.getKeyword());
                 }
                 if (fieldValue != null) {
-                    doc.add(new TextField(extension.getKeyword(), extension.getTextResult(run), (extension
-                            .isPersist()) ? STORE : DONT_STORE));
+                    doc.add(new TextField(extension.getKeyword(), extension.getTextResult(run),
+                            (extension.isPersist()) ? STORE : DONT_STORE));
                 }
             }
 
@@ -353,7 +351,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             if (fieldEntry.getValue()) {
                 // This is a persisted field (i.e. we can get values)
                 IndexSearcher searcher = new IndexSearcher(reader);
-                DistinctCollector collector = new LengthLimitedDistinctCollector(fieldEntry.getKey(), searcher, 30);
+                DistinctCollector collector = new LengthLimitedDistinctCollector(fieldEntry.getKey(), searcher, 50);
                 searcher.search(new MatchAllDocsQuery(), collector);
                 Set<String> distinctData = collector.getDistinctData();
                 definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), true, distinctData));

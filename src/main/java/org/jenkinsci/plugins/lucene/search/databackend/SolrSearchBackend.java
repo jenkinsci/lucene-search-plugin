@@ -258,6 +258,8 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
             return luceneSearchResultImpl;
         } catch (SolrServerException e) {
             throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -388,7 +390,7 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
         }
     }
 
-    public Set<String> getFacetsOfField(String fieldName) throws SolrServerException {
+    public Set<String> getFacetsOfField(String fieldName) throws SolrServerException, IOException {
         SolrQuery query = new SolrQuery("*:*");
         query.addFacetField(fieldName);
         query.setRows(0);
