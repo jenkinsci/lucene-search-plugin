@@ -6,8 +6,8 @@ import hudson.model.AbstractBuild;
 import hudson.model.BallColor;
 import hudson.model.Job;
 import hudson.model.Run;
-import jenkins.model.Jenkins;
 import java.nio.file.Path;
+import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -104,14 +104,14 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     private final Directory index;
     private final Analyzer analyzer;
     private final IndexWriter dbWriter;
-    private final Path indexPath;
+    private final File indexPath;
     private DirectoryReader reader;
 
-    public LuceneSearchBackend(final Path indexPath) throws IOException {
+    public LuceneSearchBackend(final File indexPath) throws IOException {
         super(SearchBackendEngine.LUCENE);
         this.indexPath = indexPath;
         analyzer = new StandardAnalyzer(CharArraySet.EMPTY_SET);
-        index = FSDirectory.open(indexPath);
+        index = FSDirectory.open(indexPath.toPath());
         IndexWriterConfig config = new IndexWriterConfig(analyzer);
         dbWriter = new IndexWriter(index, config);
         updateReader();
@@ -125,8 +125,8 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         }
     }
 
-    private static Path getIndexPath(final Map<String, Object> config) {
-        return (Path) config.get("lucenePath");
+    private static File getIndexPath(final Map<String, Object> config) {
+        return (File) config.get("lucenePath");
     }
 
     @Override
