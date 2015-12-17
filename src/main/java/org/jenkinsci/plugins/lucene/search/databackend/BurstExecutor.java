@@ -1,10 +1,10 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
-import org.apache.log4j.Logger;
-
-import java.util.*;
+import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import org.apache.log4j.Logger;
 
 public class BurstExecutor<T> {
     private static final Logger LOGGER = Logger.getLogger(BurstExecutor.class);

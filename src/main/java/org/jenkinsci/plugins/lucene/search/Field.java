@@ -1,22 +1,22 @@
 package org.jenkinsci.plugins.lucene.search;
 
+import hudson.model.Result;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.Run;
-import hudson.model.Job;
 import hudson.model.Cause;
-import hudson.model.Result;
+import hudson.model.Job;
+import hudson.model.Run;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.Publisher;
-
-import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.jenkinsci.plugins.lucene.search.artifact.ArtifactIndexer;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.jenkinsci.plugins.lucene.search.artifact.ArtifactIndexer;
 
 public enum Field {
     ID("id", DefaultSearchable.FALSE, Numeric.TRUE, Persist.TRUE) {
@@ -124,7 +124,7 @@ public enum Field {
                 //To add support for workflow this function needs to take a Run instead of AbstractBuild. 
                 // However I can't find the equivalent functions using the abstract form so will use instance of until I find a more permanent fix 
 
-                AbstractBuild<?, ?> build = (AbstractBuild) run;
+                AbstractBuild<?, ?> build = (AbstractBuild<?, ?>) run;
 
                 ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = build.getChangeSet();
 
@@ -151,11 +151,11 @@ public enum Field {
             // However I can't find the equivalent functions using the abstract form so will use instance of until I find a more permanent fix 
 
             if (p instanceof AbstractProject && build instanceof AbstractBuild<?, ?>) {
-                AbstractProject<?, ?> proj = (AbstractProject) p;
+                AbstractProject<?, ?> proj = (AbstractProject<?, ?>) p;
                 for (Publisher publisher : proj.getPublishersList()) {
                     if (publisher instanceof ArtifactIndexer) {
                         ArtifactIndexer ai = (ArtifactIndexer) publisher;
-                        return ai.getIndexableData((AbstractBuild) build);
+                        return ai.getIndexableData((AbstractBuild<?, ?>) build);
                     }
                 }
 

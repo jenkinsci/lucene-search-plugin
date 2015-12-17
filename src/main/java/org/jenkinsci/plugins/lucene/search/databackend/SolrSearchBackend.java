@@ -34,7 +34,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.log4j.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
@@ -50,13 +50,11 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
     private static final String[] EMPTY_ARRAY = new String[0];
     public static final String COMPOSITE_SEARCH_FIELD = "text";
 
-    @SuppressWarnings("deprecation")
-    private final HttpSolrServer httpSolrServer;
+    private final HttpSolrClient solrClient;
 
-    @SuppressWarnings("deprecation")
     public SolrSearchBackend(URI url, String solrCollection) {
         super(SearchBackendEngine.SOLR);
-        httpSolrServer = new HttpSolrServer(url.toString() + "/" + solrCollection);
+        solrClient = new HttpSolrClient(url.toString() + "/" + solrCollection);
         try {
             definedSolrFields();
             String[] defaultSearchableFields = getAllDefaultSearchableFields();
@@ -79,9 +77,9 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
     }
 
     private void defineField(String fieldName, boolean numeric, boolean stored, boolean multiValued) throws IOException {
-        HttpClient httpClient = httpSolrServer.getHttpClient();
+        HttpClient httpClient = solrClient.getHttpClient();
 
-        String url = httpSolrServer.getBaseURL() + "/schema/fields/" + fieldName;
+        String url = solrClient.getBaseURL() + "/schema/fields/" + fieldName;
         HttpGet httpGet = new HttpGet(url);
         httpGet.addHeader("Accept", ContentType.APPLICATION_JSON.getMimeType());
         HttpResponse response = httpClient.execute(httpGet);
@@ -96,7 +94,6 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
             }
             fieldDefinition.put("multiValued", multiValued);
             fieldDefinition.put("stored", stored);
-            //fieldDefinition.put("required", true); // built-on is sometimes empty
             HttpPut httpPut = new HttpPut(url);
             String thisIsAString = fieldDefinition.toString();
             StringEntity entity = new StringEntity(thisIsAString, ContentType.APPLICATION_JSON);
@@ -120,9 +117,9 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
     }
 
     private void defineCopyField(String[] defaultSearchable) throws IOException {
-        HttpClient httpClient = httpSolrServer.getHttpClient();
+        HttpClient httpClient = solrClient.getHttpClient();
 
-        String url = httpSolrServer.getBaseURL() + "/schema/copyfields/?wt=json";
+        String url = solrClient.getBaseURL() + "/schema/copyfields/?wt=json";
         HttpGet httpGet = new HttpGet(url);
         HttpResponse response = httpClient.execute(httpGet);
         if (response.getStatusLine().getStatusCode() != 200) {
@@ -170,7 +167,7 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
         if (changedCopyField) {
             String jsonString = copyFields.toString(4);
             StringEntity stringEntity = new StringEntity(jsonString, ContentType.APPLICATION_JSON);
-            HttpPost post = new HttpPost(httpSolrServer.getBaseURL() + "/schema/copyfields");
+            HttpPost post = new HttpPost(solrClient.getBaseURL() + "/schema/copyfields");
             post.setEntity(stringEntity);
             response = httpClient.execute(post);
         }
@@ -211,8 +208,8 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
                     doc.addField(extension.getKeyword(), fieldValue);
                 }
             }
-            httpSolrServer.add(doc);
-            httpSolrServer.commit();
+            solrClient.add(doc);
+            solrClient.commit();
         } catch (SolrServerException e) {
             throw new IOException(e);
         }
@@ -236,7 +233,7 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
         query.addSort(START_TIME.fieldName, SolrQuery.ORDER.desc);
         try {
             ArrayList<FreeTextSearchItemImplementation> luceneSearchResultImpl = new ArrayList<FreeTextSearchItemImplementation>();
-            QueryResponse queryResponse = httpSolrServer.query(query);
+            QueryResponse queryResponse = solrClient.query(query);
             for (SolrDocument doc : queryResponse.getResults()) {
                 String[] bestFragments = EMPTY_ARRAY;
                 String buildId = (String) doc.get(ID.fieldName);
@@ -265,11 +262,11 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
         }
     }
 
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public SearchBackend reconfigure(Map<String, Object> config) {
         String fullUrl = getUrl(config).toString() + "/" + getSolrCollection(config);
-        if (fullUrl.equals(httpSolrServer.getBaseURL())) {
+        if (fullUrl.equals(solrClient.getBaseURL())) {
             return this;
         } else {
             return new SolrSearchBackend(getUrl(config), getSolrCollection(config));
@@ -282,9 +279,9 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
             String queryString = String.format("%s:\"%s\"", ID.fieldName, run.getId());
             SolrQuery query = new SolrQuery(queryString);
             query.setTerms(true);
-            QueryResponse queryResponse = httpSolrServer.query(query);
+            QueryResponse queryResponse = solrClient.query(query);
             if (!queryResponse.getResults().isEmpty()) {
-                httpSolrServer.deleteById(run.getId());
+                solrClient.deleteById(run.getId());
                 return queryResponse.getResults().get(0);
             }
         } catch (SolrServerException e) {
@@ -306,7 +303,7 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
             query.setFields(PROJECT_NAME.fieldName, BUILD_NUMBER.fieldName, ID.fieldName);
             query.setStart(0);
             query.setRows(99999999);
-            QueryResponse queryResponse = httpSolrServer.query(query);
+            QueryResponse queryResponse = solrClient.query(query);
             progress.setMax(queryResponse.getResults().size());
             int i = 0;
             for (SolrDocument doc : queryResponse.getResults()) {
@@ -318,7 +315,7 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
                 i++;
             }
             if (!idsToDelete.isEmpty()) {
-                httpSolrServer.deleteById(idsToDelete);
+                solrClient.deleteById(idsToDelete);
             }
             progress.setSuccessfullyCompleted();
         } catch (Exception e) {
@@ -334,7 +331,7 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
     public void deleteJob(String jobName) {
         String queryString = String.format("%s:\"%s\"", PROJECT_NAME.fieldName, jobName);
         try {
-            httpSolrServer.deleteByQuery(queryString);
+            solrClient.deleteByQuery(queryString);
         } catch (SolrServerException e) {
             LOGGER.warn("Could not delete job: " + jobName + " from Solr: ", e);
         } catch (IOException e) {
@@ -363,7 +360,8 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
                     throw new IOException(e);
                 }
             } else {
-                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), false, Collections.EMPTY_LIST));
+                definitions
+                        .add(new SearchFieldDefinition(fieldEntry.getKey(), false, Collections.<String> emptyList()));
             }
         }
         return definitions;
@@ -396,7 +394,7 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
         SolrQuery query = new SolrQuery("*:*");
         query.addFacetField(fieldName);
         query.setRows(0);
-        QueryResponse queryResponse = httpSolrServer.query(query);
+        QueryResponse queryResponse = solrClient.query(query);
         FacetField jobNamesField = queryResponse.getFacetField(fieldName);
 
         Set<String> facets = new LinkedHashSet<String>();

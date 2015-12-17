@@ -21,6 +21,7 @@ public abstract class SearchBackend<T> {
 
     private static final Logger LOGGER = Logger.getLogger(SearchBackend.class);
 
+    @SuppressWarnings("rawtypes")
     private class RebuildBuildWorker implements RunWithArgument<Run> {
 
         private final Progress progress;

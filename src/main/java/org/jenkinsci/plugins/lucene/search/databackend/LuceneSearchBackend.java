@@ -385,13 +385,12 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                 Set<String> distinctData = collector.getDistinctData();
                 definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), true, distinctData));
             } else {
-                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), false, Collections.EMPTY_LIST));
+                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), false, Collections.<String> emptyList()));
             }
         }
         return definitions;
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
     public void cleanDeletedJobs(Progress progress) throws Exception {
         try {

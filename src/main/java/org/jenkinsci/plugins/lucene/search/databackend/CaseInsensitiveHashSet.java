@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Locale;
 
 public class CaseInsensitiveHashSet extends HashSet<String> {
+    private static final long serialVersionUID = 6570134740069883156L;
     private final Locale locale;
 
     public CaseInsensitiveHashSet(Locale locale) {

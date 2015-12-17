@@ -78,7 +78,6 @@ public class SearchBackendManager {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public List<FreeTextSearchItemImplementation> getHits(String query, boolean includeHighlights) {
         List<FreeTextSearchItemImplementation> hits = getBackend().getHits(query, includeHighlights);
         if (backendConfig.isUseSecurity()) {
