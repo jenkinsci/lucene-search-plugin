@@ -17,13 +17,13 @@ function updateStatusFromResponse(statement) {
 	var messageElement = document.getElementById("message");
 	messageElement.className = ((statement.code !== 0) ? "error" : "success");
 	messageElement.innerHTML = statement.message;
-	document.getElementById("btnRebuild").style.display = ((statement.progress) ? "none"
+	document.getElementById("btnRebuild").style.display = ((statement.running) ? "none"
 			: "");
-	document.getElementById("txtWorkers").style.display = ((statement.progress) ? "none"
+	document.getElementById("txtWorkers").style.display = ((statement.running) ? "none"
 			: "");
 	document.getElementById("currentProgress").style.display = ((statement.progress) ? ""
 			: "none");
-	document.getElementById("lblWorkers").style.display = ((statement.progress) ? "none"
+	document.getElementById("lblWorkers").style.display = ((statement.running) ? "none"
 			: "");
 	if (statement.progress) {
 		var progress = statement.progress;

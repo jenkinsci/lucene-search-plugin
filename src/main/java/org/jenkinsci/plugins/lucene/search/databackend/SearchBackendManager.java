@@ -32,8 +32,7 @@ public class SearchBackendManager {
     @Inject
     private transient SearchBackendConfiguration backendConfig;
 
-    @SuppressWarnings("rawtypes")
-    private synchronized SearchBackend getBackend() {
+    private synchronized SearchBackend<?> getBackend() {
         if (instance == null) {
             SearchBackendEngine engine = backendConfig.getSearchBackendEngine();
             switch (engine) {
