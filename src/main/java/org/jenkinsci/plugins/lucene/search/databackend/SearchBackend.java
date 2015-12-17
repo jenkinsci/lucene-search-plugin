@@ -16,7 +16,6 @@ import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
-import org.jenkinsci.plugins.lucene.search.databackend.Progress.ProgressState;
 
 public abstract class SearchBackend<T> {
 
@@ -60,7 +59,7 @@ public abstract class SearchBackend<T> {
         return engine;
     }
 
-    public abstract SearchBackend reconfigure(Map<String, Object> config);
+    public abstract SearchBackend<?> reconfigure(Map<String, Object> config);
 
     public abstract T removeBuild(Run<?, ?> run);
 

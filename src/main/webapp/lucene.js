@@ -1,58 +1,58 @@
 function rebuildDatabase() {
-    var workers = txtWorkers = parseInt(Q("#txtWorkers").val());
-    if(workers < 1){
-        return;
-    }
-    console.log(workers);
-    luceneSearchManager.rebuildDatabase(workers, function(t) {
-        var statement = t.responseObject();
-        updateStatusFromResponse(statement);
-        getStatus();
-    });
-}
-
-function abort() {
-    luceneSearchManager.abort(function(t) {
-        var statement = t.responseObject();
-        updateStatusFromResponse(statement);
-    });
+	var workers = document.getElementById("txtWorkers").value;
+	if (workers < 1) {
+		return;
+	}
+	luceneSearchManager.rebuildDatabase(workers, function(t) {
+		updateStatusFromResponse(t.responseObject());
+	});
 }
 
 function getStatus() {
-    luceneSearchManager.getStatus(function(t) {
-        var statement = t.responseObject();
-        Q(".running").toggle(statement.running);
-        Q(".stopped").toggle(!statement.running);
-        updateStatusFromResponse(statement);
-    });
+	luceneSearchManager.getStatus(function(t) {
+		updateStatusFromResponse(t.responseObject());
+	});
 }
-
 function updateStatusFromResponse(statement) {
-    console.log(statement);
-    Q("#message").toggleClass("error", statement.code !== 0).text(statement.message);
-    if(statement.progress) {
-        Q("#currentWorkers").text(statement.workers);
-        Q("#history").empty();
-        Q("#currentProgress").show();
-        var progress = statement.progress;
-        Q("#currentlyProcessing").text(progress.name);
-        Q("#currentlyProcessingIndex").text(progress.current);
-        Q("#currentlyProcessingMax").text(progress.max);
-        Q("#totalProcessesedRun").text(progress.processedItems);
-        Q("#currentElapsedTime").text((progress.elapsedTime/1000) + "s");
-        
-        for(var historyIndex = 0; historyIndex != progress.history.length; historyIndex++) {
-            var hist = statement.progress.history[historyIndex];
-            var projectString = hist.name + " completed after " + (hist.elapsedTime/1000) + "s (" + hist.current + " elements processed)";
-            var node = $(document.createElement("li"));
-            if (hist.reasonMessage) {
-                node.addClass("error").text(projectString + ": " + hist.reasonMessage);
-            } else {
-                node.addClass("success").text(projectString);
-            }
-            $("#history").append(node);
-        }
-    } else {
-        Q("#currentProgress").hide();
-    }
+	var messageElement = document.getElementById("message");
+	messageElement.className = ((statement.code !== 0) ? "error" : "success");
+	messageElement.innerHTML = statement.message;
+	document.getElementById("btnRebuild").style.display = ((statement.progress) ? "none"
+			: "");
+	document.getElementById("txtWorkers").style.display = ((statement.progress) ? "none"
+			: "");
+	document.getElementById("currentProgress").style.display = ((statement.progress) ? ""
+			: "none");
+	document.getElementById("lblWorkers").style.display = ((statement.progress) ? "none"
+			: "");
+	if (statement.progress) {
+		var progress = statement.progress;
+		document.getElementById("currentWorkers").innerHTML = statement.workers;
+
+		document.getElementById("currentlyProcessing").innerHTML = progress.name;
+		document.getElementById("currentlyProcessingIndex").innerHTML = progress.current;
+		document.getElementById("currentlyProcessingMax").innerHTML = progress.max;
+		document.getElementById("totalProcessesedRun").innerHTML = progress.processedItems;
+		document.getElementById("currentElapsedTime").innerHTML = (progress.elapsedTime / 1000)
+				+ "s";
+		var historyString = "";
+		for (var historyIndex = 0; historyIndex != progress.history.length; historyIndex++) {
+			var hist = statement.progress.history[historyIndex];
+			var projectString = hist.name + " completed after "
+					+ (hist.elapsedTime / 1000) + "s (" + hist.current
+					+ " elements processed)";
+			if (hist.reasonMessage) {
+				historyString += "<span class=\"historyerror\">"
+						+ projectString + ": " + hist.reasonMessage
+						+ "</span><br />";
+			} else {
+				historyString += "<span class=\"historysuccess\">"
+						+ projectString + "</span><br />";
+			}
+		}
+		document.getElementById("history").innerHTML = historyString;
+	} else {
+		document.getElementById("currentProgress").style.display = "none";
+	}
+
 }

@@ -1,11 +1,36 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
-import com.google.common.collect.TreeMultimap;
-
-import hudson.model.AbstractBuild;
+import static org.jenkinsci.plugins.lucene.search.Field.ARTIFACTS;
+import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
+import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
+import static org.jenkinsci.plugins.lucene.search.Field.BUILT_ON;
+import static org.jenkinsci.plugins.lucene.search.Field.CHANGE_LOG;
+import static org.jenkinsci.plugins.lucene.search.Field.CONSOLE;
+import static org.jenkinsci.plugins.lucene.search.Field.DURATION;
+import static org.jenkinsci.plugins.lucene.search.Field.ID;
+import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_DISPLAY_NAME;
+import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
+import static org.jenkinsci.plugins.lucene.search.Field.RESULT;
+import static org.jenkinsci.plugins.lucene.search.Field.START_CAUSE;
+import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
+import static org.jenkinsci.plugins.lucene.search.Field.getIndex;
 import hudson.model.BallColor;
 import hudson.model.Job;
 import hudson.model.Run;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
 import jenkins.model.Jenkins;
 
 import org.apache.commons.io.IOUtils;
@@ -25,24 +50,26 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.NumericRangeQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
 import org.apache.lucene.search.highlight.QueryTermScorer;
 import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
 import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-
-import static org.jenkinsci.plugins.lucene.search.Field.*;
+import com.google.common.collect.TreeMultimap;
 
 public class LuceneSearchBackend extends SearchBackend<Document> {
     private static final Logger LOGGER = Logger.getLogger(LuceneSearchBackend.class);
@@ -99,7 +126,6 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         }
     };
 
-    private static final Version LUCENE_VERSION = Version.LUCENE_4_9;
     private static final int MAX_HITS_PER_PAGE = 100;
 
     private final Directory index;
@@ -111,9 +137,9 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     public LuceneSearchBackend(final File indexPath) throws IOException {
         super(SearchBackendEngine.LUCENE);
         this.indexPath = indexPath;
-        analyzer = new StandardAnalyzer(LUCENE_VERSION, CharArraySet.EMPTY_SET);
-        index = FSDirectory.open(indexPath);
-        IndexWriterConfig config = new IndexWriterConfig(LUCENE_VERSION, analyzer);
+        analyzer = new StandardAnalyzer(CharArraySet.EMPTY_SET);
+        index = FSDirectory.open(indexPath.toPath());
+        IndexWriterConfig config = new IndexWriterConfig(analyzer);
         dbWriter = new IndexWriter(index, config);
         updateReader();
     }
@@ -131,7 +157,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     }
 
     @Override
-    public SearchBackend reconfigure(final Map<String, Object> newConfig) {
+    public SearchBackend<Document> reconfigure(final Map<String, Object> newConfig) {
         if (getIndexPath(newConfig).equals(indexPath)) {
             return this;
         } else {
@@ -168,7 +194,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             Query q = queryParser.parse(query).rewrite(reader);
 
             IndexSearcher searcher = new IndexSearcher(reader);
-            TopScoreDocCollector collector = TopScoreDocCollector.create(MAX_HITS_PER_PAGE, true);
+            TopScoreDocCollector collector = TopScoreDocCollector.create(MAX_HITS_PER_PAGE);
             QueryTermScorer scorer = new QueryTermScorer(q);
             Highlighter highlighter = new Highlighter(new SimpleHTMLFormatter(), scorer);
             searcher.search(q, collector);
@@ -207,8 +233,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     }
 
     private MultiFieldQueryParser getQueryParser() {
-        MultiFieldQueryParser queryParser = new MultiFieldQueryParser(LUCENE_VERSION, getAllDefaultSearchableFields(),
-                analyzer) {
+        MultiFieldQueryParser queryParser = new MultiFieldQueryParser(getAllDefaultSearchableFields(), analyzer) {
             @Override
             protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive,
                     boolean endInclusive) throws ParseException {
@@ -256,18 +281,21 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                     }
                 }
             }
-            // TODO Add the following data
-            // build.getCulprits()
-            // EnvVars a = build.getEnvironment(listener);
 
             for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
-                Object fieldValue = extension.getTextResult(run);
-                if (fieldValue == null && oldDoc != null) {
-                    fieldValue = oldDoc.get(extension.getKeyword());
-                }
-                if (fieldValue != null) {
-                    doc.add(new TextField(extension.getKeyword(), extension.getTextResult(run), (extension
-                            .isPersist()) ? STORE : DONT_STORE));
+                try {
+                    Object fieldValue = extension.getTextResult(run);
+                    if (fieldValue == null && oldDoc != null) {
+                        fieldValue = oldDoc.get(extension.getKeyword());
+                    }
+                    if (fieldValue != null) {
+                        doc.add(new TextField(extension.getKeyword(), extension.getTextResult(run), (extension
+                                .isPersist()) ? STORE : DONT_STORE));
+                    }
+                } catch (Throwable t) {
+                    //We don't want to crash the collection of log from other plugin extensions if we happen to add a plugin that crashes while collecting the logs.
+                    System.out.println("CRASH: " + extension.getClass().getName() + ", " + extension.getKeyword());
+                    t.printStackTrace();
                 }
             }
 
@@ -295,9 +323,8 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         }
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
-    public void cleanDeletedBuilds(Progress progress, Job job) throws Exception {
+    public void cleanDeletedBuilds(Progress progress, Job<?, ?> job) throws Exception {
         try {
             int firstBuildNumber = job.getFirstBuild().getNumber();
             IndexSearcher searcher = new IndexSearcher(reader);
@@ -353,7 +380,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             if (fieldEntry.getValue()) {
                 // This is a persisted field (i.e. we can get values)
                 IndexSearcher searcher = new IndexSearcher(reader);
-                DistinctCollector collector = new LengthLimitedDistinctCollector(fieldEntry.getKey(), searcher, 30);
+                DistinctCollector collector = new LengthLimitedDistinctCollector(fieldEntry.getKey(), searcher, 50);
                 searcher.search(new MatchAllDocsQuery(), collector);
                 Set<String> distinctData = collector.getDistinctData();
                 definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), true, distinctData));
@@ -369,7 +396,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     public void cleanDeletedJobs(Progress progress) throws Exception {
         try {
             Set<String> jobNames = new HashSet<String>();
-            for (Job job : Jenkins.getInstance().getAllItems(Job.class)) {
+            for (Job<?, ?> job : Jenkins.getInstance().getAllItems(Job.class)) {
                 jobNames.add(job.getName());
             }
             progress.setMax(jobNames.size());
