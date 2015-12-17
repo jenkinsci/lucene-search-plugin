@@ -50,8 +50,10 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
     private static final String[] EMPTY_ARRAY = new String[0];
     public static final String COMPOSITE_SEARCH_FIELD = "text";
 
+    @SuppressWarnings("deprecation")
     private final HttpSolrServer httpSolrServer;
 
+    @SuppressWarnings("deprecation")
     public SolrSearchBackend(URI url, String solrCollection) {
         super(SearchBackendEngine.SOLR);
         httpSolrServer = new HttpSolrServer(url.toString() + "/" + solrCollection);

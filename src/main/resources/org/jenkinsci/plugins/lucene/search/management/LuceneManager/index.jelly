@@ -3,36 +3,34 @@
         <st:include it="${app}" page="sidepanel.jelly"/>
         <l:header>
             <link rel="stylesheet" type="text/css" href="${rootURL}/plugin/lucene-search/lucene.css" media="screen"/>
-            <script type="text/javascript" src="${rootURL}/plugin/lucene-search/jquery-2.1.3.min.js"></script>
+            <script type="text/javascript" src="${rootURL}/plugin/lucene-search/lucene.js"></script>
             <script type="text/javascript" src=""></script>
-            <st:bind var="luceneSearchManager" value="${it}"/>
             <script>
-            	var Q=jQuery.noConflict()
-            	Q.getScript("${rootURL}/plugin/lucene-search/lucene.js", function() {
+            	var luceneSearchManager = <st:bind value="${it}"/>
+            	document.addEventListener('DOMContentLoaded', function() {
 	                getStatus();
 	                window.setInterval(function (a, b) {getStatus();}, 2000);
-	            });
+            	});
             </script>
         </l:header>
         <l:main-panel>
             <h1>${%Lucene Management}</h1>
             <p>
-                <span class="sectionHeader">${%Rebuild database}</span><br/>
-                <span class="description">${%Rebuilds the database}</span><br/>
-                <span class="warning">${%This is an expensive operations so we recommend that this is done when there is only a light load. Searches will continue to work to during the rebuilding}</span><br/>
+                <span class="warning">${%Database rebuild is an expensive operations so we recommend that this is done when there is only a light load. Searches will continue to work to during the rebuilding}</span><br/>
                 <br/>
-                <button id="btnAbort" class="running" onclick="abort()">${%Abort}</button><br/>
-                <button id="btnRebuild" class="stopped" onclick="rebuildDatabase()">${%Rebuild}</button>${% }
-                <input id="txtWorkers" class="stopped" value="5"/><label class="stopped" for="txtWorkers">${%parallel workers}</label><br/>
+                <div>
+                	<button id="btnRebuild" style="display:none" onclick="rebuildDatabase()">${%Rebuild}</button>${% }
+                	<input id="txtWorkers" style="display:none" value="5"/><label id="lblWorkers">${%parallel workers}</label><br/>
+            	</div>
                 <br/>
                 <div id="message" class="success"></div>
 
-                <div id="currentProgress" class="running">
+                <div id="currentProgress" style="display:none">
                     ${%Currently processing }<b id="currentlyProcessing"/>${% using }<b id="currentWorkers"/>${% workers}<br/>
                     ${%Total processed runs }<b id="totalProcessesedRun"/>${% took }<b id="currentElapsedTime"/><br/>
                     ${%Project }<b id="currentlyProcessingIndex"/>${% out of }<b id="currentlyProcessingMax"/><br/>
-                    <h5>${%Processed projects}</h5>
-                    <ul id="history" />
+                    <h4>${%Processed projects}</h4>
+                    <div class="history" id="history" />
                 </div>
             </p>
         </l:main-panel>

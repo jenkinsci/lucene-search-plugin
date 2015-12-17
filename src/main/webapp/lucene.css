@@ -1,19 +1,22 @@
-.description{
+.description {
 	font-style: italic;
 }
-.warning{
+
+.warning {
 	font-style: bold;
 	color: red;
 }
 
-sectionHeader.{
+sectionHeader {
 	font-style: bold;
 }
 
-#history {
-     list-style-type: none;
+.historyerror {
+	font-size: x-small;
+	color: red;
 }
 
-.running,.stopped{
-    display: none;
+.historysuccess {
+	font-size: x-small;
+	color: green;
 }

@@ -323,7 +323,6 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         }
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
     public void cleanDeletedBuilds(Progress progress, Job<?, ?> job) throws Exception {
         try {
