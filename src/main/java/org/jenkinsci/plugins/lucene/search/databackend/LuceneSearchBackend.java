@@ -1,13 +1,38 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
-import com.google.common.collect.TreeMultimap;
-
-import hudson.model.AbstractBuild;
+import static org.jenkinsci.plugins.lucene.search.Field.ARTIFACTS;
+import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
+import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
+import static org.jenkinsci.plugins.lucene.search.Field.BUILT_ON;
+import static org.jenkinsci.plugins.lucene.search.Field.CHANGE_LOG;
+import static org.jenkinsci.plugins.lucene.search.Field.CONSOLE;
+import static org.jenkinsci.plugins.lucene.search.Field.DURATION;
+import static org.jenkinsci.plugins.lucene.search.Field.ID;
+import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_DISPLAY_NAME;
+import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
+import static org.jenkinsci.plugins.lucene.search.Field.RESULT;
+import static org.jenkinsci.plugins.lucene.search.Field.START_CAUSE;
+import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
+import static org.jenkinsci.plugins.lucene.search.Field.getIndex;
 import hudson.model.BallColor;
 import hudson.model.Job;
 import hudson.model.Run;
-import java.nio.file.Path;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
 import jenkins.model.Jenkins;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -25,24 +50,26 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.NumericRangeQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
 import org.apache.lucene.search.highlight.QueryTermScorer;
 import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
 import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-
-import static org.jenkinsci.plugins.lucene.search.Field.*;
+import com.google.common.collect.TreeMultimap;
 
 public class LuceneSearchBackend extends SearchBackend<Document> {
     private static final Logger LOGGER = Logger.getLogger(LuceneSearchBackend.class);
@@ -130,7 +157,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     }
 
     @Override
-    public SearchBackend reconfigure(final Map<String, Object> newConfig) {
+    public SearchBackend<Document> reconfigure(final Map<String, Object> newConfig) {
         if (getIndexPath(newConfig).equals(indexPath)) {
             return this;
         } else {
@@ -254,18 +281,21 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                     }
                 }
             }
-            // TODO Add the following data
-            // build.getCulprits()
-            // EnvVars a = build.getEnvironment(listener);
 
             for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
-                Object fieldValue = extension.getTextResult(run);
-                if (fieldValue == null && oldDoc != null) {
-                    fieldValue = oldDoc.get(extension.getKeyword());
-                }
-                if (fieldValue != null) {
-                    doc.add(new TextField(extension.getKeyword(), extension.getTextResult(run),
-                            (extension.isPersist()) ? STORE : DONT_STORE));
+                try {
+                    Object fieldValue = extension.getTextResult(run);
+                    if (fieldValue == null && oldDoc != null) {
+                        fieldValue = oldDoc.get(extension.getKeyword());
+                    }
+                    if (fieldValue != null) {
+                        doc.add(new TextField(extension.getKeyword(), extension.getTextResult(run), (extension
+                                .isPersist()) ? STORE : DONT_STORE));
+                    }
+                } catch (Throwable t) {
+                    //We don't want to crash the collection of log from other plugin extensions if we happen to add a plugin that crashes while collecting the logs.
+                    System.out.println("CRASH: " + extension.getClass().getName() + ", " + extension.getKeyword());
+                    t.printStackTrace();
                 }
             }
 
@@ -295,7 +325,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     @SuppressWarnings("rawtypes")
     @Override
-    public void cleanDeletedBuilds(Progress progress, Job job) throws Exception {
+    public void cleanDeletedBuilds(Progress progress, Job<?, ?> job) throws Exception {
         try {
             int firstBuildNumber = job.getFirstBuild().getNumber();
             IndexSearcher searcher = new IndexSearcher(reader);
@@ -367,7 +397,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     public void cleanDeletedJobs(Progress progress) throws Exception {
         try {
             Set<String> jobNames = new HashSet<String>();
-            for (Job job : Jenkins.getInstance().getAllItems(Job.class)) {
+            for (Job<?, ?> job : Jenkins.getInstance().getAllItems(Job.class)) {
                 jobNames.add(job.getName());
             }
             progress.setMax(jobNames.size());
