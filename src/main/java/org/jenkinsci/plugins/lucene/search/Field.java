@@ -48,7 +48,7 @@ public enum Field {
         }
     },
 
-    BUILD_NUMBER("buildnumber", Numeric.TRUE, Persist.TRUE) {
+    BUILD_NUMBER("buildnumber", DefaultSearchable.FALSE, Numeric.TRUE, Persist.TRUE) {
         @Override
         public Integer getValue(Run<?, ?> build) {
             return build.getNumber();
