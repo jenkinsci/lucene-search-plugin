@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.lucene.search.extensionimplementations;
 
+import hudson.Extension;
 import hudson.model.Run;
 import hudson.tasks.junit.TestResultAction;
 import hudson.tasks.junit.CaseResult;
@@ -8,6 +9,7 @@ import java.util.List;
 
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 
+@Extension
 public class JunitFreeTextSearchExtension extends FreeTextSearchExtension {
 
     @Override
