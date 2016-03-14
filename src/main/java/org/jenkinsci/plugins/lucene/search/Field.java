@@ -29,7 +29,7 @@ public enum Field {
         public String getValue(final Run<?, ?> build) {
             StringBuilder builder = new StringBuilder();
             if (!build.getParent().getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
-                builder.append(build.getParent().getParent().getFullName() + "/");
+                builder.append(build.getParent().getParent().getFullName()).append("/");
             }
             builder.append(build.getParent().getName());
             return builder.toString();
@@ -41,7 +41,7 @@ public enum Field {
         public String getValue(Run<?, ?> build) {
             StringBuilder builder = new StringBuilder();
             if (!build.getParent().getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
-                builder.append(build.getParent().getParent().getDisplayName() + "/");
+                builder.append(build.getParent().getParent().getDisplayName()).append("/");
             }
             builder.append(build.getParent().getDisplayName());
             return builder.toString();
