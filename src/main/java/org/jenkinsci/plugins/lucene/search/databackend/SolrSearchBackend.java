@@ -5,6 +5,8 @@ import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
 import static org.jenkinsci.plugins.lucene.search.Field.ID;
 import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
 import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
+import static org.jenkinsci.plugins.lucene.search.Field.URL;
+
 import hudson.model.BallColor;
 import hudson.model.Job;
 import hudson.model.Run;
@@ -251,8 +253,9 @@ public class SolrSearchBackend extends SearchBackend<SolrDocument> {
                 }
                 String projectName = (String) doc.get(PROJECT_NAME.fieldName);
                 String buildNumber = doc.get(BUILD_NUMBER.fieldName).toString();
+                String url = (String) doc.get(URL.fieldName);
                 luceneSearchResultImpl.add(new FreeTextSearchItemImplementation(projectName, buildNumber,
-                        bestFragments, buildIcon.getImage()));
+                        bestFragments, buildIcon.getImage(), url));
             }
             return luceneSearchResultImpl;
         } catch (SolrServerException e) {

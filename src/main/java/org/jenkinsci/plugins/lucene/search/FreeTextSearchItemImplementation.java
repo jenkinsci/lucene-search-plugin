@@ -14,11 +14,13 @@ public class FreeTextSearchItemImplementation extends FreeTextSearchItem {
     private final String projectName;
     private final String iconFileName;
     private final String[] bestFragments;
+    private final String url;
 
     public FreeTextSearchItemImplementation(final String projectName, final String buildNumber,
-            final String[] bestFragments, final String iconFileName) {
+            final String[] bestFragments, final String iconFileName, final String url) {
         this.projectName = projectName;
         this.buildNumber = buildNumber;
+        this.url = url;
 
         this.bestFragments = new String[bestFragments.length];
         for (int i = 0; i < bestFragments.length; i++) {
@@ -29,7 +31,7 @@ public class FreeTextSearchItemImplementation extends FreeTextSearchItem {
 
     @Override
     public String getSearchUrl() {
-        return "/job/" + projectName + "/" + buildNumber + "/";
+        return url;
     }
 
     @Override

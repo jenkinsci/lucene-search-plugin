@@ -13,6 +13,7 @@ import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
 import static org.jenkinsci.plugins.lucene.search.Field.RESULT;
 import static org.jenkinsci.plugins.lucene.search.Field.START_CAUSE;
 import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
+import static org.jenkinsci.plugins.lucene.search.Field.URL;
 import static org.jenkinsci.plugins.lucene.search.Field.getIndex;
 import hudson.model.BallColor;
 import hudson.model.Job;
@@ -101,6 +102,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         types.put(CONSOLE, LuceneFieldType.TEXT);
         types.put(CHANGE_LOG, LuceneFieldType.TEXT);
         types.put(ARTIFACTS, LuceneFieldType.TEXT);
+        types.put(URL, LuceneFieldType.TEXT);
         FIELD_TYPE_MAP = Collections.unmodifiableMap(types);
     }
 
@@ -221,8 +223,17 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                     buildIcon = BallColor.valueOf(colorName);
                 }
 
-                luceneSearchResultImpl.add(new FreeTextSearchItemImplementation(doc.get(PROJECT_NAME.fieldName), doc
-                        .get(BUILD_NUMBER.fieldName), bestFragments, buildIcon.getImage()));
+                String projectName = doc.get(PROJECT_NAME.fieldName);
+                String buildNumber = doc.get(BUILD_NUMBER.fieldName);
+
+                String url;
+                if (doc.get(URL.fieldName) != null) {
+                    url = doc.get(URL.fieldName);
+                } else {
+                    url = "/job/" + projectName + "/" + buildNumber + "/";
+                }
+
+                luceneSearchResultImpl.add(new FreeTextSearchItemImplementation(projectName, buildNumber, bestFragments, buildIcon.getImage(), url));
             }
         } catch (ParseException e) {
             // Do nothing
