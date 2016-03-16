@@ -162,6 +162,12 @@ public enum Field {
             }
             return "";
         }
+    },
+
+    URL("url", Persist.TRUE, DefaultSearchable.FALSE) {
+        @Override public Object getValue(Run<?, ?> build) {
+            return build.getParent().getParent().getUrl() + build.getParent().getSearchUrl() + build.getSearchUrl();
+        }
     };
 
     private static Map<String, Field> index;
