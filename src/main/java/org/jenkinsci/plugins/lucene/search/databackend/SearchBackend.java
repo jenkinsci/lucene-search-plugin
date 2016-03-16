@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
-import hudson.model.AbstractBuild;
 import hudson.model.Job;
 import hudson.model.Run;
 
@@ -76,11 +75,8 @@ public abstract class SearchBackend<T> {
                 .andStart();
         progress.setMax(0);
         for (Run<?, ?> run : job.getBuilds()) {
-            if (run instanceof AbstractBuild) {
-                progress.setMax(progress.getMax() + 1);
-                AbstractBuild build = (AbstractBuild) run;
-                burstExecutor.add(build);
-            }
+            progress.setMax(progress.getMax() + 1);
+            burstExecutor.add(run);
         }
         try {
             burstExecutor.waitForCompletion();
