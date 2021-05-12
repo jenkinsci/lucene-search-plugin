@@ -11,7 +11,7 @@
 	<packaging>hpi</packaging>
 	<properties>
 		<lucene.version>5.3.1</lucene.version>
-		<solr.version>5.3.1</solr.version>
+		<solr.version>8.8.2</solr.version>
 		<junit.version>1.9</junit.version>
 	</properties>
 
