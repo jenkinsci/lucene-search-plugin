@@ -1,39 +1,10 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
-import static org.jenkinsci.plugins.lucene.search.Field.ARTIFACTS;
-import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
-import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
-import static org.jenkinsci.plugins.lucene.search.Field.BUILT_ON;
-import static org.jenkinsci.plugins.lucene.search.Field.CHANGE_LOG;
-import static org.jenkinsci.plugins.lucene.search.Field.CONSOLE;
-import static org.jenkinsci.plugins.lucene.search.Field.DURATION;
-import static org.jenkinsci.plugins.lucene.search.Field.ID;
-import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_DISPLAY_NAME;
-import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
-import static org.jenkinsci.plugins.lucene.search.Field.RESULT;
-import static org.jenkinsci.plugins.lucene.search.Field.START_CAUSE;
-import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
-import static org.jenkinsci.plugins.lucene.search.Field.URL;
-import static org.jenkinsci.plugins.lucene.search.Field.getIndex;
+import com.google.common.collect.TreeMultimap;
 import hudson.model.BallColor;
 import hudson.model.Job;
 import hudson.model.Run;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
 import jenkins.model.Jenkins;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -43,22 +14,11 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.index.Term;
+import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.TopScoreDocCollector;
+import org.apache.lucene.search.*;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
 import org.apache.lucene.search.highlight.QueryTermScorer;
@@ -70,7 +30,11 @@ import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 
-import com.google.common.collect.TreeMultimap;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+
+import static org.jenkinsci.plugins.lucene.search.Field.*;
 
 public class LuceneSearchBackend extends SearchBackend<Document> {
     private static final Logger LOGGER = Logger.getLogger(LuceneSearchBackend.class);
@@ -315,22 +279,25 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         }
     }
 
+    public Query getRunQuery(Run<?, ?> run) throws ParseException {
+        assert (run != null);
+        String[] queries = {run.getParent().getName(), String.valueOf(run.getNumber())};
+        String[] fields = {PROJECT_NAME.fieldName, BUILD_NUMBER.fieldName};
+        BooleanClause.Occur[] clauses = {BooleanClause.Occur.MUST, BooleanClause.Occur.MUST};
+        return MultiFieldQueryParser.parse(queries, fields, clauses, analyzer);
+    }
+
     @Override
     public Document removeBuild(final Run<?, ?> run) {
         try {
-            Term term = new Term(Field.ID.fieldName, run.getId());
-            IndexSearcher searcher = new IndexSearcher(reader);
-            TopDocs search = searcher.search(new TermQuery(term), 1);
-            Document doc = null;
-            if (search.scoreDocs.length > 0) {
-                doc = searcher.doc(search.scoreDocs[0].doc);
-                dbWriter.deleteDocuments(term);
-                updateReader();
-            }
-            return doc;
+            dbWriter.deleteDocuments(getRunQuery(run));
+            updateReader();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOGGER.warn("removeBuild: " + e);
+        } catch (ParseException e) {
+            //
         }
+        return null;
     }
 
     @Override
