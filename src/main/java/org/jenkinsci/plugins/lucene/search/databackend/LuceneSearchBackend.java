@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
-import com.google.common.collect.TreeMultimap;
 import hudson.model.Run;
 
 import java.io.File;
@@ -19,10 +18,7 @@ import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
-import org.apache.lucene.search.highlight.Highlighter;
-import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
-import org.apache.lucene.search.highlight.QueryTermScorer;
-import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
+import org.apache.lucene.search.highlight.*;
 import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -52,32 +48,16 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         Map<Field, LuceneFieldType> types = new HashMap<>();
         types.put(PROJECT_NAME, LuceneFieldType.TEXT);
         types.put(BUILD_NUMBER, LuceneFieldType.STRING);
-        types.put(START_TIME, LuceneFieldType.LONG);
         types.put(CONSOLE, LuceneFieldType.TEXT);
         types.put(BUILD_DISPLAY_NAME, LuceneFieldType.TEXT);
         types.put(BUILD_PARAMETER, LuceneFieldType.TEXT);
         FIELD_TYPE_MAP = Collections.unmodifiableMap(types);
     }
 
-    private static final Comparator<Float> FLOAT_COMPARATOR = new Comparator<Float>() {
+    private static final Comparator<Integer> INT_COMPARATOR = new Comparator<Integer>() {
         @Override
-        public int compare(Float o1, Float o2) {
+        public int compare(Integer o1, Integer o2) {
             return o2.compareTo(o1);
-        }
-    };
-
-    private static final Comparator<Document> START_TIME_COMPARATOR = new Comparator<Document>() {
-        private Long getStartTime(Document o) {
-            IndexableField field = o.getField(START_TIME.fieldName);
-            if (field != null) {
-                return field.numericValue().longValue();
-            }
-            return 0l;
-        }
-
-        @Override
-        public int compare(Document o1, Document o2) {
-            return getStartTime(o2).compareTo(getStartTime(o1));
         }
     };
 
@@ -179,7 +159,6 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                 fields.contains(CONSOLE.fieldName));
     }
 
-
     @Override
     public List<FreeTextSearchItemImplementation> getHits(String q, boolean searchNext) {
         List<FreeTextSearchItemImplementation> luceneSearchResultImpl = new ArrayList<>();
@@ -203,11 +182,11 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             if (hits.length != 0) {
                 lastDoc = hits[hits.length - 1];
             }
-            TreeMultimap<Float, Document> docs = TreeMultimap.create(FLOAT_COMPARATOR, START_TIME_COMPARATOR);
+            TreeMap<Integer, Document> docs = new TreeMap<>(INT_COMPARATOR);
 
             for (ScoreDoc hit : hits) {
                 Document doc = searcher.doc(hit.doc);
-                docs.put(hit.score, doc);
+                docs.put(Integer.parseInt(doc.get(BUILD_NUMBER.fieldName)), doc);
             }
 
             for (Document doc : docs.values()) {

@@ -54,13 +54,6 @@ public enum Field {
         }
     },
 
-    START_TIME("starttime", DefaultSearchable.FALSE, Numeric.TRUE, Persist.TRUE) {
-        @Override
-        public Long getValue(Run<?, ?> build) {
-            return build.getStartTimeInMillis();
-        }
-    },
-
     CONSOLE("c", Persist.TRUE) {
         @Override
         public String getValue(Run<?, ?> build) {
