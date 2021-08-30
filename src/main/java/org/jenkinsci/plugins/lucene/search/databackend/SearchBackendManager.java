@@ -23,7 +23,6 @@ public class SearchBackendManager {
     private static final Logger LOG = Logger.getLogger(SearchBackendManager.class);
 
     private transient SearchBackend<?> instance;
-    private transient List<SearchFieldDefinition> cachedFieldDefinitions;
 
     @Inject
     private transient SearchBackendConfiguration backendConfig;
@@ -71,6 +70,10 @@ public class SearchBackendManager {
     public void clean(ManagerProgress progress) {
         progress.setMax(1);
         getBackend().cleanAllJob(progress);
+    }
+
+    public void abort() {
+        getBackend().abort();
     }
 
     public void removeBuild(Run<?, ?> run) throws IOException {

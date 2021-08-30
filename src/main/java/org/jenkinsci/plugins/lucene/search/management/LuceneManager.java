@@ -5,7 +5,6 @@ import hudson.model.ManagementLink;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONSerializer;
 import org.apache.log4j.Logger;
-import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
 import org.jenkinsci.plugins.lucene.search.databackend.ManagerProgress;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackend;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
@@ -101,19 +100,7 @@ public class LuceneManager extends ManagementLink {
     @JavaScriptMethod
     public JSReturnCollection abort() {
         JSReturnCollection statement = verifyNotInProgress();
-//        if (statement.code == 1) {
-//            statement.message = "Aborted";
-//            statement.code = 0;
-//            statement.running = false;
-//            statement.neverStarted = true;
-//            try {
-//                progress.assertNoErrors();
-//            } catch (Exception e) {
-//                progress.completedWithErrors(e);
-//                return statement;
-//            }
-//            progress.jobComplete();
-//        }
+        backendManager.abort();
         this.progress = null;
         return statement;
     }

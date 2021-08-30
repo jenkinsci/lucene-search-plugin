@@ -3,17 +3,14 @@ package org.jenkinsci.plugins.lucene.search.config;
 import com.google.common.annotations.VisibleForTesting;
 import hudson.Extension;
 import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import javax.inject.Inject;
 

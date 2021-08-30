@@ -19,6 +19,7 @@ import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 public abstract class SearchBackend<T> {
 
     private static final Logger LOGGER = Logger.getLogger(SearchBackend.class);
+    private boolean stop = false;
 
     @SuppressWarnings("rawtypes")
     private class RebuildBuildWorker implements RunWithArgument<Run> {
@@ -99,13 +100,25 @@ public abstract class SearchBackend<T> {
         return fieldNames.toArray(new String[fieldNames.size()]);
     }
 
+    public void abort() {
+        stop = true;
+    }
+
+    public void start() {
+        stop = false;
+    }
+
     @SuppressWarnings("rawtypes")
     public void rebuildDatabase(ManagerProgress progress, int maxWorkers, Set<String> jobNames, boolean overwrite) {
+        start();
         List<Job> allItems = Jenkins.getInstance().getAllItems(Job.class);
         try {
             if (!jobNames.isEmpty()) {
                 progress.setMax(jobNames.size());
                 for (Job job : allItems) {
+                    if (stop) {
+                        break;
+                    }
                     if (jobNames.contains(job.getName())) {
                         rebuildSingleJob(progress, job, maxWorkers, overwrite);
                         jobNames.remove(job.getName());
@@ -118,6 +131,9 @@ public abstract class SearchBackend<T> {
             } else {
                 progress.setMax(allItems.size());
                 for (Job job : allItems) {
+                    if (stop) {
+                        break;
+                    }
                     rebuildSingleJob(progress, job, maxWorkers, overwrite);
                 }
                 progress.setSuccessfullyCompleted();
