@@ -425,6 +425,23 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         }
     }
 
+    @Override
+    public void cleanAllJob(ManagerProgress progress) {
+        Progress currentProgress = progress.beginCleanJob();
+        try {
+            IndexReader reader = DirectoryReader.open(index);
+            currentProgress.setCurrent(reader.numDocs());
+            dbWriter.deleteAll();
+            dbWriter.commit();
+            reader.close();
+            progress.setSuccessfullyCompleted();
+        } catch (IOException e) {
+            progress.completedWithErrors(e);
+        } finally {
+            currentProgress.setFinished();
+            progress.jobComplete();
+        }
+    }
 }
 
 class Pair<T, S, Q> {
