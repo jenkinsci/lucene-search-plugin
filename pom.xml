@@ -11,7 +11,6 @@
 	<packaging>hpi</packaging>
 	<properties>
 		<lucene.version>5.3.1</lucene.version>
-		<solr.version>5.3.1</solr.version>
 		<junit.version>1.9</junit.version>
 	</properties>
 
@@ -74,22 +73,6 @@
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-highlighter</artifactId>
 			<version>${lucene.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.solr</groupId>
-			<artifactId>solr-solrj</artifactId>
-			<version>${solr.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.solr</groupId>
-			<artifactId>solr-core</artifactId>
-			<version>${solr.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.lucene</groupId>
-			<artifactId>lucene-backward-codecs</artifactId>
-			<version>${solr.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>

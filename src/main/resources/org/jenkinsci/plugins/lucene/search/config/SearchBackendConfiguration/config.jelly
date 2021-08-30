@@ -9,15 +9,6 @@
                     <f:textbox name="lucenePath"/>
                 </f:entry>
             </f:dropdownListBlock>
-            <f:dropdownListBlock value="SOLR" title="${%Solr}"
-                                 selected="${descriptor.searchBackend.equals('SOLR')}">
-                <f:entry title="${%Solr host url}" field="solrUrl">
-                    <f:textbox name="solrUrl"/>
-                </f:entry>
-                <f:entry title="${%Solr collection}" field="solrCollection">
-                    <f:select/>
-                </f:entry>
-            </f:dropdownListBlock>
         </f:dropdownList>
     </f:section>
 </j:jelly>
