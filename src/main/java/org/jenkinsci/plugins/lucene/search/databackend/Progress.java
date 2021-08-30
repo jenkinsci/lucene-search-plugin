@@ -29,6 +29,8 @@ public class Progress {
     public Progress(String name) {
         this.setName(name);
         startTime = System.currentTimeMillis();
+        current = 0;
+        max = 0;
     }
 
     public void completedWithErrors(Exception reason) {
@@ -83,7 +85,7 @@ public class Progress {
         this.current = current;
     }
 
-    public void incCurrent() {
+    public synchronized void incCurrent() {
         this.current++;
     }
 
