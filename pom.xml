@@ -24,6 +24,11 @@
 	</scm>
 	<developers>
 		<developer>
+			<id>hmarkc</id>
+			<name>Mark Chen</name>
+			<email>a77069752@gmail.com</email>
+		</developer>
+		<developer>
 			<id>tobias-</id>
 			<name>Tobias Olsson</name>
 			<email>tobias@olsson.be</email>
