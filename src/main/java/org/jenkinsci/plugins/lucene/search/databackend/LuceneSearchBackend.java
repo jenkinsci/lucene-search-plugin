@@ -230,7 +230,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         MultiFieldQueryParser queryParser = new MultiFieldQueryParser(getAllDefaultSearchableFields(), analyzer) {
             @Override
             protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive,
-                    boolean endInclusive) throws ParseException {
+                                          boolean endInclusive) throws ParseException {
                 if (field != null && getIndex(field).numeric) {
                     Long min = getWithDefault(part1, null);
                     Long max = getWithDefault(part2, null);
@@ -244,7 +244,8 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         queryParser.setDefaultOperator(QueryParser.Operator.AND);
         queryParser.setLocale(LOCALE);
         queryParser.setAnalyzeRangeTerms(true);
-        queryParser.setLowercaseExpandedTerms(true);
+        queryParser.setAllowLeadingWildcard(true);
+        queryParser.setLowercaseExpandedTerms(false);
         return queryParser;
     }
 
