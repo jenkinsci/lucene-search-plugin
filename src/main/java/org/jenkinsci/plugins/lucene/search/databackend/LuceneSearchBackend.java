@@ -325,38 +325,6 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     }
 
     @Override
-    public void cleanDeletedBuilds(Progress progress, Job<?, ?> job) throws Exception {
-        try {
-            IndexReader reader = DirectoryReader.open(index);
-            int firstBuildNumber = job.getFirstBuild().getNumber();
-            IndexSearcher searcher = new IndexSearcher(reader);
-
-            Term term = new Term(Field.PROJECT_NAME.fieldName, job.getName().toLowerCase(LOCALE));
-            Query q = new TermQuery(term).rewrite(reader);
-            TopDocs topDocs = searcher.search(q, 9999999);
-
-            for (int i = 0; i < topDocs.scoreDocs.length; i++) {
-                Document doc = searcher.doc(topDocs.scoreDocs[i].doc);
-                progress.setMax(reader.maxDoc());
-                progress.setCurrent(i);
-                Integer buildNumber = Integer.valueOf(doc.get(BUILD_NUMBER.fieldName));
-                if (firstBuildNumber > buildNumber) {
-                    String id = doc.get(ID.fieldName);
-                    dbWriter.deleteDocuments(new Term(ID.fieldName, id));
-                }
-            }
-            progress.setSuccessfullyCompleted();
-            updateReader();
-        } catch (Exception e) {
-            progress.completedWithErrors(e);
-            LOGGER.error("Failed to delete cleaned builds", e);
-            throw e;
-        } finally {
-            progress.setFinished();
-        }
-    }
-
-    @Override
     public void deleteJob(String jobName) throws IOException {
         try {
             Query query = getQueryParser().parse(PROJECT_NAME.fieldName + ":" + jobName);
