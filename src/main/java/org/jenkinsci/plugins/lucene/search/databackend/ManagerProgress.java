@@ -19,7 +19,7 @@ public class ManagerProgress extends Progress {
         if (currentProject != null) {
             currentProject.setSuccessfullyCompleted();
             currentProject.setFinished();
-            this.getHistory().add(currentProject);
+//            this.getHistory().add(currentProject);
             setProcessedItems(getProcessedItems() + currentProject.getMax());
             this.setElapsedTime(System.currentTimeMillis() - startTime);
         }
@@ -45,14 +45,17 @@ public class ManagerProgress extends Progress {
     @Override
     public void completedWithErrors(Exception e) {
         super.completedWithErrors(e);
-        currentProject.completedWithErrors(e);
-        currentProject.setFinished();
-        this.getHistory().add(currentProject);
+        if (currentProject != null) {
+            currentProject.completedWithErrors(e);
+            currentProject.setFinished();
+            this.getHistory().add(currentProject);
+        }
     }
 
     public Progress beginCleanJob() {
         incCurrent();
-        currentProject = new Progress("main clean");
+        currentProject = new Progress("clean all");
+        this.getHistory().add(currentProject);
         return currentProject;
     }
 
@@ -64,6 +67,7 @@ public class ManagerProgress extends Progress {
         builder.append(project.getName());
         incCurrent();
         currentProject = new Progress(builder.toString());
+        this.getHistory().add(currentProject);
         return currentProject;
     }
 
