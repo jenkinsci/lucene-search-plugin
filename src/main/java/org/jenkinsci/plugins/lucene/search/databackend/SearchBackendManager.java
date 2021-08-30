@@ -5,18 +5,18 @@ import hudson.model.Item;
 import hudson.model.Run;
 import hudson.search.SearchResult;
 import hudson.search.SuggestedItem;
+
+import java.io.IOException;
+import java.util.*;
+
+import javax.inject.Inject;
+
 import jenkins.model.Jenkins;
+
 import org.apache.log4j.Logger;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.SearchResultImpl;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Extension
 public class SearchBackendManager {
@@ -68,6 +68,11 @@ public class SearchBackendManager {
         return result;
     }
 
+    public void clean(ManagerProgress progress) {
+        progress.setMax(1);
+        getBackend().cleanAllJob(progress);
+    }
+
     public void removeBuild(Run<?, ?> run) throws IOException {
         getBackend().removeBuild(run);
     }
@@ -78,12 +83,12 @@ public class SearchBackendManager {
 
 
     public void storeBuild(Run<?, ?> run) throws IOException {
-        getBackend().storeBuild(run, null);
+        getBackend().storeBuild(run);
     }
 
     public void rebuildDatabase(ManagerProgress progress, int maxWorkers, Set<String> jobs, boolean overwrite) {
         try {
-            getBackend().rebuildDatabase(progress, maxWorkers);
+            getBackend().rebuildDatabase(progress, maxWorkers, jobs, overwrite);
         } catch (Exception e) {
             progress.completedWithErrors(e);
             LOG.error("Failed rebuilding search database", e);
