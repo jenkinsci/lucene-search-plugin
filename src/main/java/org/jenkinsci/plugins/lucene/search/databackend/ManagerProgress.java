@@ -19,7 +19,6 @@ public class ManagerProgress extends Progress {
         if (currentProject != null) {
             currentProject.setSuccessfullyCompleted();
             currentProject.setFinished();
-//            this.getHistory().add(currentProject);
             setProcessedItems(getProcessedItems() + currentProject.getMax());
             this.setElapsedTime(System.currentTimeMillis() - startTime);
         }

@@ -8,19 +8,15 @@ import hudson.search.SuggestedItem;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
 import jenkins.model.Jenkins;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.queryparser.classic.ParseException;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.SearchResultImpl;
-import org.jenkinsci.plugins.lucene.search.bashrunner.BashRunner;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
-import org.kohsuke.stapler.bind.JavaScriptMethod;
 
 @Extension
 public class SearchBackendManager {

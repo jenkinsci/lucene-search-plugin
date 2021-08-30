@@ -12,7 +12,6 @@ import java.util.Set;
 import jenkins.model.Jenkins;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.queryparser.classic.ParseException;
 import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
