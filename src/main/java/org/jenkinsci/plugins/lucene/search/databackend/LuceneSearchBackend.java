@@ -426,3 +426,15 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     }
 
 }
+
+class Pair<T, S, Q> {
+    public final T first;
+    public final S second;
+    public final Q third;
+
+    Pair(T first, S second, Q third) {
+        this.first = first;
+        this.second = second;
+        this.third = third;
+    }
+}
