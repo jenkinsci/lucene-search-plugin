@@ -249,28 +249,26 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     }
 
     @Override
-    public void storeBuild(final Run<?, ?> run, Document oldDoc) throws IOException {
+    public void storeBuild(final Run<?, ?> run) throws IOException {
         try {
             Document doc = new Document();
             for (Field field : Field.values()) {
                 org.apache.lucene.document.Field.Store store = field.persist ? STORE : DONT_STORE;
                 Object fieldValue = field.getValue(run);
-                if (fieldValue == null && oldDoc != null) {
-                    fieldValue = oldDoc.get(field.fieldName);
-                }
                 if (fieldValue != null) {
+
                     switch (FIELD_TYPE_MAP.get(field)) {
-                    case LONG:
-                        doc.add(new LongField(field.fieldName, ((Number) fieldValue).longValue(), store));
-                        break;
-                    case STRING:
-                        doc.add(new StringField(field.fieldName, fieldValue.toString(), store));
-                        break;
-                    case TEXT:
-                        doc.add(new TextField(field.fieldName, fieldValue.toString(), store));
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Don't know how to handle " + FIELD_TYPE_MAP.get(field));
+                        case LONG:
+                            doc.add(new LongField(field.fieldName, ((Number) fieldValue).longValue(), store));
+                            break;
+                        case STRING:
+                            doc.add(new StringField(field.fieldName, fieldValue.toString(), store));
+                            break;
+                        case TEXT:
+                            doc.add(new TextField(field.fieldName, fieldValue.toString(), store));
+                            break;
+                        default:
+                            throw new IllegalArgumentException("Don't know how to handle " + FIELD_TYPE_MAP.get(field));
                     }
                 }
             }
@@ -278,23 +276,18 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
                 try {
                     Object fieldValue = extension.getTextResult(run);
-                    if (fieldValue == null && oldDoc != null) {
-                        fieldValue = oldDoc.get(extension.getKeyword());
-                    }
                     if (fieldValue != null) {
                         doc.add(new TextField(extension.getKeyword(), extension.getTextResult(run), (extension
                                 .isPersist()) ? STORE : DONT_STORE));
                     }
                 } catch (Throwable t) {
                     //We don't want to crash the collection of log from other plugin extensions if we happen to add a plugin that crashes while collecting the logs.
-                    System.out.println("CRASH: " + extension.getClass().getName() + ", " + extension.getKeyword());
-                    t.printStackTrace();
+                    LOGGER.warn("CRASH: " + extension.getClass().getName() + ", " + extension.getKeyword() + t);
                 }
             }
-
             dbWriter.addDocument(doc);
         } finally {
-            updateReader();
+            dbWriter.commit();
         }
     }
 
