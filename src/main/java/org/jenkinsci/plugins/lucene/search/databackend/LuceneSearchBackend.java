@@ -47,14 +47,7 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.TopScoreDocCollector;
+import org.apache.lucene.search.*;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
 import org.apache.lucene.search.highlight.QueryTermScorer;
@@ -305,22 +298,22 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         }
     }
 
+    public Query getRunQuery(Run<?, ?> run) throws ParseException {
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(getQueryParser()
+                .parse(PROJECT_NAME.fieldName + ":" + run.getParent().getDisplayName()), BooleanClause.Occur.MUST)
+                .add(getQueryParser()
+                        .parse(BUILD_NUMBER.fieldName + ":" + run.getNumber()), BooleanClause.Occur.MUST);
+        return builder.build();
+    }
+
     @Override
-    public Document removeBuild(final Run<?, ?> run) {
+    public void removeBuild(Run<?, ?> run) throws IOException {
         try {
-            IndexReader reader = DirectoryReader.open(index);
-            Term term = new Term(Field.ID.fieldName, run.getId());
-            IndexSearcher searcher = new IndexSearcher(reader);
-            TopDocs search = searcher.search(new TermQuery(term), 1);
-            Document doc = null;
-            if (search.scoreDocs.length > 0) {
-                doc = searcher.doc(search.scoreDocs[0].doc);
-                dbWriter.deleteDocuments(term);
-                dbWriter.commit();
-            }
-            return doc;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            dbWriter.deleteDocuments(getRunQuery(run));
+            dbWriter.commit();
+        } catch (ParseException e) {
+            LOGGER.warn("removeBuild: " + e);
         }
     }
 
