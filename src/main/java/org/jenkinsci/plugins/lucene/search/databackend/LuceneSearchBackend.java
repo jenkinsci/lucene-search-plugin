@@ -1,36 +1,12 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
-import static org.jenkinsci.plugins.lucene.search.Field.ARTIFACTS;
-import static org.jenkinsci.plugins.lucene.search.Field.BALL_COLOR;
-import static org.jenkinsci.plugins.lucene.search.Field.BUILD_NUMBER;
-import static org.jenkinsci.plugins.lucene.search.Field.BUILT_ON;
-import static org.jenkinsci.plugins.lucene.search.Field.CHANGE_LOG;
-import static org.jenkinsci.plugins.lucene.search.Field.CONSOLE;
-import static org.jenkinsci.plugins.lucene.search.Field.DURATION;
-import static org.jenkinsci.plugins.lucene.search.Field.ID;
-import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_DISPLAY_NAME;
-import static org.jenkinsci.plugins.lucene.search.Field.PROJECT_NAME;
-import static org.jenkinsci.plugins.lucene.search.Field.RESULT;
-import static org.jenkinsci.plugins.lucene.search.Field.START_CAUSE;
-import static org.jenkinsci.plugins.lucene.search.Field.START_TIME;
-import static org.jenkinsci.plugins.lucene.search.Field.URL;
-import static org.jenkinsci.plugins.lucene.search.Field.getIndex;
 import hudson.model.BallColor;
 import hudson.model.Job;
 import hudson.model.Run;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import jenkins.model.Jenkins;
 
@@ -52,6 +28,7 @@ import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
 import org.apache.lucene.search.highlight.QueryTermScorer;
 import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
+import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.jenkinsci.plugins.lucene.search.Field;
@@ -59,6 +36,8 @@ import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 
 import com.google.common.collect.TreeMultimap;
+
+import static org.jenkinsci.plugins.lucene.search.Field.*;
 
 public class LuceneSearchBackend extends SearchBackend<Document> {
     private static final Logger LOGGER = Logger.getLogger(LuceneSearchBackend.class);
@@ -169,59 +148,113 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         return defaultNumber;
     }
 
+    private static Set<String> calculateQueryFieldsRecursively(Query query) {
+        Set<String> fields = new HashSet<>();
+
+        if (query instanceof TermQuery) {
+            TermQuery tQuery = (TermQuery) query;
+            Term term = tQuery.getTerm();
+            fields.add(term.field());
+        } else if (query instanceof BooleanQuery) {
+            BooleanQuery bQuery = (BooleanQuery) query;
+            List<BooleanClause> clauses = bQuery.clauses();
+            for (BooleanClause clause : clauses) {
+                Query innerQuery = clause.getQuery();
+                Set<String> innerFields = calculateQueryFieldsRecursively(innerQuery);
+                fields.addAll(innerFields);
+            }
+        }
+        return fields;
+    }
+
+    private Pair<Query, Query, Boolean> parseQuery(String q, IndexSearcher searcher) throws ParseException, IOException {
+
+        List<String> words = new ArrayList<>(Arrays.asList(q.trim().split("\\s+", 2)));
+        words.removeAll(Arrays.asList("", null));
+
+        QueryParser parser = getQueryParser();
+        Query query = parser.parse(q);
+        Query highlight = query;
+
+        if (words.size() >= 2) {
+            try {
+                Query jobNameQuery = parser.parse(PROJECT_NAME.fieldName + ":" + words.get(0));
+                if (searcher.search(jobNameQuery, 1).scoreDocs.length > 0) {
+                    highlight = parser.parse(words.get(1));
+                    query = new BooleanQuery.Builder()
+                            .add(jobNameQuery, BooleanClause.Occur.MUST)
+                            .add(highlight, BooleanClause.Occur.MUST)
+                            .build();
+                }
+            } catch (ParseException e) {
+                // proceed with multi-job search
+            }
+        }
+
+        Set<String> fields = calculateQueryFieldsRecursively(highlight);
+        return new Pair<>(query.rewrite(searcher.getIndexReader()),
+                highlight.rewrite(searcher.getIndexReader()),
+                fields.contains(CONSOLE.fieldName));
+    }
+
+
     @Override
-    public List<FreeTextSearchItemImplementation> getHits(String query, boolean includeHighlights) {
-        List<FreeTextSearchItemImplementation> luceneSearchResultImpl = new ArrayList<FreeTextSearchItemImplementation>();
+    public List<FreeTextSearchItemImplementation> getHits(String q, boolean searchNext) {
+        List<FreeTextSearchItemImplementation> luceneSearchResultImpl = new ArrayList<>();
         try {
             IndexReader reader = DirectoryReader.open(index);
-            MultiFieldQueryParser queryParser = getQueryParser();
-            Query q = queryParser.parse(query).rewrite(reader);
-
             IndexSearcher searcher = new IndexSearcher(reader);
-            TopScoreDocCollector collector = TopScoreDocCollector.create(MAX_HITS_PER_PAGE);
-            QueryTermScorer scorer = new QueryTermScorer(q);
+            Pair<Query, Query, Boolean> fieldQueryPair = parseQuery(q, searcher);
+            Query query = fieldQueryPair.first;
+            Query highlight = fieldQueryPair.second;
+            Boolean isShowConsole = fieldQueryPair.third;
+
+            QueryTermScorer scorer = new QueryTermScorer(highlight);
             Highlighter highlighter = new Highlighter(new SimpleHTMLFormatter(), scorer);
-            searcher.search(q, collector);
-            ScoreDoc[] hits = collector.topDocs().scoreDocs;
+            highlighter.setMaxDocCharsToAnalyze(Integer.MAX_VALUE);
+            ScoreDoc[] hits;
+            if (searchNext) {
+                hits = searcher.searchAfter(lastDoc, query, MAX_HITS_PER_PAGE).scoreDocs;
+            } else {
+                hits = searcher.searchAfter(null, query, MAX_HITS_PER_PAGE).scoreDocs;
+            }
+            if (hits.length != 0) {
+                lastDoc = hits[hits.length - 1];
+            }
             TreeMultimap<Float, Document> docs = TreeMultimap.create(FLOAT_COMPARATOR, START_TIME_COMPARATOR);
 
             for (ScoreDoc hit : hits) {
                 Document doc = searcher.doc(hit.doc);
                 docs.put(hit.score, doc);
             }
+
             for (Document doc : docs.values()) {
                 String[] bestFragments = EMPTY_ARRAY;
-                if (includeHighlights) {
-                    try {
-                        bestFragments = highlighter.getBestFragments(analyzer, CONSOLE.fieldName,
-                                doc.get(CONSOLE.fieldName), MAX_NUM_FRAGMENTS);
-                    } catch (InvalidTokenOffsetsException e) {
-                        LOGGER.warn("Failed to find bestFragments", e);
-                    }
-                }
-                BallColor buildIcon = BallColor.GREY;
-                String colorName = doc.get(BALL_COLOR.fieldName);
-                if (colorName != null) {
-                    buildIcon = BallColor.valueOf(colorName);
+                try {
+                    bestFragments = highlighter.getBestFragments(analyzer, CONSOLE.fieldName,
+                            doc.get(CONSOLE.fieldName), MAX_NUM_FRAGMENTS);
+                } catch (InvalidTokenOffsetsException e) {
+                    LOGGER.debug("Failed to find bestFragments", e);
                 }
 
                 String projectName = doc.get(PROJECT_NAME.fieldName);
                 String buildNumber = doc.get(BUILD_NUMBER.fieldName);
+                String searchName = doc.get(BUILD_DISPLAY_NAME.fieldName);
 
-                String url;
-                if (doc.get(URL.fieldName) != null) {
-                    url = doc.get(URL.fieldName);
-                } else {
-                    url = "/job/" + projectName + "/" + buildNumber + "/";
-                }
-
-                luceneSearchResultImpl.add(new FreeTextSearchItemImplementation(projectName, buildNumber, bestFragments, buildIcon.getImage(), url));
+                String url = "/job/" + projectName + "/" + buildNumber + "/";
+                luceneSearchResultImpl.add(new FreeTextSearchItemImplementation(searchName,
+                        projectName,
+                        bestFragments,
+                        url,
+                        isShowConsole));
             }
             reader.close();
         } catch (ParseException e) {
-            // Do nothing
+//            LOGGER.warn("Search Parsing Error: ", e);
         } catch (IOException e) {
-            // Do nothing
+            LOGGER.warn("Search IO Error: ", e);
+        } catch (AlreadyClosedException e) {
+            LOGGER.warn("IndexReader is closed: ", e);
         }
         return luceneSearchResultImpl;
     }
