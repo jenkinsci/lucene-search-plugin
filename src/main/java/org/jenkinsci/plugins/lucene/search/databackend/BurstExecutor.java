@@ -48,12 +48,10 @@ public class BurstExecutor<T> {
         @Override
         public void run() {
             try {
-                LOGGER.debug("Started thread " + getName());
                 while (!workQueue.isEmpty()) {
                     try {
                         T poll = workQueue.poll(1000, TimeUnit.MILLISECONDS);
                         if (poll != null) {
-                            LOGGER.debug("Procesing with thread " + getName());
                             worker.run(poll);
                         }
                     } catch (Exception e) {
@@ -61,7 +59,6 @@ public class BurstExecutor<T> {
                     }
                 }
             } finally {
-                LOGGER.debug("Quit thread " + getName());
                 removeThread(this);
             }
         }
@@ -70,6 +67,9 @@ public class BurstExecutor<T> {
     public void waitForCompletion() throws InterruptedException {
         if (!started) {
             throw new IllegalStateException("Not started yet");
+        }
+        while (!workQueue.isEmpty()) {
+            worker.run(workQueue.poll());
         }
         ensureEnoughThreadToFinishJob();
         WorkerThread workerThread;
