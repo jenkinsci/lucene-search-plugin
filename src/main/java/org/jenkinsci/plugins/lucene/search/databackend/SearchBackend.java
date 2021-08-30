@@ -2,17 +2,20 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import hudson.model.Job;
 import hudson.model.Run;
-import jenkins.model.Jenkins;
-import org.apache.log4j.Logger;
-import org.jenkinsci.plugins.lucene.search.Field;
-import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
-import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import jenkins.model.Jenkins;
+
+import org.apache.log4j.Logger;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.jenkinsci.plugins.lucene.search.Field;
+import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
+import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 
 public abstract class SearchBackend<T> {
 
@@ -65,7 +68,7 @@ public abstract class SearchBackend<T> {
     @SuppressWarnings("rawtypes")
     public void rebuildJob(Progress progress, Job<?, ?> job, int maxWorkers, boolean overwrite) throws IOException {
         BurstExecutor<Run> burstExecutor = BurstExecutor.create(new RebuildBuildWorker(progress, overwrite), maxWorkers)
-               .andStart();
+                .andStart();
         if (overwrite) {
             deleteJob(job.getName());
         }
