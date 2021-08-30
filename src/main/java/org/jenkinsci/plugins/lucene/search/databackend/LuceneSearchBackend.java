@@ -395,37 +395,6 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     }
 
     @Override
-    public void cleanDeletedJobs(Progress progress) throws Exception {
-        try {
-            Set<String> jobNames = new HashSet<String>();
-            for (Job<?, ?> job : Jenkins.getInstance().getAllItems(Job.class)) {
-                jobNames.add(job.getName());
-            }
-            progress.setMax(jobNames.size());
-            IndexReader reader = DirectoryReader.open(index);
-            IndexSearcher searcher = new IndexSearcher(reader);
-            DistinctCollector distinctCollector = new DistinctCollector(PROJECT_NAME.fieldName, searcher);
-            searcher.search(new MatchAllDocsQuery(), distinctCollector);
-            int i = 0;
-            for (String jobName : distinctCollector.getDistinctData()) {
-                progress.setCurrent(i);
-                if (!jobNames.contains(jobName)) {
-                    deleteJob(jobName);
-                }
-                i++;
-            }
-            dbWriter.commit();
-            progress.setSuccessfullyCompleted();
-        } catch (Exception e) {
-            progress.completedWithErrors(e);
-            LOGGER.error("Failed to clean deleted jobs", e);
-            throw e;
-        } finally {
-            progress.setFinished();
-        }
-    }
-
-    @Override
     public void cleanAllJob(ManagerProgress progress) {
         Progress currentProgress = progress.beginCleanJob();
         try {
