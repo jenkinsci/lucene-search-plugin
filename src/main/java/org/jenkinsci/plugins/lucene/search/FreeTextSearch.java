@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.lucene.search;
 
 import hudson.search.*;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
-import org.jenkinsci.plugins.lucene.search.databackend.SearchFieldDefinition;
 import org.kohsuke.stapler.Ancestor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;

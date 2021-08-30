@@ -9,7 +9,7 @@ import org.apache.http.util.TextUtils;
 
 public class ManagerProgress extends Progress {
 
-    private List<Progress> history = new LinkedList<Progress>();
+    private List<Progress> history = new LinkedList<>();
 
     private Progress currentProject;
 

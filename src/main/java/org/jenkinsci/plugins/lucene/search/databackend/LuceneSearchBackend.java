@@ -1,15 +1,12 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
 import com.google.common.collect.TreeMultimap;
-import hudson.model.Job;
 import hudson.model.Run;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import hudson.util.RunList;
-import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
