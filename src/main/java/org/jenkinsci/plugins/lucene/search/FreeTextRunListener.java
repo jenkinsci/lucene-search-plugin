@@ -10,10 +10,13 @@ import java.io.IOException;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
+import org.apache.log4j.Logger;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 
 @Extension
 public class FreeTextRunListener extends RunListener<Run<?, ?>> {
+
+    Logger logger = Logger.getLogger(FreeTextRunListener.class);
 
     @Inject
     SearchBackendManager searchBackendManager;
@@ -23,12 +26,16 @@ public class FreeTextRunListener extends RunListener<Run<?, ?>> {
         try {
             searchBackendManager.storeBuild(build);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            logger.error("When saving the finished build index: ", e);
         }
     }
 
     @Override
     public void onDeleted(final Run<?, ?> build) {
-        searchBackendManager.removeBuild(build);
+        try {
+            searchBackendManager.removeBuild(build);
+        } catch (IOException e) {
+            logger.error("When removing the deleted build index: ", e);
+        }
     }
 }

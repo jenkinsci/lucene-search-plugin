@@ -1,9 +1,13 @@
 package org.jenkinsci.plugins.lucene.search.management;
-
 import hudson.Extension;
+import hudson.model.Job;
 import hudson.model.ManagementLink;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONSerializer;
+import org.apache.log4j.Logger;
+import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
 import org.jenkinsci.plugins.lucene.search.databackend.ManagerProgress;
+import org.jenkinsci.plugins.lucene.search.databackend.SearchBackend;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -14,9 +18,12 @@ import javax.inject.Inject;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.*;
 
 @Extension
 public class LuceneManager extends ManagementLink {
+
+    private static final Logger LOGGER = Logger.getLogger(SearchBackend.class);
 
     @Inject
     private transient SearchBackendManager backendManager;
@@ -39,7 +46,7 @@ public class LuceneManager extends ManagementLink {
     }
 
     @JavaScriptMethod
-    public JSReturnCollection rebuildDatabase(int workers) {
+    public JSReturnCollection rebuildDatabase(int workers, String jobNames, String overwrite) {
         JSReturnCollection statement = verifyNotInProgress();
         this.workers = workers;
         if (this.workers <= 0) {
@@ -50,17 +57,34 @@ public class LuceneManager extends ManagementLink {
 
         if (statement.code == 0) {
             progress = new ManagerProgress();
-            backendManager.rebuildDatabase(progress, this.workers);
-
-            statement.message = "Work completed succesfully";
-            statement.code = 0;
+            Set<String> jobs = new HashSet(Arrays.asList(jobNames.split("\\s+")));
+            jobs.removeAll(Collections.singleton(""));
+            if (checkJobNames(jobs)) {
+                backendManager.rebuildDatabase(progress, this.workers, jobs, overwrite.equals("overwrite"));
+                statement.message = "Work completed successfully";
+                statement.code = 0;
+            } else {
+                progress.completedWithErrors(new Exception("The entered job names are invalid"));
+                progress.setFinished();
+            }
         }
         return statement;
     }
 
+    private boolean checkJobNames(Set<String> jobs) {
+        List<Job> allItems = Jenkins.getInstance().getAllItems(Job.class);
+        int size = jobs.size();
+        for (Job job : allItems) {
+            if (jobs.contains(job.getName())) {
+                size--;
+            }
+        }
+        return size == 0;
+    }
+
     public void doPostRebuildDatabase(StaplerRequest req, StaplerResponse rsp, @QueryParameter int workers)
             throws IOException, ServletException {
-        writeStatus(rsp, rebuildDatabase(workers));
+        writeStatus(rsp, rebuildDatabase(workers, "", "overwrite"));
     }
 
     private JSReturnCollection verifyNotInProgress() {
@@ -75,10 +99,34 @@ public class LuceneManager extends ManagementLink {
     }
 
     @JavaScriptMethod
-    public JSReturnCollection abort() throws Exception {
-        JSReturnCollection statement = new JSReturnCollection();
-        statement.message = "Not implemented";
-        statement.code = 1;
+    public JSReturnCollection abort() {
+        JSReturnCollection statement = verifyNotInProgress();
+//        if (statement.code == 1) {
+//            statement.message = "Aborted";
+//            statement.code = 0;
+//            statement.running = false;
+//            statement.neverStarted = true;
+//            try {
+//                progress.assertNoErrors();
+//            } catch (Exception e) {
+//                progress.completedWithErrors(e);
+//                return statement;
+//            }
+//            progress.jobComplete();
+//        }
+        this.progress = null;
+        return statement;
+    }
+
+    @JavaScriptMethod
+    public JSReturnCollection clean() {
+        JSReturnCollection statement = verifyNotInProgress();
+        if (statement.code == 0) {
+            progress = new ManagerProgress();
+            backendManager.clean(progress);
+            statement.message = "Index cleaned successfully";
+            statement.code = 0;
+        }
         return statement;
     }
 
@@ -89,17 +137,17 @@ public class LuceneManager extends ManagementLink {
             statement.progress = progress;
             statement.workers = workers;
             switch (progress.getState()) {
-            case COMPLETE:
-                statement.message = "Completed without errors";
-                break;
-            case COMPLETE_WITH_ERROR:
-                statement.message = progress.getReasonsAsString();
-                statement.code = 2;
-                break;
-            case PROCESSING:
-                statement.running = true;
-                statement.message = "processing";
-                break;
+                case COMPLETE:
+                    statement.message = "Completed without errors";
+                    break;
+                case COMPLETE_WITH_ERROR:
+                    statement.message = progress.getReasonsAsString();
+                    statement.code = 2;
+                    break;
+                case PROCESSING:
+                    statement.running = true;
+                    statement.message = "processing";
+                    break;
             }
         } else {
             statement.message = "Never started";
@@ -129,5 +177,4 @@ public class LuceneManager extends ManagementLink {
         public int workers;
         public boolean neverStarted;
     }
-
 }

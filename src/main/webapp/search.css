@@ -1,0 +1,18 @@
+h3 {
+    font-family: Arial;
+    margin-left: 5%;
+}
+
+p {
+    font-family: Times New Roman;
+    margin-left: 5%;
+    margin-right: 5%;
+    border: 2px solid powderblue;
+    padding: 20px;
+}
+
+.bnt {
+    width:30px;
+    position: relative;
+    text-align: center
+}

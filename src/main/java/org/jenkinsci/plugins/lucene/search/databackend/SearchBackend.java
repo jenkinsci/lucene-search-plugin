@@ -68,7 +68,7 @@ public abstract class SearchBackend<T> {
     @SuppressWarnings("rawtypes")
     public void rebuildJob(Progress progress, Job<?, ?> job, int maxWorkers, boolean overwrite) throws IOException {
         BurstExecutor<Run> burstExecutor = BurstExecutor.create(new RebuildBuildWorker(progress, overwrite), maxWorkers)
-                .andStart();
+               .andStart();
         if (overwrite) {
             deleteJob(job.getName());
         }

@@ -51,6 +51,7 @@ public class BurstExecutor<T> {
                 while (!workQueue.isEmpty()) {
                     try {
                         T poll = workQueue.poll(1000, TimeUnit.MILLISECONDS);
+//                        T poll = workQueue.poll();
                         if (poll != null) {
                             worker.run(poll);
                         }

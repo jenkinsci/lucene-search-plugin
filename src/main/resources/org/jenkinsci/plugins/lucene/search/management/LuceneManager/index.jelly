@@ -19,11 +19,30 @@
                 <span class="warning">${%Database rebuild is an expensive operations so we recommend that this is done when there is only a light load. Searches will continue to work to during the rebuilding}</span><br/>
                 <br/>
                 <div>
-                	<button id="btnRebuild" style="display:none" onclick="rebuildDatabase()">${%Rebuild}</button>${% }
+                	<button id="btnRebuild" style="display:none" onclick="rebuildDatabase()">${%Rebuilds}</button>${% }
+                	<button id="btnClean" style="display:none" onclick="clean()">${%Clean}</button>${% }
                 	<input id="txtWorkers" style="display:none" value="5"/><label id="lblWorkers">${%parallel workers}</label><br/>
+                	<br/>
+                	<input id="txtJob" style="display:none" value="" placeholder="enter the job for rebuild" size="100"/><br/>
+                	<br/>
+                	<label id="lblJob">${%If you enter no job, all jobs will be rebuilt}</label><br/>
             	</div>
                 <br/>
-                <div id="message" class="success"></div>
+
+                <div>
+                    <label id="lblOverwrite">${%If you have existing index database, you can either overwrite or preserve the old index}</label><br/>
+                    <select name="overwrite" id="selectOverwrite">
+                        <option value="overwrite">overwrite</option>
+                        <option value="preserve">preserve</option>
+                    </select>
+                </div>
+                <br/>
+
+                <div id="message" class="success"/>
+
+                <div>
+                    <button id="btnAbort" style="display:none" onclick="abort()">${%Abort}</button>${% }
+                </div>
 
                 <div id="currentProgress" style="display:none">
                     ${%Currently processing }<b id="currentlyProcessing"/>${% using }<b id="currentWorkers"/>${% workers}<br/>

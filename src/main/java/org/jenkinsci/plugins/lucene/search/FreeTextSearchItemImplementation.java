@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.lucene.search;
 
+import hudson.model.BallColor;
 import hudson.search.SearchIndex;
 import hudson.search.SearchItem;
 
@@ -10,23 +11,23 @@ public class FreeTextSearchItemImplementation extends FreeTextSearchItem {
 
     private static final Pattern LINE_ENDINGS = Pattern.compile("(\\r\\n|\\n|\\r)");
 
-    private final String buildNumber;
     private final String projectName;
-    private final String iconFileName;
+    private final boolean isShowConsole;
     private final String[] bestFragments;
     private final String url;
+    private final String searchName;
 
-    public FreeTextSearchItemImplementation(final String projectName, final String buildNumber,
-            final String[] bestFragments, final String iconFileName, final String url) {
+    public FreeTextSearchItemImplementation(final String searchName, final String projectName,
+            final String[] bestFragments, final String url, boolean isShowConsole) {
+        this.searchName = searchName;
         this.projectName = projectName;
-        this.buildNumber = buildNumber;
         this.url = url;
-
+        this.isShowConsole = isShowConsole;
         this.bestFragments = new String[bestFragments.length];
         for (int i = 0; i < bestFragments.length; i++) {
-            this.bestFragments[i] = LINE_ENDINGS.matcher(bestFragments[i]).replaceAll("\1<br/>");
+            this.bestFragments[i] = LINE_ENDINGS.matcher(bestFragments[i]).replaceAll("<br/>");
         }
-        this.iconFileName = iconFileName;
+
     }
 
     @Override
@@ -36,7 +37,7 @@ public class FreeTextSearchItemImplementation extends FreeTextSearchItem {
 
     @Override
     public String getSearchName() {
-        return projectName + " #" + buildNumber;
+        return searchName;
     }
 
     public String getProjectName() {
@@ -47,13 +48,15 @@ public class FreeTextSearchItemImplementation extends FreeTextSearchItem {
         return bestFragments;
     }
 
+    @Override
     public String getIconFileName() {
-        return iconFileName;
+        // return blue by default; this part could be extended
+        return BallColor.BLUE.getImage();
     }
 
     @Override
     public boolean isShowConsole() {
-        return true;
+        return isShowConsole;
     }
 
     @Override

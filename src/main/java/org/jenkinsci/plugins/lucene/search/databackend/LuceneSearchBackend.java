@@ -1,6 +1,6 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
-import hudson.model.BallColor;
+import com.google.common.collect.TreeMultimap;
 import hudson.model.Job;
 import hudson.model.Run;
 
@@ -8,13 +8,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import hudson.util.RunList;
 import jenkins.model.Jenkins;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
@@ -35,8 +33,6 @@ import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 
-import com.google.common.collect.TreeMultimap;
-
 import static org.jenkinsci.plugins.lucene.search.Field.*;
 
 public class LuceneSearchBackend extends SearchBackend<Document> {
@@ -54,22 +50,15 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     }
 
     static final Map<Field, LuceneFieldType> FIELD_TYPE_MAP;
+
     static {
-        Map<Field, LuceneFieldType> types = new HashMap<Field, LuceneFieldType>();
-        types.put(ID, LuceneFieldType.STRING);
+        Map<Field, LuceneFieldType> types = new HashMap<>();
         types.put(PROJECT_NAME, LuceneFieldType.TEXT);
-        types.put(PROJECT_DISPLAY_NAME, LuceneFieldType.TEXT);
-        types.put(BUILD_NUMBER, LuceneFieldType.LONG);
-        types.put(RESULT, LuceneFieldType.TEXT);
-        types.put(DURATION, LuceneFieldType.LONG);
+        types.put(BUILD_NUMBER, LuceneFieldType.STRING);
         types.put(START_TIME, LuceneFieldType.LONG);
-        types.put(BUILT_ON, LuceneFieldType.TEXT);
-        types.put(START_CAUSE, LuceneFieldType.TEXT);
-        types.put(BALL_COLOR, LuceneFieldType.STRING);
         types.put(CONSOLE, LuceneFieldType.TEXT);
-        types.put(CHANGE_LOG, LuceneFieldType.TEXT);
-        types.put(ARTIFACTS, LuceneFieldType.TEXT);
-        types.put(URL, LuceneFieldType.TEXT);
+        types.put(BUILD_DISPLAY_NAME, LuceneFieldType.TEXT);
+        types.put(BUILD_PARAMETER, LuceneFieldType.TEXT);
         FIELD_TYPE_MAP = Collections.unmodifiableMap(types);
     }
 
@@ -100,11 +89,10 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     private final Directory index;
     private final Analyzer analyzer;
     private final IndexWriter dbWriter;
-    private final File indexPath;
+    private volatile ScoreDoc lastDoc;
 
     public LuceneSearchBackend(final File indexPath) throws IOException {
-        this.indexPath = indexPath;
-        analyzer = new StandardAnalyzer(CharArraySet.EMPTY_SET);
+        analyzer = new CaseSensitiveAnalyzer();
         index = FSDirectory.open(indexPath.toPath());
         IndexWriterConfig config = new IndexWriterConfig(analyzer);
         dbWriter = new IndexWriter(index, config);
@@ -115,8 +103,9 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         try {
             return new LuceneSearchBackend(getIndexPath(config));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOGGER.error("create lucene search backend failed: " + e);
         }
+        return null;
     }
 
     private static File getIndexPath(final Map<String, Object> config) {
@@ -125,15 +114,11 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     @Override
     public SearchBackend<Document> reconfigure(final Map<String, Object> newConfig) {
-        if (getIndexPath(newConfig).equals(indexPath)) {
-            return this;
-        } else {
-            close();
-            return create(newConfig);
-        }
+        close();
+        return create(newConfig);
     }
 
-    public synchronized void close() {
+    public void close() {
         IOUtils.closeQuietly(dbWriter);
         IOUtils.closeQuietly(index);
     }

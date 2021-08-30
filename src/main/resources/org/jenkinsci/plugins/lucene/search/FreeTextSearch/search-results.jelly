@@ -1,38 +1,112 @@
 <?jelly escape-by-default='false'?>
-<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
     <j:set var="q" value="${request.getParameter('q')}"/>
     <j:new var="h" className="hudson.Functions"/>
     <!-- needed for printing title. -->
     <l:layout title="${%Search for} '${q}'">
         <l:side-panel>
-            <h2><img src="${rootURL}/images/16x16/help.png" /> Search help</h2>
-            <h3>${%Supported keywords with an example}</h3>
-            <j:forEach var="searchItem" items="${it.getSearchHelp()}">
-                ${searchItem.fieldName}:<j:if test="${! searchItem.values.isEmpty()}">${searchItem.getExamples(1)}</j:if>
-                ${" "}<j:if test="${searchItem.caseSensitive}">†</j:if>
-                <br />
-            </j:forEach>
-            † ${%Case sensitive}
-            <h3>${%Search examples}</h3>
-                projectname:LucenSearchPlugin<br/>
-                console:"Something went wrong"<br/>
-                result:FAILURE<br/>
+            <link rel="stylesheet" type="text/css" href="${rootURL}/plugin/lucene-search/search.css" media="screen"/>
+            <h3>${%Search Help}</h3>
+            <p>
+                Search Range:
                 <br/>
-                result:FAILURE AND console:"the build completed successfully" <br/>
-            <h3>Escaping</h3>
-                ${%Some chars needs to be escaped}<br/>
-                "error\: something went wrong" <br/>
-                "plug\-in needs to be like this"<br/>
+                1. Console log
+                <br/>
+                2. Build display name
+                <br/>
+                3. Build parameter
+                <br/>
+                <br/>
+                Search Mode:
+                <br/>
+                1. Single-job search
+                <br/>
+                2. Across-job search
+                <br/>
+                <br/>
+                If the first word of the query is recognized as a job name, single-job search will be performed;
+                otherwise, across-job search will be performed.
+                <br/>
+                <br/>
+                The list of keywords are:
+                <br/>
+                "c" : console log
+                <br/>
+                "d" : build display name
+                <br/>
+                "p" : build parameter
+                <br/>
+                "j" : job name
+                <br/>
+                "n" : build number
+                <br/>
+            </p>
+            <h3>${%Search examples}</h3>
+            <p>
+                Search across different jobs:
+                <br/>
+                "some keywords in some console log"
+                <br/>
+                <br/>
+                Search in a specific job:
+                <br/>
+                "jobName some keywords in some console log"
+                <br/>
+                <br/>
+                Search for console log in a specific job:
+                <br/>
+                "jobName c:words you want to search for"
+                <br/>
+            </p>
+            <h3>${%Operators}</h3>
+            <p>
+                ?: one unknown character
+                <br/>
+                <br/>
+                *: any number of unknown characters
+                <br/>
+                <br/>
+                AND(&amp;&amp;): must satisfy both queries; it is the default logical operator
+                <br/>
+                <br/>
+                OR(||): must satisfy at least one query
+                <br/>
+                <br/>
+                NOT(-): must not satisfy the following query
+                <br/>
+                <br/>
+                "": put query between double quotes to search for successive words
+                <br/>
+            </p>
+            <h3>${%Escaping}</h3>
+            <p>
+                ${%Some chars needs to be escaped}
+                <br/>
+                "error\: something went wrong"
+                <br/>
+                "plug\-in needs to be like this"
+                <br/>
                 "c:\\ also needs to be escaped"
-            <h3>More information</h3>
-                <a href="http://www.lucenetutorial.com/lucene-query-syntax.html">${%Lucene Query Syntax}</a><br/>
-                <a href="https://wiki.apache.org/solr/SolrQuerySyntax">${%Solr Search Syntax}</a><br/>
-
+            </p>
+            <h3>${%More information}</h3>
+            <p>
+                <a href="http://www.lucenetutorial.com/lucene-query-syntax.html">${%Lucene Query Syntax}</a>
+                <br/>
+            </p>
         </l:side-panel>
+
         <l:main-panel>
-            <j:set var="hits" value="${it.hits}"/>
             <j:set var="searchModelHits" value="${it.searchModelHits}"/>
+            <script type="text/javascript" src="${rootURL}/plugin/lucene-search/search.js"/>
+            <script>
+                var search =
+                <st:bind value="${it}"/>
+            </script>
             <h1>${%Search for} '${q}'</h1>
+            <h2 id="numberOfResults" style="display: inline"/>
+            <button class="bnt" style="left: 60px; background-color: Azure" onclick="toMiddle()">${%m}</button>
+            <button class="bnt" style="left: 100px; background-color: Beige" onclick="toBottom()">${%b}</button>
+            <hr/>
             <j:choose>
                 <j:when test="${it.noResult}">
                     <div class='error'>
@@ -40,37 +114,15 @@
                     </div>
                 </j:when>
                 <j:otherwise>
-                    <ol>
-                        <j:if test="${! hits.isEmpty()}">
-                            <j:forEach var="hit" items="${hits}">
-                                <li>
-                                    <span style="white-space: nowrap;">
-                                        <img src="${rootURL}/images/16x16/${hit.iconFileName}"/>${" "}
-                                        <a href="${hit.url}">${hit.searchName}</a>
-                                    </span>
-                                    <j:if test="${hit.showConsole}">
-                                        ${" "}
-                                        <a href="${hit.url}consoleFull"><img src="${rootURL}/images/16x16/terminal.png"/></a>
-                                        ${" "}
-                                        <a href="${hit.url}consoleText">
-                                        ${" "}
-                                        <img src="${rootURL}/images/16x16/text.png"/></a>
-                                        <div class="collapsible">
-                                            <j:forEach var="fragment" items="${hit.bestFragments}">
-                                                <ul>
-                                                    <li>
-                                                        ${fragment}
-                                                    </li>
-                                                </ul>
-                                            </j:forEach>
-                                        </div>
-                                    </j:if>
-                                </li>
-                            </j:forEach>
-                        </j:if>
+                    <ol id="results">
                     </ol>
                 </j:otherwise>
             </j:choose>
+            <script>
+                loadNext();
+            </script>
+            <button id="btnPrev" style="margin-left: 0%" onclick="loadPrev()">${%prev}</button>
+            <button id="btnNext" style="margin-left: 80%" onclick="loadNext()">${%next}</button>
         </l:main-panel>
     </l:layout>
 </j:jelly>
