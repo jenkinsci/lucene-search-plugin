@@ -43,11 +43,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.index.Term;
+import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -134,7 +130,6 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     private final Analyzer analyzer;
     private final IndexWriter dbWriter;
     private final File indexPath;
-    private DirectoryReader reader;
 
     public LuceneSearchBackend(final File indexPath) throws IOException {
         super(SearchBackendEngine.LUCENE);
@@ -143,7 +138,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         index = FSDirectory.open(indexPath.toPath());
         IndexWriterConfig config = new IndexWriterConfig(analyzer);
         dbWriter = new IndexWriter(index, config);
-        updateReader();
+        dbWriter.commit();
     }
 
     public static LuceneSearchBackend create(final Map<String, Object> config) {
@@ -173,11 +168,6 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         IOUtils.closeQuietly(index);
     }
 
-    private void updateReader() throws IOException {
-        dbWriter.commit();
-        reader = DirectoryReader.open(index);
-    }
-
     private Long getWithDefault(String number, Long defaultNumber) {
         if (number != null) {
             Long l = Long.getLong(number);
@@ -192,6 +182,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     public List<FreeTextSearchItemImplementation> getHits(String query, boolean includeHighlights) {
         List<FreeTextSearchItemImplementation> luceneSearchResultImpl = new ArrayList<FreeTextSearchItemImplementation>();
         try {
+            IndexReader reader = DirectoryReader.open(index);
             MultiFieldQueryParser queryParser = getQueryParser();
             Query q = queryParser.parse(query).rewrite(reader);
 
@@ -235,6 +226,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
                 luceneSearchResultImpl.add(new FreeTextSearchItemImplementation(projectName, buildNumber, bestFragments, buildIcon.getImage(), url));
             }
+            reader.close();
         } catch (ParseException e) {
             // Do nothing
         } catch (IOException e) {
@@ -318,6 +310,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     @Override
     public Document removeBuild(final Run<?, ?> run) {
         try {
+            IndexReader reader = DirectoryReader.open(index);
             Term term = new Term(Field.ID.fieldName, run.getId());
             IndexSearcher searcher = new IndexSearcher(reader);
             TopDocs search = searcher.search(new TermQuery(term), 1);
@@ -325,7 +318,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             if (search.scoreDocs.length > 0) {
                 doc = searcher.doc(search.scoreDocs[0].doc);
                 dbWriter.deleteDocuments(term);
-                updateReader();
+                dbWriter.commit();
             }
             return doc;
         } catch (IOException e) {
@@ -336,6 +329,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     @Override
     public void cleanDeletedBuilds(Progress progress, Job<?, ?> job) throws Exception {
         try {
+            IndexReader reader = DirectoryReader.open(index);
             int firstBuildNumber = job.getFirstBuild().getNumber();
             IndexSearcher searcher = new IndexSearcher(reader);
 
@@ -377,6 +371,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     @Override
     public List<SearchFieldDefinition> getAllFieldDefinitions() throws IOException {
+        IndexReader reader = DirectoryReader.open(index);
         Map<String, Boolean> fieldNames = new LinkedHashMap<String, Boolean>();
         for (Field field : Field.values()) {
             fieldNames.put(field.fieldName, field.persist);
@@ -409,6 +404,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                 jobNames.add(job.getName());
             }
             progress.setMax(jobNames.size());
+            IndexReader reader = DirectoryReader.open(index);
             IndexSearcher searcher = new IndexSearcher(reader);
             DistinctCollector distinctCollector = new DistinctCollector(PROJECT_NAME.fieldName, searcher);
             searcher.search(new MatchAllDocsQuery(), distinctCollector);
@@ -420,7 +416,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                 }
                 i++;
             }
-            updateReader();
+            dbWriter.commit();
             progress.setSuccessfullyCompleted();
         } catch (Exception e) {
             progress.completedWithErrors(e);
