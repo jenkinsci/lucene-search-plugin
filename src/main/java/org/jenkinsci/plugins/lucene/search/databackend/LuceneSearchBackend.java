@@ -368,33 +368,6 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     }
 
     @Override
-    public List<SearchFieldDefinition> getAllFieldDefinitions() throws IOException {
-        IndexReader reader = DirectoryReader.open(index);
-        Map<String, Boolean> fieldNames = new LinkedHashMap<String, Boolean>();
-        for (Field field : Field.values()) {
-            fieldNames.put(field.fieldName, field.persist);
-        }
-        for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
-            fieldNames.put(extension.getKeyword(), extension.isPersist());
-        }
-
-        List<SearchFieldDefinition> definitions = new ArrayList<SearchFieldDefinition>();
-        for (Map.Entry<String, Boolean> fieldEntry : fieldNames.entrySet()) {
-            if (fieldEntry.getValue()) {
-                // This is a persisted field (i.e. we can get values)
-                IndexSearcher searcher = new IndexSearcher(reader);
-                DistinctCollector collector = new LengthLimitedDistinctCollector(fieldEntry.getKey(), searcher, 50);
-                searcher.search(new MatchAllDocsQuery(), collector);
-                Set<String> distinctData = collector.getDistinctData();
-                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), true, distinctData));
-            } else {
-                definitions.add(new SearchFieldDefinition(fieldEntry.getKey(), false, Collections.<String> emptyList()));
-            }
-        }
-        return definitions;
-    }
-
-    @Override
     public void cleanAllJob(ManagerProgress progress) {
         Progress currentProgress = progress.beginCleanJob();
         try {
