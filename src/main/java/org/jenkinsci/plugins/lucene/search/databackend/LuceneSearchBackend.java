@@ -308,6 +308,23 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     }
 
     @Override
+    public boolean findRunIndex(Run<?, ?> run) {
+        try {
+            Query query = getRunQuery(run);
+            IndexReader reader = DirectoryReader.open(index);
+            IndexSearcher searcher = new IndexSearcher(reader);
+            TopDocs docs = searcher.search(query, 1);
+            reader.close();
+            return docs.scoreDocs.length > 0;
+        } catch (ParseException e) {
+            LOGGER.warn("findRunIndex: " + e);
+        } catch (IOException e) {
+            LOGGER.warn("findRunIndex: " + e);
+        }
+        return false;
+    }
+
+    @Override
     public void removeBuild(Run<?, ?> run) throws IOException {
         try {
             dbWriter.deleteDocuments(getRunQuery(run));
