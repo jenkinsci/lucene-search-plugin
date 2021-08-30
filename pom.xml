@@ -11,7 +11,6 @@
 	<packaging>hpi</packaging>
 	<properties>
 		<lucene.version>5.3.1</lucene.version>
-		<solr.version>5.3.1</solr.version>
 		<junit.version>1.9</junit.version>
 	</properties>
 
@@ -71,22 +70,6 @@
 			<version>${lucene.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.solr</groupId>
-			<artifactId>solr-solrj</artifactId>
-			<version>${solr.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.solr</groupId>
-			<artifactId>solr-core</artifactId>
-			<version>${solr.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-		    <groupId>org.apache.lucene</groupId>
-		    <artifactId>lucene-backward-codecs</artifactId>
-		    <version>${solr.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.2.4</version>
@@ -121,6 +104,14 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<forkCount>1</forkCount>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>7</source>
+					<target>7</target>
 				</configuration>
 			</plugin>
 		</plugins>

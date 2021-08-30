@@ -2,19 +2,17 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import hudson.model.Job;
 import hudson.model.Run;
+import jenkins.model.Jenkins;
+import org.apache.log4j.Logger;
+import org.jenkinsci.plugins.lucene.search.Field;
+import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
+import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import jenkins.model.Jenkins;
-
-import org.apache.log4j.Logger;
-import org.jenkinsci.plugins.lucene.search.Field;
-import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
-import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
-import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
+import java.util.Set;
 
 public abstract class SearchBackend<T> {
 
@@ -24,17 +22,24 @@ public abstract class SearchBackend<T> {
     private class RebuildBuildWorker implements RunWithArgument<Run> {
 
         private final Progress progress;
+        private final boolean overwrite;
 
-        private RebuildBuildWorker(Progress progress) {
+        private RebuildBuildWorker(Progress progress, boolean overwrite) {
             this.progress = progress;
+            this.overwrite = overwrite;
         }
 
         @Override
         public void run(Run run) {
-            T oldValue = removeBuild(run);
             try {
-                storeBuild(run, oldValue);
-            } catch (IOException e) {
+                if (overwrite) {
+                    storeBuild(run);
+                } else {
+                    if (!findRunIndex(run)) {
+                        storeBuild(run);
+                    }
+                }
+            } catch (Exception e) {
                 progress.completedWithErrors(e);
                 LOGGER.warn("Error rebuilding build", e);
             } finally {
@@ -43,37 +48,27 @@ public abstract class SearchBackend<T> {
         }
     }
 
-    private final SearchBackendEngine engine;
-
-    public SearchBackend(SearchBackendEngine engine) {
-        this.engine = engine;
-    }
-
     public abstract void close();
 
-    public abstract void storeBuild(final Run<?, ?> run, T oldValue) throws IOException;
+    public abstract void storeBuild(final Run<?, ?> run) throws IOException;
 
-    public abstract List<FreeTextSearchItemImplementation> getHits(final String query, final boolean includeHighlights);
+    public abstract boolean findRunIndex(Run<?, ?> run);
 
-    public final SearchBackendEngine getEngine() {
-        return engine;
-    }
+    public abstract List<FreeTextSearchItemImplementation> getHits(final String query, boolean searchNext);
 
     public abstract SearchBackend<?> reconfigure(Map<String, Object> config);
 
-    public abstract T removeBuild(Run<?, ?> run);
+    public abstract void removeBuild(Run<?, ?> run) throws IOException;
 
-    public abstract void cleanDeletedBuilds(Progress progress, Job<?, ?> job) throws Exception;
-
-    public abstract void cleanDeletedJobs(Progress progress) throws Exception;
-
-    public abstract void deleteJob(String jobName);
+    public abstract void deleteJob(String jobName) throws IOException;
 
     @SuppressWarnings("rawtypes")
-    public void rebuildJob(Progress progress, Job<?, ?> job, int maxWorkers) throws IOException {
-        BurstExecutor<Run> burstExecutor = BurstExecutor.create(new RebuildBuildWorker(progress), maxWorkers)
-                .andStart();
-        progress.setMax(0);
+    public void rebuildJob(Progress progress, Job<?, ?> job, int maxWorkers, boolean overwrite) throws IOException {
+        BurstExecutor<Run> burstExecutor = BurstExecutor.create(new RebuildBuildWorker(progress, overwrite), maxWorkers)
+               .andStart();
+        if (overwrite) {
+            deleteJob(job.getName());
+        }
         for (Run<?, ?> run : job.getBuilds()) {
             progress.setMax(progress.getMax() + 1);
             burstExecutor.add(run);
@@ -103,35 +98,47 @@ public abstract class SearchBackend<T> {
     }
 
     @SuppressWarnings("rawtypes")
-    public void rebuildDatabase(ManagerProgress progress, int maxWorkers) {
+    public void rebuildDatabase(ManagerProgress progress, int maxWorkers, Set<String> jobNames, boolean overwrite) {
         List<Job> allItems = Jenkins.getInstance().getAllItems(Job.class);
-        progress.setMax(allItems.size() + 1);
         try {
-            Progress cleanProgress = progress.beginCleanJob();
-            cleanDeletedJobs(cleanProgress);
-            progress.jobComplete();
-            progress.assertNoErrors();
-            for (Job job : allItems) {
-                Progress currentJobProgress = progress.beginJob(job);
-                try {
-                    if (job.getBuilds().isEmpty()) {
-                        deleteJob(job.getName());
-                    } else {
-                        cleanDeletedBuilds(currentJobProgress, job);
-                        progress.assertNoErrors();
-                        rebuildJob(currentJobProgress, job, maxWorkers);
-                        progress.assertNoErrors();
+            if (!jobNames.isEmpty()) {
+                progress.setMax(jobNames.size());
+                for (Job job : allItems) {
+                    if (jobNames.contains(job.getName())) {
+                        rebuildSingleJob(progress, job, maxWorkers, overwrite);
+                        jobNames.remove(job.getName());
                     }
-                } finally {
-                    progress.jobComplete();
+                    if (jobNames.isEmpty()) {
+                        progress.setSuccessfullyCompleted();
+                        return;
+                    }
                 }
+            } else {
+                progress.setMax(allItems.size());
+                for (Job job : allItems) {
+                    rebuildSingleJob(progress, job, maxWorkers, overwrite);
+                }
+                progress.setSuccessfullyCompleted();
             }
-            progress.setSuccessfullyCompleted();
         } catch (Exception e) {
             progress.completedWithErrors(e);
             LOGGER.error("Rebuild database failed", e);
         } finally {
             progress.setFinished();
+        }
+    }
+
+    private void rebuildSingleJob(ManagerProgress progress, Job job, int maxWorkers, boolean overwrite) throws Exception {
+        Progress currentJobProgress = progress.beginJob(job);
+        try {
+            if (job.getBuilds().isEmpty()) {
+                deleteJob(job.getName());
+            } else {
+                rebuildJob(currentJobProgress, job, maxWorkers, overwrite);
+                progress.assertNoErrors();
+            }
+        } finally {
+            progress.jobComplete();
         }
     }
 
@@ -146,5 +153,5 @@ public abstract class SearchBackend<T> {
         return fieldNames.toArray(new String[fieldNames.size()]);
     }
 
-    public abstract List<SearchFieldDefinition> getAllFieldDefinitions() throws IOException;
+    public abstract void cleanAllJob(ManagerProgress progress);
 }

@@ -4,15 +4,20 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
-import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.BuildListener;
 import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.LogTaskListener;
+import jenkins.MasterToSlaveFileCallable;
+import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
+import org.jenkinsci.remoting.RoleChecker;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,13 +25,6 @@ import java.nio.charset.Charset;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
-
-import jenkins.MasterToSlaveFileCallable;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
-import org.jenkinsci.remoting.RoleChecker;
-import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Supplies the methods and configuration data needed to get index artifacts.

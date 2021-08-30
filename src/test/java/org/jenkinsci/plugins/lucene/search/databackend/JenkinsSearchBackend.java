@@ -5,7 +5,6 @@ import hudson.search.Search;
 import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
-import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 import org.jenkinsci.plugins.lucene.search.management.LuceneManager;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.xml.sax.SAXException;
@@ -26,21 +25,10 @@ public class JenkinsSearchBackend {
         this.backgroundWorker = backgroundWorker;
     }
 
-    public void setSolrBackend(boolean useSecurity, int port) throws IOException, URISyntaxException {
-        SearchBackendConfiguration searchBackendConfiguration = GlobalConfiguration.all().get(
-                SearchBackendConfiguration.class);
-        searchBackendConfiguration.setUseSecurity(useSecurity);
-        searchBackendConfiguration.setSearchBackend(SearchBackendEngine.SOLR);
-        searchBackendConfiguration.setSolrCollection("collection1");
-        searchBackendConfiguration.setSolrUrl(searchBackendConfiguration.makeSolrUrl("http://127.0.0.1:" + port));
-        searchBackendConfiguration.reconfigure();
-    }
-
     public void setLuceneBackend(boolean useSecurity) throws IOException, URISyntaxException, SAXException {
         SearchBackendConfiguration searchBackendConfiguration = GlobalConfiguration.all().get(
                 SearchBackendConfiguration.class);
         searchBackendConfiguration.setUseSecurity(useSecurity);
-        searchBackendConfiguration.setSearchBackend(SearchBackendEngine.LUCENE);
         searchBackendConfiguration.reconfigure();
     }
 
