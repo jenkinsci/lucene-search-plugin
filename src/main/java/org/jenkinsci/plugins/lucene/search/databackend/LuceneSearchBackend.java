@@ -64,7 +64,6 @@ import org.apache.lucene.store.FSDirectory;
 import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
-import org.jenkinsci.plugins.lucene.search.config.SearchBackendEngine;
 
 import com.google.common.collect.TreeMultimap;
 
@@ -132,7 +131,6 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     private final File indexPath;
 
     public LuceneSearchBackend(final File indexPath) throws IOException {
-        super(SearchBackendEngine.LUCENE);
         this.indexPath = indexPath;
         analyzer = new StandardAnalyzer(CharArraySet.EMPTY_SET);
         index = FSDirectory.open(indexPath.toPath());
