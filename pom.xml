@@ -17,7 +17,7 @@
 		<junit.version>1.9</junit.version>
 		<java.level>8</java.level>
 		<gitHubRepo>jenkinsci/lucene-search-plugin</gitHubRepo>
-		<maven.version>3.8.2</maven.version>
+		<maven.version>3.6.3</maven.version>
 	</properties>
 
 	<!-- Jenkins plugin config -->
