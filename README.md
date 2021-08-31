@@ -1,5 +1,4 @@
 # Lucene Search Plugin
-# Overview
 
 This plug-in allows you to search for console log and build display name etc.
 
