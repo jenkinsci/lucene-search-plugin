@@ -1,10 +1,11 @@
+<?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
     <l:layout title="Lucene Management" permission="${app.ADMINISTER}" norefresh="true">
         <st:include it="${app}" page="sidepanel.jelly"/>
         <l:header>
             <link rel="stylesheet" type="text/css" href="${rootURL}/plugin/lucene-search/lucene.css" media="screen"/>
-            <script type="text/javascript" src="${rootURL}/plugin/lucene-search/lucene.js"></script>
-            <script type="text/javascript" src=""></script>
+            <script type="text/javascript" src="${rootURL}/plugin/lucene-search/lucene.js"/>
+            <script type="text/javascript" src=""/>
             <script>
             	var luceneSearchManager = <st:bind value="${it}"/>
             	document.addEventListener('DOMContentLoaded', function() {
