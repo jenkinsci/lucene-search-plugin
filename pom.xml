@@ -93,16 +93,6 @@
 		</dependency>
 	</dependencies>
 
-	<!-- http://stackoverflow.com/questions/15886209/maven-is-not-working-in-java-8-when-javadoc-tags-are-incomplete -->
-	<profiles>
-		<profile>
-			<id>doclint-java8-disable</id>
-			<activation>
-				<jdk>[1.8,)</jdk>
-			</activation>
-		</profile>
-	</profiles>
-
 	<!-- get every artifact through repo.jenkins-ci.org, which proxies all the
 		artifacts that we need -->
 	<repositories>
