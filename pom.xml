@@ -10,7 +10,8 @@
 	</parent>
 
 	<artifactId>lucene-search</artifactId>
-	<version>${changelist}</version>
+	<version>5.0-SNAPSHOT</version>
+<!--	<version>${changelist}</version>-->
 	<packaging>hpi</packaging>
 	<properties>
 		<changelist>9999-SNAPSHOT</changelist>
