@@ -1,32 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>4.16</version>
+		<version>4.18</version>
 		<relativePath />
 	</parent>
 
-	<groupId>io.jenkins.plugins</groupId>
 	<artifactId>lucene-search</artifactId>
-	<version>5.0-SNAPSHOT</version>
+	<version>${changelist}</version>
 	<packaging>hpi</packaging>
 	<properties>
+		<changelist>9999-SNAPSHOT</changelist>
+		<jenkins.version>2.277.2</jenkins.version>
 		<lucene.version>5.3.1</lucene.version>
 		<solr.version>5.3.1</solr.version>
 		<junit.version>1.9</junit.version>
 		<java.level>8</java.level>
-		<gitHubRepo>jenkinsci/lucene-search-plugin</gitHubRepo>
-		<maven.version>3.6.3</maven.version>
 	</properties>
 
 	<!-- Jenkins plugin config -->
 	<name>Lucene-Search</name>
 	<url>https://wiki.jenkins-ci.org/display/JENKINS/Lucene-Search</url>
 	<scm>
-		<connection>scm:git:git://github.com/jenkinsci/lucene-search-plugin</connection>
-		<developerConnection>scm:git:git@github.com:jenkinsci/lucene-search-plugin</developerConnection>
+		<connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
+		<developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
+		<url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
 		<tag>lucene-search-5.0</tag>
 	</scm>
 	<developers>
@@ -93,41 +94,6 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-release-plugin</artifactId>
-				<version>2.5.3</version>
-				<configuration>
-					<arguments>-Dmaven.javadoc.skip=true -Dspotbugs.skip=true -Dmaven.test.skip=true</arguments>
-				</configuration>
-				<dependencies>
-					<dependency>
-						<groupId>org.apache.maven.scm</groupId>
-						<artifactId>maven-scm-provider-gitexe</artifactId>
-						<version>1.9.2</version>
-					</dependency>
-				</dependencies>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<forkCount>1</forkCount>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 
 	<!-- get every artifact through repo.jenkins-ci.org, which proxies all the
 		artifacts that we need -->
