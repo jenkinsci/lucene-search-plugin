@@ -10,10 +10,13 @@
 	</parent>
 
 	<artifactId>lucene-search</artifactId>
-	<version>4.5-SNAPSHOT</version>
+	<version>${revision}${changelist}</version>
 <!--	<version>${changelist}</version>-->
 	<packaging>hpi</packaging>
 	<properties>
+		<revision>4.5</revision>
+		<changelist>-SNAPSHOT</changelist>
+		<gitHubRepo>jenkinsci/lucene-search-plugin</gitHubRepo>
 		<changelist>9999-SNAPSHOT</changelist>
 		<jenkins.version>2.277.2</jenkins.version>
 		<lucene.version>5.3.1</lucene.version>
@@ -26,9 +29,9 @@
 	<name>Lucene-Search</name>
 	<url>https://wiki.jenkins-ci.org/display/JENKINS/Lucene-Search</url>
 	<scm>
-		<connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
-		<developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
-		<url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
+		<connection>scm:git:git://github.com/${gitHubRepo}.git</connection>
+		<developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
+		<url>https://github.com/${gitHubRepo}</url>
 	</scm>
 	<developers>
 		<developer>
