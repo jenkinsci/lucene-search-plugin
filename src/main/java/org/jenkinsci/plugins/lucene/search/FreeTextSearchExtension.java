@@ -4,10 +4,6 @@ import hudson.ExtensionPoint;
 import hudson.model.Run;
 import jenkins.model.Jenkins;
 
-/**
- * Extend this {@link ExtensionPoint} to add more data that can be searched.
- * @see <a href="https://wiki.jenkins-ci.org/display/JENKINS/Lucene-Search#Lucene-Search-Example">Lucene-Search-Example</a> for an example.
- */
 public abstract class FreeTextSearchExtension implements ExtensionPoint {
 
     public static hudson.ExtensionList<FreeTextSearchExtension> all() {
