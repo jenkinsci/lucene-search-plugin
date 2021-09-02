@@ -10,7 +10,7 @@
 	</parent>
 
 	<artifactId>lucene-search</artifactId>
-	<version>${changelist}</version>
+	<version>5.0</version>
 	<packaging>hpi</packaging>
 	<properties>
 		<gitHubRepo>jenkinsci/lucene-search-plugin</gitHubRepo>
@@ -29,7 +29,8 @@
 		<connection>scm:git:git://github.com/${gitHubRepo}.git</connection>
 		<developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
 		<url>https://github.com/${gitHubRepo}</url>
-	</scm>
+	  <tag>lucene-search-5.0</tag>
+  </scm>
 	<developers>
 		<developer>
 			<id>hmarkc</id>
