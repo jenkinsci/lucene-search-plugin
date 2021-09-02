@@ -125,6 +125,15 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                 Set<String> innerFields = calculateQueryFieldsRecursively(innerQuery);
                 fields.addAll(innerFields);
             }
+        } else if (query instanceof PhraseQuery) {
+            PhraseQuery pQuery = (PhraseQuery) query;
+            for (Term term : pQuery.getTerms()) {
+                fields.add(term.field());
+            }
+        } else if (query instanceof WildcardQuery) {
+            WildcardQuery wQuery = (WildcardQuery) query;
+            Term term = wQuery.getTerm();
+            fields.add(term.field());
         }
         return fields;
     }
@@ -240,6 +249,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         queryParser.setAnalyzeRangeTerms(true);
         queryParser.setAllowLeadingWildcard(true);
         queryParser.setLowercaseExpandedTerms(false);
+        queryParser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_QUERY_REWRITE);
         return queryParser;
     }
 
