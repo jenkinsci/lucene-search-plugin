@@ -10,11 +10,12 @@
 	</parent>
 
 	<artifactId>lucene-search</artifactId>
-	<version>5.0</version>
+	<version>${revision}${changelist}</version>
 	<packaging>hpi</packaging>
 	<properties>
 		<gitHubRepo>jenkinsci/lucene-search-plugin</gitHubRepo>
-		<changelist>999999-SNAPSHOT</changelist>
+		<revision>5.01</revision>
+		<changelist>-SNAPSHOT</changelist>
 		<jenkins.version>2.277.2</jenkins.version>
 		<lucene.version>5.3.1</lucene.version>
 		<solr.version>5.3.1</solr.version>
@@ -24,7 +25,7 @@
 
 	<!-- Jenkins plugin config -->
 	<name>Lucene-Search</name>
-	<url>https://wiki.jenkins-ci.org/display/JENKINS/Lucene-Search</url>
+	<url>https://github.com/jenkinsci/lucene-search-plugin</url>
 	<scm>
 		<connection>scm:git:git://github.com/${gitHubRepo}.git</connection>
 		<developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
@@ -33,7 +34,7 @@
   </scm>
 	<developers>
 		<developer>
-			<id>hmarkc</id>
+			<id>markch</id>
 			<name>Mark Chen</name>
 			<email>a77069752@gmail.com</email>
 		</developer>
