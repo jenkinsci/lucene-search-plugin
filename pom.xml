@@ -10,7 +10,7 @@
 	</parent>
 
 	<artifactId>lucene-search</artifactId>
-	<version>5.01</version>
+	<version>5.1</version>
 	<packaging>hpi</packaging>
 	<properties>
 		<gitHubRepo>jenkinsci/lucene-search-plugin</gitHubRepo>
