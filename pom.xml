@@ -10,10 +10,11 @@
 	</parent>
 
 	<artifactId>lucene-search</artifactId>
-    	<version>${changelist}</version>
+    	<version>${revision}-${changelist}</version>
 	<packaging>hpi</packaging>
 	<properties>
-		<changelist>9999-SNAPSHOT</changelist>
+		<revision>5.1.1</revision>
+		<changelist>999999-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/lucene-search-plugin</gitHubRepo>
 		<jenkins.version>2.277.2</jenkins.version>
 		<lucene.version>5.3.1</lucene.version>
