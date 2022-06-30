@@ -18,7 +18,7 @@
 		<jenkins.version>2.277.2</jenkins.version>
 		<lucene.version>5.3.1</lucene.version>
 		<solr.version>5.3.1</solr.version>
-		<junit.version>1.9</junit.version>
+		<junit.version>1.24</junit.version>
 		<java.level>8</java.level>
 	</properties>
 
