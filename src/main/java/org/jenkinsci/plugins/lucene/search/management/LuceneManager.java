@@ -46,6 +46,7 @@ public class LuceneManager extends ManagementLink {
 
     @JavaScriptMethod
     public JSReturnCollection rebuildDatabase(int workers, String jobNames, String overwrite) {
+        Jenkins.get().getACL().checkPermission(getRequiredPermission());
         JSReturnCollection statement = verifyNotInProgress();
         this.workers = workers;
         if (this.workers <= 0) {
@@ -99,6 +100,7 @@ public class LuceneManager extends ManagementLink {
 
     @JavaScriptMethod
     public JSReturnCollection abort() {
+        Jenkins.get().getACL().checkPermission(getRequiredPermission());
         JSReturnCollection statement = verifyNotInProgress();
         backendManager.abort();
         this.progress = null;
@@ -107,6 +109,7 @@ public class LuceneManager extends ManagementLink {
 
     @JavaScriptMethod
     public JSReturnCollection clean() {
+        Jenkins.get().getACL().checkPermission(getRequiredPermission());
         JSReturnCollection statement = verifyNotInProgress();
         if (statement.code == 0) {
             progress = new ManagerProgress();
@@ -119,6 +122,7 @@ public class LuceneManager extends ManagementLink {
 
     @JavaScriptMethod
     public JSReturnCollection getStatus() {
+        Jenkins.get().getACL().checkPermission(getRequiredPermission());
         JSReturnCollection statement = new JSReturnCollection();
         if (progress != null) {
             statement.progress = progress;
