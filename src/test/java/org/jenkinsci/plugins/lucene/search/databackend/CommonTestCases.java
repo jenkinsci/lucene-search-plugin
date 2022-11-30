@@ -3,7 +3,6 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -38,7 +37,7 @@ public class CommonTestCases {
             public Throwable call() throws Exception {
                 try {
                     LuceneManager.JSReturnCollection jsonObject = jenkinsSearchBackend.getRebuildStatus(rebuildUrl);
-                    assertEquals(GSON.toJson(jsonObject), 0, jsonObject.code);
+                    assertEquals(GSON.toJson(jsonObject), 0, jsonObject.getCode());
                     return null;
                 } catch (Exception e) {
                     return e;
@@ -49,12 +48,12 @@ public class CommonTestCases {
         assertNull(throwable);
         LuceneManager.JSReturnCollection jsonObject = jenkinsSearchBackend.getRebuildStatus(statusUrl);
         long started = System.currentTimeMillis();
-        while ((jsonObject.running || jsonObject.neverStarted) && started + 10000 > System.currentTimeMillis()) {
+        while ((jsonObject.isRunning() || jsonObject.isNeverStarted()) && started + 10000 > System.currentTimeMillis()) {
             Thread.sleep(1000);
             jsonObject = jenkinsSearchBackend.getRebuildStatus(statusUrl);
         }
-        assertFalse("Test took too long", jsonObject.running || jsonObject.neverStarted);
-        assertEquals(GSON.toJson(jsonObject), 0, jsonObject.code);
+        assertFalse("Test took too long", jsonObject.isRunning() || jsonObject.isNeverStarted());
+        assertEquals(GSON.toJson(jsonObject), 0, jsonObject.getCode());
     }
 
     public static void givenSearchWhenJobsWithBuildsAreExecutedThenTheyShouldBeSearchable(

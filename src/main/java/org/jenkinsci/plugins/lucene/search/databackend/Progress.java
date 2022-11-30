@@ -1,5 +1,7 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class Progress {
 
     public enum ProgressState {
@@ -13,7 +15,7 @@ public class Progress {
     private transient Exception reason;
     private String reasonMessage = "";
     private int max;
-    private volatile int current;
+    private AtomicInteger current = new AtomicInteger(0);
     private String name;
 
     public void assertNoErrors() throws Exception {
@@ -29,7 +31,6 @@ public class Progress {
     public Progress(String name) {
         this.setName(name);
         startTime = System.currentTimeMillis();
-        current = 0;
         max = 0;
     }
 
@@ -78,15 +79,15 @@ public class Progress {
     }
 
     public int getCurrent() {
-        return current;
+        return current.get();
     }
 
     public void setCurrent(int current) {
-        this.current = current;
+        this.current.set(current);
     }
 
-    public synchronized void incCurrent() {
-        this.current++;
+    public void incCurrent() {
+        this.current.incrementAndGet();
     }
 
     public String getName() {

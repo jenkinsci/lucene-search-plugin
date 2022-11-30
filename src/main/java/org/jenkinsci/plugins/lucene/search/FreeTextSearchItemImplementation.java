@@ -4,6 +4,7 @@ import hudson.model.BallColor;
 import hudson.search.SearchIndex;
 import hudson.search.SearchItem;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -13,7 +14,7 @@ public class FreeTextSearchItemImplementation extends FreeTextSearchItem {
 
     private final String projectName;
     private final boolean isShowConsole;
-    private final String[] bestFragments;
+    private final List<String> bestFragments;
     private final String url;
     private final String searchName;
 
@@ -23,9 +24,9 @@ public class FreeTextSearchItemImplementation extends FreeTextSearchItem {
         this.projectName = projectName;
         this.url = url;
         this.isShowConsole = isShowConsole;
-        this.bestFragments = new String[bestFragments.length];
+        this.bestFragments = new ArrayList<>(bestFragments.length);
         for (int i = 0; i < bestFragments.length; i++) {
-            this.bestFragments[i] = LINE_ENDINGS.matcher(bestFragments[i]).replaceAll("<br/>");
+            this.bestFragments.add(LINE_ENDINGS.matcher(bestFragments[i]).replaceAll("<br/>"));
         }
 
     }
@@ -45,7 +46,7 @@ public class FreeTextSearchItemImplementation extends FreeTextSearchItem {
     }
 
     public String[] getBestFragments() {
-        return bestFragments;
+        return bestFragments.toArray(new String[bestFragments.size()]);
     }
 
     @Override

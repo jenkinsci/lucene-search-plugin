@@ -9,7 +9,7 @@ public class SearchResultImpl extends ArrayList<SuggestedItem> implements Search
 
     private static final long serialVersionUID = 1L;
 
-    private final boolean hasMoreResults = false;
+    private static final boolean hasMoreResults = false;
 
     @Override
     public boolean hasMoreResults() {

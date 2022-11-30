@@ -46,6 +46,7 @@ public class LuceneManager extends ManagementLink {
 
     @JavaScriptMethod
     public JSReturnCollection rebuildDatabase(int workers, String jobNames, String overwrite) {
+        Jenkins.get().getACL().checkPermission(getRequiredPermission());
         JSReturnCollection statement = verifyNotInProgress();
         this.workers = workers;
         if (this.workers <= 0) {
@@ -99,6 +100,7 @@ public class LuceneManager extends ManagementLink {
 
     @JavaScriptMethod
     public JSReturnCollection abort() {
+        Jenkins.get().getACL().checkPermission(getRequiredPermission());
         JSReturnCollection statement = verifyNotInProgress();
         backendManager.abort();
         this.progress = null;
@@ -107,6 +109,7 @@ public class LuceneManager extends ManagementLink {
 
     @JavaScriptMethod
     public JSReturnCollection clean() {
+        Jenkins.get().getACL().checkPermission(getRequiredPermission());
         JSReturnCollection statement = verifyNotInProgress();
         if (statement.code == 0) {
             progress = new ManagerProgress();
@@ -119,6 +122,7 @@ public class LuceneManager extends ManagementLink {
 
     @JavaScriptMethod
     public JSReturnCollection getStatus() {
+        Jenkins.get().getACL().checkPermission(getRequiredPermission());
         JSReturnCollection statement = new JSReturnCollection();
         if (progress != null) {
             statement.progress = progress;
@@ -157,11 +161,47 @@ public class LuceneManager extends ManagementLink {
     }
 
     public static class JSReturnCollection {
-        public int code;
-        public String message = "";
-        public boolean running;
-        public ManagerProgress progress;
-        public int workers;
-        public boolean neverStarted;
+        private int code;
+        private String message = "";
+        private boolean running;
+        private ManagerProgress progress;
+        private int workers;
+        private boolean neverStarted;
+		public int getCode() {
+			return code;
+		}
+		public void setCode(int code) {
+			this.code = code;
+		}
+		public String getMessage() {
+			return message;
+		}
+		public void setMessage(String message) {
+			this.message = message;
+		}
+		public boolean isRunning() {
+			return running;
+		}
+		public void setRunning(boolean running) {
+			this.running = running;
+		}
+		public ManagerProgress getProgress() {
+			return progress;
+		}
+		public void setProgress(ManagerProgress progress) {
+			this.progress = progress;
+		}
+		public int getWorkers() {
+			return workers;
+		}
+		public void setWorkers(int workers) {
+			this.workers = workers;
+		}
+		public boolean isNeverStarted() {
+			return neverStarted;
+		}
+		public void setNeverStarted(boolean neverStarted) {
+			this.neverStarted = neverStarted;
+		}
     }
 }

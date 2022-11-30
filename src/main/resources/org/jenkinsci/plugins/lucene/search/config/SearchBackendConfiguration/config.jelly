@@ -11,5 +11,8 @@
                 </f:entry>
             </f:dropdownListBlock>
         </f:dropdownList>
+        <f:entry title="${%Use user security}" field="useSecurity" description="${%Only show search results the user may read. Will slow down searches _considerably_.}">
+            <f:checkbox/>
+        </f:entry>
     </f:section>
 </j:jelly>

@@ -6,10 +6,7 @@ import hudson.util.FormValidation;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -18,11 +15,6 @@ import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -38,7 +30,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     private transient SearchBackendManager backendManager;
 
     private File lucenePath = new File(Jenkins.getInstance().getRootDir(), "luceneIndex");
-    private boolean useSecurity;
+    private boolean useSecurity = true;
 
     @DataBoundConstructor
     public SearchBackendConfiguration(final String lucenePath,
@@ -56,39 +48,18 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
         load();
     }
 
-    public String getLucenePath() {
-        return lucenePath.toString();
-    }
-
     public void setLucenePath(final File lucenePath) {
+        Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
         this.lucenePath = lucenePath;
     }
 
     public FormValidation doCheckLucenePath(@QueryParameter final String lucenePath) {
+        Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
         try {
             new File(lucenePath);
             return FormValidation.ok();
         } catch (RuntimeException e) {
             return FormValidation.error(e.getMessage());
-        }
-    }
-
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private List<String> getCollections(String baseUrl) throws IOException {
-        HttpClient httpClient = HttpClientBuilder.create().build();
-        String url = baseUrl + "/admin/cores?wt=json";
-        HttpGet get = new HttpGet(url);
-        HttpResponse response = httpClient.execute(get);
-        if (response.getStatusLine().getStatusCode() != 200) {
-            throw new IOException("Failed to GET " + url);
-        }
-        InputStream content = response.getEntity().getContent();
-        try {
-            String jsonString = IOUtils.toString(content, "UTF-8");
-            JSONObject json = JSONObject.fromObject(jsonString);
-            return new ArrayList(json.getJSONObject("status").keySet());
-        } finally {
-            IOUtils.closeQuietly(content);
         }
     }
 
@@ -113,6 +84,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
 
     @VisibleForTesting
     public void reconfigure() throws IOException {
+        Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
         backendManager.reconfigure(getConfig());
         save();
     }
@@ -134,6 +106,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     }
 
     public void setUseSecurity(boolean useSecurity) {
+        Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
         this.useSecurity = useSecurity;
     }
 }
