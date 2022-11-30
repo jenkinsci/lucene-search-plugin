@@ -10,6 +10,8 @@ import java.util.Map;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public enum Field {
 
     PROJECT_NAME("j", Persist.TRUE) {
@@ -55,6 +57,9 @@ public enum Field {
     },
 
     CONSOLE("c", Persist.TRUE) {
+        @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED",
+            justification = "The offset returned by writeLogTo() can be ignored, " +
+                "since no furtehr text is written to the output stream.")
         @Override
         public String getValue(Run<?, ?> build) {
             try {
