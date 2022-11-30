@@ -49,10 +49,12 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     }
 
     public void setLucenePath(final File lucenePath) {
+        Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
         this.lucenePath = lucenePath;
     }
 
     public FormValidation doCheckLucenePath(@QueryParameter final String lucenePath) {
+        Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
         try {
             new File(lucenePath);
             return FormValidation.ok();
@@ -82,6 +84,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
 
     @VisibleForTesting
     public void reconfigure() throws IOException {
+        Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
         backendManager.reconfigure(getConfig());
         save();
     }
@@ -103,6 +106,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     }
 
     public void setUseSecurity(boolean useSecurity) {
+        Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
         this.useSecurity = useSecurity;
     }
 }
