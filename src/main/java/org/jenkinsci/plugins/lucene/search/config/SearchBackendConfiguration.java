@@ -38,7 +38,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     private transient SearchBackendManager backendManager;
 
     private File lucenePath = new File(Jenkins.getInstance().getRootDir(), "luceneIndex");
-    private boolean useSecurity;
+    private boolean useSecurity = true;
 
     @DataBoundConstructor
     public SearchBackendConfiguration(final String lucenePath,
