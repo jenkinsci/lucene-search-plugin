@@ -18,7 +18,7 @@
 		<jenkins.version>2.277.4</jenkins.version>
 		<lucene.version>5.3.1</lucene.version>
 		<solr.version>5.3.1</solr.version>
-		<junit.version>1.9</junit.version>
+		<junit.version>1159.v0b_396e1e07dd</junit.version>
 	</properties>
 
 	<!-- Jenkins plugin config -->
