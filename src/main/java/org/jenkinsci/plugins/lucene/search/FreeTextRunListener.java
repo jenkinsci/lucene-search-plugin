@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.lucene.search;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.TaskListener;
 import hudson.model.Run;
@@ -7,7 +8,6 @@ import hudson.model.listeners.RunListener;
 
 import java.io.IOException;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
@@ -22,7 +22,7 @@ public class FreeTextRunListener extends RunListener<Run<?, ?>> {
     SearchBackendManager searchBackendManager;
 
     @Override
-    public void onCompleted(final Run<?, ?> build, @Nonnull final TaskListener listener) {
+    public void onCompleted(final Run<?, ?> build, @NonNull final TaskListener listener) {
         try {
             searchBackendManager.storeBuild(build);
         } catch (IOException e) {
