@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>4.18</version>
+		<version>4.51</version>
 		<relativePath />
 	</parent>
 
@@ -15,18 +15,17 @@
 	<properties>
 		<changelist>999999-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/lucene-search-plugin</gitHubRepo>
-		<jenkins.version>2.277.2</jenkins.version>
+		<jenkins.version>2.277.4</jenkins.version>
 		<lucene.version>5.3.1</lucene.version>
 		<solr.version>5.3.1</solr.version>
 		<junit.version>1.9</junit.version>
-		<java.level>8</java.level>
 	</properties>
 
 	<!-- Jenkins plugin config -->
 	<name>Lucene-Search</name>
 	<url>https://github.com/jenkinsci/lucene-search-plugin</url>
 	<scm>
-		<connection>scm:git:git://github.com/${gitHubRepo}.git</connection>
+		<connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
 		<developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
 		<url>https://github.com/${gitHubRepo}</url>
 		<tag>${scmTag}</tag>
