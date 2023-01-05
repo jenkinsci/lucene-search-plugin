@@ -10,7 +10,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.LongField;
+import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.*;
@@ -237,7 +237,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                 if (field != null && getIndex(field).numeric) {
                     Long min = getWithDefault(part1, null);
                     Long max = getWithDefault(part2, null);
-                    return NumericRangeQuery.newLongRange(field, min, max, true, true);
+                    return LongPoint.newRangeQuery(field, min, max);
                 } else if (field != null) {
                     return new TermQuery(new Term(field));
                 }
@@ -246,10 +246,8 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         };
         queryParser.setDefaultOperator(QueryParser.Operator.AND);
         queryParser.setLocale(LOCALE);
-        queryParser.setAnalyzeRangeTerms(true);
         queryParser.setAllowLeadingWildcard(true);
-        queryParser.setLowercaseExpandedTerms(false);
-        queryParser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_QUERY_REWRITE);
+        queryParser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_REWRITE);
         return queryParser;
     }
 
@@ -264,7 +262,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
                     switch (FIELD_TYPE_MAP.get(field)) {
                         case LONG:
-                            doc.add(new LongField(field.fieldName, ((Number) fieldValue).longValue(), store));
+                            doc.add(new LongPoint(field.fieldName, ((Number) fieldValue).longValue()));
                             break;
                         case STRING:
                             doc.add(new StringField(field.fieldName, fieldValue.toString(), store));

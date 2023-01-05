@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	
+
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>4.51</version>
+		<version>4.53</version>
 		<relativePath />
 	</parent>
 
@@ -15,9 +15,8 @@
 	<properties>
 		<changelist>999999-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/lucene-search-plugin</gitHubRepo>
-		<jenkins.version>2.277.4</jenkins.version>
-		<lucene.version>5.3.1</lucene.version>
-		<solr.version>5.3.1</solr.version>
+		<jenkins.version>2.361.4</jenkins.version>
+		<lucene.version>8.11.2</lucene.version>
 		<junit.version>1.9</junit.version>
 	</properties>
 
@@ -58,6 +57,11 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.jenkins-ci.plugins</groupId>
+			<artifactId>apache-httpcomponents-client-4-api</artifactId>
+			<version>4.5.13-1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jenkins-ci.plugins</groupId>
 			<artifactId>junit</artifactId>
 			<version>${junit.version}</version>
 			<optional>false</optional>
@@ -81,11 +85,6 @@
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-highlighter</artifactId>
 			<version>${lucene.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.solr</groupId>
-			<artifactId>solr-solrj</artifactId>
-			<version>${solr.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
