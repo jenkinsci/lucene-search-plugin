@@ -31,17 +31,19 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
 
     private File lucenePath = new File(Jenkins.getInstance().getRootDir(), "luceneIndex");
     private boolean useSecurity = true;
+    private boolean luceneSearchEnabled = true;
 
     @DataBoundConstructor
     public SearchBackendConfiguration(final String lucenePath,
-           boolean useSecurity) {
-        this(new File(lucenePath), useSecurity);
+           boolean useSecurity, boolean luceneSearchEnabled) {
+        this(new File(lucenePath), useSecurity, luceneSearchEnabled);
     }
 
-    public SearchBackendConfiguration(final File lucenePath, boolean useSecurity) {
+    public SearchBackendConfiguration(final File lucenePath, boolean useSecurity, boolean luceneSearchEnabled) {
         load();
         this.lucenePath = lucenePath;
         this.useSecurity = useSecurity;
+        this.luceneSearchEnabled = luceneSearchEnabled;
     }
 
     public SearchBackendConfiguration() {
@@ -108,5 +110,13 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     public void setUseSecurity(boolean useSecurity) {
         Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
         this.useSecurity = useSecurity;
+    }
+
+    public boolean isLuceneSearchEnabled() {
+        return luceneSearchEnabled;
+    }
+
+    public void setLuceneSearchEnabled(boolean luceneSearchEnabled) {
+        this.luceneSearchEnabled = luceneSearchEnabled;
     }
 }

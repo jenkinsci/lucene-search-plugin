@@ -14,5 +14,8 @@
         <f:entry title="${%Use user security}" field="useSecurity" description="${%Only show search results the user may read. Will slow down searches _considerably_.}">
             <f:checkbox/>
         </f:entry>
+        <f:entry title="${%Enable Lucene search for users}" field="luceneSearchEnabled" description="${%Sometimes this plugin should only be used by other plugins but not change the way how users search in Jenkins. Thus, this option allows to disable the Lucene search for external users.}">
+            <f:checkbox/>
+        </f:entry>
     </f:section>
 </j:jelly>
