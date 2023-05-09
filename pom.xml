@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
@@ -10,14 +12,14 @@
 	</parent>
 
 	<artifactId>lucene-search</artifactId>
-    	<version>${changelist}</version>
+	<version>${changelist}</version>
 	<packaging>hpi</packaging>
 	<properties>
 		<changelist>999999-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/lucene-search-plugin</gitHubRepo>
 		<jenkins.version>2.361.4</jenkins.version>
 		<lucene.version>8.11.2</lucene.version>
-		<junit.version>1.9</junit.version>
+		<junit.version>1166.va_436e268e972</junit.version>
 	</properties>
 
 	<!-- Jenkins plugin config -->
@@ -28,7 +30,7 @@
 		<developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
 		<url>https://github.com/${gitHubRepo}</url>
 		<tag>${scmTag}</tag>
-  	</scm>
+	</scm>
 	<developers>
 		<developer>
 			<id>markch</id>
@@ -85,6 +87,11 @@
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-highlighter</artifactId>
 			<version>${lucene.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jenkins.plugins</groupId>
+			<artifactId>caffeine-api</artifactId>
+			<version>2.9.3-65.v6a_47d0f4d1fe</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
