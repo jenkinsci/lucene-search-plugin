@@ -12,6 +12,7 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -82,6 +83,7 @@ public class LuceneManager extends ManagementLink {
         return size == 0;
     }
 
+    @RequirePOST
     public void doPostRebuildDatabase(StaplerRequest req, StaplerResponse rsp, @QueryParameter int workers)
             throws IOException, ServletException {
         writeStatus(rsp, rebuildDatabase(workers, "", "overwrite"));

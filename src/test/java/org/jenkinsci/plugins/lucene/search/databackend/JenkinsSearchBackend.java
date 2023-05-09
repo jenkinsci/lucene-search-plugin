@@ -40,9 +40,10 @@ public class JenkinsSearchBackend {
     }
 
     public LuceneManager.JSReturnCollection getRebuildStatus(URL url) throws IOException {
-        String jsonString = Resources.toString(url, Charset.defaultCharset());
-        return (LuceneManager.JSReturnCollection) JSONObject.fromObject(jsonString).toBean(
-                LuceneManager.JSReturnCollection.class);
+        JenkinsRule.WebClient wc = rule.createWebClient();
+        String jsonString = wc.postJSON(url.toString(), new JSONObject()).getContentAsString();
+        return (LuceneManager.JSReturnCollection)
+                JSONObject.fromObject(jsonString).toBean(LuceneManager.JSReturnCollection.class);
     }
 
     public ExecutorService getBackgroundWorker() {
