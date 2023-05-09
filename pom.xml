@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>4.51</version>
+		<version>4.53</version>
 		<relativePath />
 	</parent>
 
 	<artifactId>lucene-search</artifactId>
-    	<version>${changelist}</version>
+	<version>${changelist}</version>
 	<packaging>hpi</packaging>
 	<properties>
 		<changelist>999999-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/lucene-search-plugin</gitHubRepo>
-		<jenkins.version>2.277.4</jenkins.version>
-		<lucene.version>5.3.1</lucene.version>
-		<solr.version>5.3.1</solr.version>
+		<jenkins.version>2.361.4</jenkins.version>
+		<lucene.version>8.11.2</lucene.version>
 		<junit.version>1166.va_436e268e972</junit.version>
 	</properties>
 
@@ -29,7 +30,7 @@
 		<developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
 		<url>https://github.com/${gitHubRepo}</url>
 		<tag>${scmTag}</tag>
-  	</scm>
+	</scm>
 	<developers>
 		<developer>
 			<id>markch</id>
@@ -58,6 +59,11 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.jenkins-ci.plugins</groupId>
+			<artifactId>apache-httpcomponents-client-4-api</artifactId>
+			<version>4.5.13-1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jenkins-ci.plugins</groupId>
 			<artifactId>junit</artifactId>
 			<version>${junit.version}</version>
 			<optional>false</optional>
@@ -83,9 +89,9 @@
 			<version>${lucene.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.solr</groupId>
-			<artifactId>solr-solrj</artifactId>
-			<version>${solr.version}</version>
+			<groupId>io.jenkins.plugins</groupId>
+			<artifactId>caffeine-api</artifactId>
+			<version>2.9.3-65.v6a_47d0f4d1fe</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
