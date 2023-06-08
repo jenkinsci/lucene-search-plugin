@@ -50,7 +50,7 @@ public class SearchBackendManager {
             Iterator<FreeTextSearchItemImplementation> iter = hits.iterator();
             while (iter.hasNext()) {
                 FreeTextSearchItemImplementation searchItem = iter.next();
-                Item item = jenkins.getItem(searchItem.getProjectName());
+                Item item = jenkins.getItemByFullName(searchItem.getProjectName());
                 if (item == null) {
                     iter.remove();
                 }
