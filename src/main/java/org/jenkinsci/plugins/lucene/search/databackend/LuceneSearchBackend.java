@@ -57,9 +57,12 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         FIELD_TYPE_MAP = Collections.unmodifiableMap(types);
     }
 
-    private static final Comparator<Integer> INT_COMPARATOR = new Comparator<Integer>() {
+    private static final Comparator<String> BUILD_COMPARATOR = new Comparator<String>() {
         @Override
-        public int compare(Integer o1, Integer o2) {
+        public int compare(String o1, String o2) {
+            if (o2 == null) {
+                return 1;
+            }
             return o2.compareTo(o1);
         }
     };
@@ -194,11 +197,11 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             if (hits.length != 0) {
                 lastDoc = hits[hits.length - 1];
             }
-            TreeMap<Integer, Document> docs = new TreeMap<>(INT_COMPARATOR);
+            TreeMap<String, Document> docs = new TreeMap<>(BUILD_COMPARATOR);
 
             for (ScoreDoc hit : hits) {
                 Document doc = searcher.doc(hit.doc);
-                docs.put(Integer.parseInt(doc.get(BUILD_NUMBER.fieldName)), doc);
+                docs.put(doc.get(PROJECT_NAME.fieldName) + doc.get(BUILD_DISPLAY_NAME.fieldName), doc);
             }
 
             for (Document doc : docs.values()) {
@@ -212,7 +215,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
                 String projectName = doc.get(PROJECT_NAME.fieldName);
                 String buildNumber = doc.get(BUILD_NUMBER.fieldName);
-                String searchName = doc.get(BUILD_DISPLAY_NAME.fieldName);
+                String searchName = doc.get(PROJECT_NAME.fieldName) + doc.get(BUILD_DISPLAY_NAME.fieldName);
 
                 String url = "/job/" + projectName + "/" + buildNumber + "/";
                 luceneSearchResultImpl.add(new FreeTextSearchItemImplementation(searchName,
