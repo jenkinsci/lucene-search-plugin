@@ -5,6 +5,8 @@ import hudson.model.Run;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
@@ -34,6 +36,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     private static final int MAX_NUM_FRAGMENTS = 5;
     private static final String[] EMPTY_ARRAY = new String[0];
     private static final Locale LOCALE = Locale.ENGLISH;
+    private static final Pattern TERM_PATTERN = Pattern.compile("(?<field>\\S+:)?(?<text>[^\\\"]\\S*|\\\".+?\\\")\\s*");
 
     private static final org.apache.lucene.document.Field.Store DONT_STORE = org.apache.lucene.document.Field.Store.NO;
     private static final org.apache.lucene.document.Field.Store STORE = org.apache.lucene.document.Field.Store.YES;
@@ -144,14 +147,14 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         words.removeAll(Arrays.asList("", null));
 
         QueryParser parser = getQueryParser();
-        Query query = parser.parse(q);
+        Query query = parser.parse(escapeQuery(q));
         Query highlight = query;
 
         if (words.size() >= 2) {
             try {
-                Query jobNameQuery = parser.parse(PROJECT_NAME.fieldName + ":" + words.get(0));
+                Query jobNameQuery = parser.parse(PROJECT_NAME.fieldName + ":" + QueryParser.escape(words.get(0)));
                 if (searcher.search(jobNameQuery, 1).scoreDocs.length > 0) {
-                    highlight = parser.parse(words.get(1));
+                    highlight = parser.parse(escapeQuery(words.get(1)));
                     query = new BooleanQuery.Builder()
                             .add(jobNameQuery, BooleanClause.Occur.MUST)
                             .add(highlight, BooleanClause.Occur.MUST)
@@ -297,7 +300,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     public Query getRunQuery(Run<?, ?> run) throws ParseException {
         BooleanQuery.Builder builder = new BooleanQuery.Builder();
         builder.add(getQueryParser()
-                .parse(PROJECT_NAME.fieldName + ":" + run.getParent().getDisplayName()), BooleanClause.Occur.MUST)
+                .parse(PROJECT_NAME.fieldName + ":" + QueryParser.escape(run.getParent().getDisplayName())), BooleanClause.Occur.MUST)
                 .add(getQueryParser()
                         .parse(BUILD_NUMBER.fieldName + ":" + run.getNumber()), BooleanClause.Occur.MUST);
         return builder.build();
@@ -333,7 +336,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     @Override
     public void deleteJob(String jobName) throws IOException {
         try {
-            Query query = getQueryParser().parse(PROJECT_NAME.fieldName + ":" + jobName);
+            Query query = getQueryParser().parse(PROJECT_NAME.fieldName + ":" + QueryParser.escape(jobName));
             dbWriter.deleteDocuments(query);
             dbWriter.commit();
         } catch (IOException e) {
@@ -359,6 +362,25 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             currentProgress.setFinished();
             progress.jobComplete();
         }
+    }
+
+    static String escapeQuery(String q) {
+        StringBuilder escapedQuery = new StringBuilder();
+        Matcher termMatcher = TERM_PATTERN.matcher(q);
+        while (termMatcher.find()) {
+            String field = termMatcher.group("field");
+            String text = termMatcher.group("text");
+
+            if (field == null) {
+                    escapedQuery.append(QueryParser.escape(text));
+                    escapedQuery.append(" ");
+                    continue;
+            }
+            escapedQuery.append(field);
+            escapedQuery.append(QueryParser.escape(text));
+            escapedQuery.append(" ");
+        }
+        return escapedQuery.toString().strip();
     }
 }
 
