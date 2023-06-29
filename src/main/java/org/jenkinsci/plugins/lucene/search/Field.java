@@ -16,12 +16,7 @@ public enum Field {
 
     PROJECT_NAME("j", Persist.TRUE) {
         public String getValue(final Run<?, ?> build) {
-            StringBuilder builder = new StringBuilder();
-            if (!build.getParent().getParent().getDisplayName().equalsIgnoreCase("jenkins")) {
-                builder.append(build.getParent().getParent().getFullName()).append("/");
-            }
-            builder.append(build.getParent().getName());
-            return builder.toString();
+            return build.getParent().getFullName();
         }
     },
 

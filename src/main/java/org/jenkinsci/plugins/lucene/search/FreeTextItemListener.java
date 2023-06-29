@@ -21,7 +21,7 @@ public class FreeTextItemListener extends ItemListener {
     @Override
     public void onDeleted(Item item) {
         try {
-            searchBackendManager.deleteJob(item.getName());
+            searchBackendManager.deleteJob(item.getFullName());
         } catch (IOException e) {
             logger.error("When deleting the job index: ", e);
         }
