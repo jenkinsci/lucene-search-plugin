@@ -339,13 +339,10 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     @Override
     public void deleteJob(String jobName) throws IOException {
         try {
-            Query query = getQueryParser().parse(PROJECT_NAME.fieldName + ":" + QueryParser.escape(jobName));
-            dbWriter.deleteDocuments(query);
+            dbWriter.deleteDocuments(new Term("j", "\"" + jobName + "\""));
             dbWriter.commit();
         } catch (IOException e) {
             LOGGER.error("Could not delete job", e);
-        } catch (ParseException e) {
-            //
         }
     }
 
@@ -367,7 +364,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         }
     }
 
-    static String escapeQuery(String q) {
+    public static String escapeQuery(String q) {
         StringBuilder escapedQuery = new StringBuilder();
         Matcher termMatcher = TERM_PATTERN.matcher(q);
         while (termMatcher.find()) {

@@ -70,7 +70,7 @@ public abstract class SearchBackend<T> {
         BurstExecutor<Run> burstExecutor = BurstExecutor.create(new RebuildBuildWorker(progress, overwrite), maxWorkers)
                .andStart();
         if (overwrite) {
-            deleteJob(job.getName());
+            deleteJob(job.getFullName());
         }
         for (Run<?, ?> run : job.getBuilds()) {
             progress.setMax(progress.getMax() + 1);
@@ -150,7 +150,7 @@ public abstract class SearchBackend<T> {
         Progress currentJobProgress = progress.beginJob(job);
         try {
             if (job.getBuilds().isEmpty()) {
-                deleteJob(job.getName());
+                deleteJob(job.getFullName());
             } else {
                 rebuildJob(currentJobProgress, job, maxWorkers, overwrite);
                 progress.assertNoErrors();
