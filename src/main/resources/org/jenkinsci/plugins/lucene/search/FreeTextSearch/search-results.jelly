@@ -78,16 +78,6 @@
                 "": put query between double quotes to search for successive words
                 <br/>
             </p>
-            <h3>${%Escaping}</h3>
-            <p>
-                ${%Some chars needs to be escaped}
-                <br/>
-                "error\: something went wrong"
-                <br/>
-                "plug\-in needs to be like this"
-                <br/>
-                "c:\\ also needs to be escaped"
-            </p>
             <h3>${%More information}</h3>
             <p>
                 <a href="http://www.lucenetutorial.com/lucene-query-syntax.html">${%Lucene Query Syntax}</a>
