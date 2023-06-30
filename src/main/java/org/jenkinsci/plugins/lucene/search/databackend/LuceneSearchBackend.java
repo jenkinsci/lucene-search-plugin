@@ -2,12 +2,15 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import static org.jenkinsci.plugins.lucene.search.Field.*;
 
+import hudson.model.Item;
+import hudson.model.Job;
 import hudson.model.Run;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -76,6 +79,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
   private final Directory index;
   private final Analyzer analyzer;
   private final IndexWriter dbWriter;
+  private final Jenkins jenkins;
   private volatile ScoreDoc lastDoc;
 
   public LuceneSearchBackend(final File indexPath) throws IOException {
@@ -84,6 +88,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     IndexWriterConfig config = new IndexWriterConfig(analyzer);
     dbWriter = new IndexWriter(index, config);
     dbWriter.commit();
+    jenkins = Jenkins.get();
   }
 
   public static LuceneSearchBackend create(final Map<String, Object> config) {
@@ -182,6 +187,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         fields.contains(CONSOLE.fieldName));
   }
 
+  @SuppressWarnings("rawtypes")
   @Override
   public List<FreeTextSearchItemImplementation> getHits(String q, boolean searchNext) {
     List<FreeTextSearchItemImplementation> luceneSearchResultImpl = new ArrayList<>();
@@ -226,7 +232,12 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         String buildNumber = doc.get(BUILD_NUMBER.fieldName);
         String searchName = doc.get(PROJECT_NAME.fieldName) + doc.get(BUILD_DISPLAY_NAME.fieldName);
 
-        String url = "/job/" + projectName + "/" + buildNumber + "/";
+        Item jobItem = jenkins.getItemByFullName(projectName);
+        if (!(jobItem instanceof Job)) {
+          throw new IllegalStateException("Unknown project type for project name: " + projectName);
+        }
+        Job job = (Job) jobItem;
+        String url = job.getBuildByNumber(Integer.parseInt(buildNumber)).getUrl();
         luceneSearchResultImpl.add(
             new FreeTextSearchItemImplementation(
                 searchName, projectName, bestFragments, url, isShowConsole));
