@@ -8,7 +8,7 @@
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
 		<version>4.53</version>
-		<relativePath />
+		<relativePath/>
 	</parent>
 
 	<artifactId>lucene-search</artifactId>
@@ -17,10 +17,23 @@
 	<properties>
 		<changelist>999999-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/lucene-search-plugin</gitHubRepo>
-		<jenkins.version>2.361.4</jenkins.version>
+		<!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
+		<jenkins.baseline>2.361</jenkins.baseline>
+		<jenkins.version>${jenkins.baseline}.4</jenkins.version>
 		<lucene.version>8.11.2</lucene.version>
 		<junit.version>1166.va_436e268e972</junit.version>
 	</properties>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>io.jenkins.tools.bom</groupId>
+				<artifactId>bom-${jenkins.baseline}.x</artifactId>
+				<version>2102.v854b_fec19c92</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<!-- Jenkins plugin config -->
 	<name>Lucene-Search</name>
@@ -60,12 +73,10 @@
 		<dependency>
 			<groupId>org.jenkins-ci.plugins</groupId>
 			<artifactId>apache-httpcomponents-client-4-api</artifactId>
-			<version>4.5.13-1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jenkins-ci.plugins</groupId>
 			<artifactId>junit</artifactId>
-			<version>${junit.version}</version>
 			<optional>false</optional>
 		</dependency>
 		<dependency>
@@ -91,7 +102,6 @@
 		<dependency>
 			<groupId>io.jenkins.plugins</groupId>
 			<artifactId>caffeine-api</artifactId>
-			<version>2.9.3-65.v6a_47d0f4d1fe</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
