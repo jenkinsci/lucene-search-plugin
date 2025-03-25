@@ -1,7 +1,9 @@
 package org.jenkinsci.plugins.lucene.search;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import hudson.model.*;
+import hudson.model.ParameterValue;
+import hudson.model.ParametersAction;
+import hudson.model.Run;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
