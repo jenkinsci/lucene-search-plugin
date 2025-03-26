@@ -92,7 +92,21 @@
                 var search =
                 <st:bind value="${it}"/>
             </script>
-            <h1>${%Search for} '${q}'</h1>
+
+            <form method="get"
+                  style="display: grid; grid-template-columns: 500px 46px; gap: 1rem"
+                  class="jenkins-!-margin-bottom-3">
+                <input type="search"
+                       value="${q}"
+                       name="q"
+                       autofocus="true"
+                       class="jenkins-input"
+                       placeholder="${%Search}" />
+                <button class="jenkins-button jenkins-button--primary">
+                    <l:icon src="symbol-search" />
+                </button>
+            </form>
+
             <h2 id="numberOfResults" style="display: inline"/>
             <button class="bnt" style="left: 60px; background-color: Azure" onclick="toMiddle()">${%m}</button>
             <button class="bnt" style="left: 100px; background-color: Beige" onclick="toBottom()">${%b}</button>
