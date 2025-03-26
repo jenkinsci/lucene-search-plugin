@@ -64,8 +64,12 @@ public class CommonTestCases {
 
   public static void givenSearchWhenJobsWithBuildsAreExecutedThenTheyShouldBeSearchable(
       JenkinsSearchBackend jenkinsSearchBackend, JenkinsRule rule)
-      throws IOException, ExecutionException, InterruptedException, SAXException,
-          URISyntaxException, TimeoutException {
+      throws IOException,
+          ExecutionException,
+          InterruptedException,
+          SAXException,
+          URISyntaxException,
+          TimeoutException {
     assertEquals(0, jenkinsSearchBackend.search("echo").suggestions.size());
     FreeStyleProject project1 = rule.createFreeStyleProject("project1");
     project1.getBuildersList().add(new Shell("echo $BUILD_TAG\n"));
@@ -85,7 +89,10 @@ public class CommonTestCases {
 
   public static void givenSearchWhenIsNewItShouldSupportRebuildFromClean(
       JenkinsSearchBackend jenkinsSearchBackend, JenkinsRule rule)
-      throws IOException, ExecutionException, InterruptedException, SAXException,
+      throws IOException,
+          ExecutionException,
+          InterruptedException,
+          SAXException,
           URISyntaxException {
     try {
       assertEquals(0, jenkinsSearchBackend.search("echo").suggestions.size());
