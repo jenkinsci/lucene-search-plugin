@@ -1,13 +1,13 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class LuceneSearchBackendUnitTest {
+class LuceneSearchBackendUnitTest {
 
   @Test
-  public void escapingQueryWorks() {
+  void escapingQueryWorks() {
     String[] input =
         new String[] {
           "job",

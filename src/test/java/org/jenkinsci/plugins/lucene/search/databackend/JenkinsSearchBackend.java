@@ -2,8 +2,6 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import com.google.common.io.Resources;
 import hudson.search.Search;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.concurrent.ExecutorService;
@@ -12,9 +10,8 @@ import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
 import org.jenkinsci.plugins.lucene.search.management.LuceneManager;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.xml.sax.SAXException;
 
-public class JenkinsSearchBackend {
+class JenkinsSearchBackend {
 
   private final JenkinsRule rule;
   private final ExecutorService backgroundWorker;
@@ -24,23 +21,20 @@ public class JenkinsSearchBackend {
     this.backgroundWorker = backgroundWorker;
   }
 
-  public void setLuceneBackend(boolean useSecurity)
-      throws IOException, URISyntaxException, SAXException {
+  void setLuceneBackend(boolean useSecurity) throws Exception {
     SearchBackendConfiguration searchBackendConfiguration =
         GlobalConfiguration.all().get(SearchBackendConfiguration.class);
     searchBackendConfiguration.setUseSecurity(useSecurity);
     searchBackendConfiguration.reconfigure();
   }
 
-  public Search.Result search(String query) throws IOException, SAXException {
+  Search.Result search(String query) throws Exception {
     URL status = new URL(rule.getURL(), "search/suggest?query=" + query);
     String jsonString = Resources.toString(status, Charset.defaultCharset());
-    Search.Result list =
-        (Search.Result) JSONObject.fromObject(jsonString).toBean(Search.Result.class);
-    return list;
+    return (Search.Result) JSONObject.fromObject(jsonString).toBean(Search.Result.class);
   }
 
-  public LuceneManager.JSReturnCollection getRebuildStatus(URL url) throws IOException {
+  LuceneManager.JSReturnCollection getRebuildStatus(URL url) throws Exception {
     JenkinsRule.WebClient wc = rule.createWebClient();
     String jsonString = wc.postJSON(url.toString(), new JSONObject()).getContentAsString();
     return (LuceneManager.JSReturnCollection)
