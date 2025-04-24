@@ -1,6 +1,6 @@
 function rebuildDatabase() {
-	var workers = document.getElementById("txtWorkers").value;
-	var jobs = document.getElementById("txtJob").value;
+	var workers = document.querySelector(".txtWorkers").value;
+	var jobs = document.querySelector(".txtJob").value;
 	var overwrite = document.getElementById("selectOverwrite").value;
 	if (workers < 1) {
 		return;
@@ -32,27 +32,10 @@ function updateStatusFromResponse(statement) {
 	var messageElement = document.getElementById("message");
 	messageElement.className = ((statement.code !== 0) ? "error" : "success");
 	messageElement.innerHTML = statement.message;
-    document.getElementById("lblOverwrite").style.display = ((statement.running) ? "none"
-        	: "");
-    document.getElementById("selectOverwrite").style.display = ((statement.running) ? "none"
-            : "");
-	document.getElementById("btnRebuild").style.display = ((statement.running) ? "none"
-			: "");
-	document.getElementById("btnClean").style.display = ((statement.running) ? "none"
-            : "");
-	document.getElementById("txtWorkers").style.display = ((statement.running) ? "none"
-			: "");
-	document.getElementById("currentProgress").style.display = ((statement.progress) ? ""
-			: "none");
-	document.getElementById("btnAbort").style.display = ((statement.running) ? ""
-            : "none")
-    document.getElementById("txtJob").style.display = ((statement.running) ? "none"
-            : "")
-    document.getElementById("lblJob").style.display = ((statement.running) ? "none"
-            : "")
-    document.getElementById("lblWorkers").style.display = ((statement.running) ? "none"
-            : "")
+  document.getElementById("luceneManagement").classList.toggle("jenkins-hidden", statement.running);
+  document.getElementById("btnAbort").classList.toggle("jenkins-hidden", !statement.running);
 	if (statement.progress) {
+    document.getElementById("currentProgress").classList.remove("jenkins-hidden");
 		var progress = statement.progress;
 		document.getElementById("currentWorkers").innerHTML = statement.workers;
 		document.getElementById("currentlyProcessing").innerHTML = progress.name;
@@ -78,7 +61,30 @@ function updateStatusFromResponse(statement) {
 		}
 		document.getElementById("history").innerHTML = historyString;
 	} else {
-		document.getElementById("currentProgress").style.display = "none";
+		document.getElementById("currentProgress").classList.add("jenkins-hidden");
 	}
 
 }
+
+Behaviour.specify("#btnRebuild", "lucene-rebuild", 0, function(button) {
+  button.onclick = function() {
+    rebuildDatabase();
+  }
+});
+
+Behaviour.specify("#btnClean", "lucene-clean", 0, function(button) {
+  button.onclick = function() {
+    clean();
+  }
+});
+
+Behaviour.specify("#btnAbort", "lucene-abort", 0, function(button) {
+  button.onclick = function() {
+    abort();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  getStatus();
+  window.setInterval(function (a, b) {getStatus();}, 2000);
+});
