@@ -36,7 +36,7 @@ public class LuceneManager extends ManagementLink {
 
   @Override
   public String getIconFileName() {
-    return "/plugin/lucene-search/lucenesearchmanager.jpg";
+    return "symbol-lucene plugin-lucene-search";
   }
 
   @Override
@@ -139,7 +139,7 @@ public class LuceneManager extends ManagementLink {
           break;
         case PROCESSING:
           statement.running = true;
-          statement.message = "processing";
+          statement.message = "Processing";
           break;
       }
     } else {

@@ -1,58 +1,47 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form">
     <l:layout title="Lucene Management" permission="${app.ADMINISTER}" norefresh="true">
         <st:include it="${app}" page="sidepanel.jelly"/>
         <l:header>
             <link rel="stylesheet" type="text/css" href="${rootURL}/plugin/lucene-search/lucene.css" media="screen"/>
             <script type="text/javascript" src="${rootURL}/plugin/lucene-search/lucene.js"/>
-            <script type="text/javascript" src=""/>
-            <script>
-            	var luceneSearchManager = <st:bind value="${it}"/>
-            	document.addEventListener('DOMContentLoaded', function() {
-	                getStatus();
-	                window.setInterval(function (a, b) {getStatus();}, 2000);
-            	});
-            </script>
+            <st:bind var="luceneSearchManager" value="${it}"/>
         </l:header>
         <l:main-panel>
             <h1>${%Lucene Management}</h1>
-            <p>
-                <span class="warning">${%Database rebuild is an expensive operations so we recommend that this is done when there is only a light load. Searches will continue to work to during the rebuilding}</span><br/>
-                <br/>
-                <div>
-                	<button id="btnRebuild" style="display:none" onclick="rebuildDatabase()">${%Rebuilds}</button>${% }
-                	<button id="btnClean" style="display:none" onclick="clean()">${%Clean}</button>${% }
-                	<input id="txtWorkers" style="display:none" value="5"/><label id="lblWorkers">${%parallel workers}</label><br/>
-                	<br/>
-                	<input id="txtJob" style="display:none" value="" placeholder="enter the job for rebuild" size="100"/><br/>
-                	<br/>
-                	<label id="lblJob">${%If you enter no job, all jobs will be rebuilt}</label><br/>
-            	</div>
-                <br/>
-
-                <div>
-                    <label id="lblOverwrite">${%If you have existing index database, you can either overwrite or preserve the old index}</label><br/>
-                    <select name="overwrite" id="selectOverwrite">
-                        <option value="overwrite">overwrite</option>
-                        <option value="preserve">preserve</option>
-                    </select>
+            <div class="warning jenkins-!-margin-bottom-2">${%The database rebuild is an expensive operations so we recommend that this is done when there is only light load. Searches will continue to work to during the rebuild}</div>
+            <div class="jenkins-form jenkins-hidden" id="luceneManagement">
+                <div class="lucene-rebuild jenkins-!-margin-bottom-2">
+                	  <button class="jenkins-button" id="btnRebuild">${%Rebuild}</button>
+                	  <button class="jenkins-button" id="btnClean">${%Clean}</button>${% }
                 </div>
-                <br/>
+                <f:entry description="${%Parallel workers}">
+                    <f:number min="1" default="5" clazz="txtWorkers"/>
+                </f:entry>
+                <f:entry description="${%If you enter no job, all jobs will be rebuilt}">
+                    <f:textbox clazz="txtJob" value="" placeholder="Enter the job to rebuild"/>
+                </f:entry >
+                <f:entry description="${%If you have an existing index database, you can either overwrite or preserve the old index}">
+                    <div class="jenkins-select">
+                        <select class="jenkins-select__input" name="overwrite" id="selectOverwrite">
+                            <option value="overwrite">Overwrite</option>
+                            <option value="preserve">Preserve</option>
+                        </select>
+                    </div>
+                </f:entry>
+            </div>
 
-                <div id="message" class="success"/>
+            <div id="message" class="success"/>
 
-                <div>
-                    <button id="btnAbort" style="display:none" onclick="abort()">${%Abort}</button>${% }
-                </div>
+            <button class="jenkins-button jenkins-hidden jenkins-!-margin-top-1 jenkins-!-margin-bottom-1" id="btnAbort">${%Abort}</button>
 
-                <div id="currentProgress" style="display:none">
-                    ${%Currently processing }<b id="currentlyProcessing"/>${% using }<b id="currentWorkers"/>${% workers}<br/>
-                    ${%Total processed runs }<b id="totalProcessesedRun"/>${% took }<b id="currentElapsedTime"/><br/>
-                    ${%Project }<b id="currentlyProcessingIndex"/>${% out of }<b id="currentlyProcessingMax"/><br/>
-                    <h4>${%Processed projects}</h4>
-                    <div class="history" id="history" />
-                </div>
-            </p>
+            <div id="currentProgress" class="jenkins-hidden">
+                ${%Currently processing }<b id="currentlyProcessing"/>${% using }<b id="currentWorkers"/>${% workers}<br/>
+                ${%Total processed runs }<b id="totalProcessesedRun"/>${% took }<b id="currentElapsedTime"/><br/>
+                ${%Project }<b id="currentlyProcessingIndex"/>${% out of }<b id="currentlyProcessingMax"/><br/>
+                <div class="lucene-processed">${%Processed projects}</div>
+                <div class="history" id="history" />
+            </div>
         </l:main-panel>
     </l:layout>
 </j:jelly>

@@ -1,13 +1,14 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form">
     <j:set var="q" value="${request.getParameter('q')}"/>
     <j:new var="h" className="hudson.Functions"/>
     <!-- needed for printing title. -->
     <l:layout title="${%Search for} '${q}'">
         <l:side-panel>
-            <link rel="stylesheet" type="text/css" href="${rootURL}/plugin/lucene-search/search.css" media="screen"/>
-            <h3>${%Search Help}</h3>
-            <p>
+          <link rel="stylesheet" type="text/css" href="${rootURL}/plugin/lucene-search/search.css" media="screen"/>
+          <div class="lucene-search-help">
+            <div class="lucene-search--title">${%Search Help}</div>
+            <div class="lucene-search--card">
                 Search Range:
                 <br/>
                 1. Console log
@@ -40,9 +41,9 @@
                 <br/>
                 "n" : build number
                 <br/>
-            </p>
-            <h3>${%Search examples}</h3>
-            <p>
+            </div>
+            <div class="lucene-search--title">${%Search examples}</div>
+            <div class="lucene-search--card">
                 Search across different jobs:
                 <br/>
                 "some keywords in some console log"
@@ -57,9 +58,9 @@
                 <br/>
                 "jobName c:words you want to search for"
                 <br/>
-            </p>
-            <h3>${%Operators}</h3>
-            <p>
+            </div>
+            <div class="lucene-search--title">${%Operators}</div>
+            <div class="lucene-search--card">
                 ?: one unknown character
                 <br/>
                 <br/>
@@ -77,25 +78,22 @@
                 <br/>
                 "": put query between double quotes to search for successive words
                 <br/>
-            </p>
-            <h3>${%More information}</h3>
-            <p>
+            </div>
+            <div class="lucene-search--title">${%More information}</div>
+            <div class="lucene-search--card">
                 <a href="http://www.lucenetutorial.com/lucene-query-syntax.html">${%Lucene Query Syntax}</a>
-                <br/>
-            </p>
+            </div>
+          </div>
         </l:side-panel>
 
         <l:main-panel>
             <j:set var="searchModelHits" value="${it.searchModelHits}"/>
             <script type="text/javascript" src="${rootURL}/plugin/lucene-search/search.js"/>
-            <script>
-                var search =
-                <st:bind value="${it}"/>
-            </script>
+            <st:bind var="search" value="${it}"/>
             <h1>${%Search for} '${q}'</h1>
             <h2 id="numberOfResults" style="display: inline"/>
-            <button class="bnt" style="left: 60px; background-color: Azure" onclick="toMiddle()">${%m}</button>
-            <button class="bnt" style="left: 100px; background-color: Beige" onclick="toBottom()">${%b}</button>
+            <button id="btnMiddle" class="jenkins-button bnt" style="left: 60px;" tooltip="${%Scroll to middle}">${%m}</button>
+            <button id="btnBottom" class="jenkins-button bnt" style="left: 100px;" tooltip="${%Scroll to bottom}">${%b}</button>
             <hr/>
             <j:choose>
                 <j:when test="${it.noResult}">
@@ -108,11 +106,10 @@
                     </ol>
                 </j:otherwise>
             </j:choose>
-            <script>
-                loadNext();
-            </script>
-            <button id="btnPrev" style="margin-left: 0%" onclick="loadPrev()">${%prev}</button>
-            <button id="btnNext" style="margin-left: 80%" onclick="loadNext()">${%next}</button>
+            <f:bottomButtonBar>
+              <button class="jenkins-button" id="btnPrev">${%prev}</button>
+              <button class="jenkins-button" id="btnNext" style="margin-left: 30%;">${%next}</button>
+            </f:bottomButtonBar>
         </l:main-panel>
     </l:layout>
 </j:jelly>

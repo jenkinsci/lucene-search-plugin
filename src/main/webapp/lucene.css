@@ -1,22 +1,18 @@
-.description {
-	font-style: italic;
-}
-
-.warning {
-	font-style: bold;
-	color: red;
-}
-
-sectionHeader {
-	font-style: bold;
-}
-
 .historyerror {
-	font-size: x-small;
-	color: red;
+	color: var(--error-color);
 }
 
 .historysuccess {
-	font-size: x-small;
-	color: green;
+	color: var(--success-color);
+}
+
+.lucene-rebuild {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.lucene-processed {
+  margin-top: 5px;
+  font-weight: bold;
 }

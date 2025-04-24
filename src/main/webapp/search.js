@@ -20,7 +20,7 @@ function toMiddle() {
 
 function load(hits) {
     var numResults = (hits.length >= 100) ? hits.length + "+" : hits.length;
-    document.getElementById("numberOfResults").innerHTML = "The number of results: " + numResults;
+    document.getElementById("numberOfResults").innerHTML = "Number of results: " + numResults;
 
     const results = document.getElementById("results");
     while (results.firstChild) {
@@ -57,3 +57,35 @@ function load(hits) {
     })
     window.scrollTo(0, 0);
 }
+
+Behaviour.specify("#btnMiddle", "lucene-btnMiddle", 0, function(button) {
+  button.onclick = function(e) {
+    toMiddle();
+    button.blur();
+  }
+});
+
+Behaviour.specify("#btnBottom", "lucene-btnBottom", 0, function(button) {
+  button.onclick = function(e) {
+    toBottom();
+    button.blur();
+  }
+});
+
+Behaviour.specify("#btnPrev", "lucene-btnPrev", 0, function(button) {
+  button.onclick = function() {
+    loadPrev();
+    button.blur();
+  }
+});
+
+Behaviour.specify("#btnNext", "lucene-btnNext", 0, function(button) {
+  button.onclick = function() {
+    loadNext();
+    button.blur();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadNext();
+});

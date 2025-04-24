@@ -1,18 +1,30 @@
-h3 {
-    font-family: Arial;
-    margin-left: 5%;
+.lucene-search-help {
+  margin: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-p {
+.lucene-search-help div.lucene-search--card {
     font-family: Times New Roman;
-    margin-left: 5%;
-    margin-right: 5%;
-    border: 2px solid powderblue;
-    padding: 20px;
+    border: 2px solid color-mix(
+      in sRGB,
+      var(--text-color) 15%,
+      var(--background)
+    );
+    border-radius: var(--form-input-border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.lucene-search--title {
+  font-weight: bold;
+  font-size: 1.125rem;
 }
 
 .bnt {
     width:30px;
+    min-height: 30px;
+    height: 30px;
     position: relative;
-    text-align: center
 }
