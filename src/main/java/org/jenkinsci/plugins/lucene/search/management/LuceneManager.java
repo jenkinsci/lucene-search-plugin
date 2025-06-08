@@ -3,11 +3,11 @@ package org.jenkinsci.plugins.lucene.search.management;
 import hudson.Extension;
 import hudson.model.Job;
 import hudson.model.ManagementLink;
+import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 import javax.inject.Inject;
-import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONSerializer;
 import org.apache.log4j.Logger;
@@ -15,8 +15,8 @@ import org.jenkinsci.plugins.lucene.search.databackend.ManagerProgress;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackend;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
@@ -84,7 +84,7 @@ public class LuceneManager extends ManagementLink {
 
   @RequirePOST
   public void doPostRebuildDatabase(
-      StaplerRequest req, StaplerResponse rsp, @QueryParameter int workers)
+      StaplerRequest2 req, StaplerResponse2 rsp, @QueryParameter int workers)
       throws IOException, ServletException {
     writeStatus(rsp, rebuildDatabase(workers, "", "overwrite"));
   }
@@ -150,13 +150,13 @@ public class LuceneManager extends ManagementLink {
   }
 
   // Primarily for testing
-  public void doStatus(StaplerRequest req, StaplerResponse rsp)
+  public void doStatus(StaplerRequest2 req, StaplerResponse2 rsp)
       throws IOException, ServletException {
     JSReturnCollection status = getStatus();
     writeStatus(rsp, status);
   }
 
-  public void writeStatus(StaplerResponse rsp, JSReturnCollection status) throws IOException {
+  public void writeStatus(StaplerResponse2 rsp, JSReturnCollection status) throws IOException {
     Writer compressedWriter = rsp.getWriter();
     JSONSerializer.toJSON(status).write(compressedWriter);
     rsp.setStatus(200);
