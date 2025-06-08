@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>4.88</version>
+		<version>5.17</version>
 		<relativePath/>
 	</parent>
 
@@ -18,8 +18,8 @@
 		<changelist>999999-SNAPSHOT</changelist>
 		<gitHubRepo>jenkinsci/lucene-search-plugin</gitHubRepo>
 		<!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-		<jenkins.baseline>2.361</jenkins.baseline>
-		<jenkins.version>${jenkins.baseline}.4</jenkins.version>
+		<jenkins.baseline>2.492</jenkins.baseline>
+		<jenkins.version>${jenkins.baseline}.3</jenkins.version>
 		<lucene.version>8.11.2</lucene.version>
 	</properties>
 	<dependencyManagement>
@@ -27,7 +27,7 @@
 			<dependency>
 				<groupId>io.jenkins.tools.bom</groupId>
 				<artifactId>bom-${jenkins.baseline}.x</artifactId>
-				<version>2102.v854b_fec19c92</version>
+				<version>4890.vfca_82c6741a_d</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -43,23 +43,6 @@
 		<url>https://github.com/${gitHubRepo}</url>
 		<tag>${scmTag}</tag>
 	</scm>
-	<developers>
-		<developer>
-			<id>markch</id>
-			<name>Mark Chen</name>
-			<email>a77069752@gmail.com</email>
-		</developer>
-		<developer>
-			<id>tobias-</id>
-			<name>Tobias Olsson</name>
-			<email>tobias@olsson.be</email>
-		</developer>
-		<developer>
-			<id>hanabishi</id>
-			<name>Marcus Jacobsson</name>
-			<email>jenkins@hanabi.se</email>
-		</developer>
-	</developers>
 
 	<licenses>
 		<license>

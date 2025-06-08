@@ -1,16 +1,16 @@
 package org.jenkinsci.plugins.lucene.search;
 
 import hudson.search.*;
+import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.servlet.ServletException;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 import org.kohsuke.stapler.Ancestor;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
 
 public class FreeTextSearch extends Search {
@@ -37,7 +37,7 @@ public class FreeTextSearch extends Search {
     return curr_page;
   }
 
-  private List<FreeTextSearchItem> normalSearch(StaplerRequest req, String query) {
+  private List<FreeTextSearchItem> normalSearch(StaplerRequest2 req, String query) {
     List<FreeTextSearchItem> searchResults = new ArrayList<FreeTextSearchItem>();
 
     List<Ancestor> l = req.getAncestors();
@@ -88,7 +88,7 @@ public class FreeTextSearch extends Search {
   }
 
   @Override
-  public void doIndex(StaplerRequest req, StaplerResponse rsp)
+  public void doIndex(StaplerRequest2 req, StaplerResponse2 rsp)
       throws IOException, ServletException {
     query = req.getParameter("q");
     if (query != null) {
@@ -100,7 +100,8 @@ public class FreeTextSearch extends Search {
   }
 
   @Override
-  public SearchResult getSuggestions(final StaplerRequest req, @QueryParameter final String query) {
+  public SearchResult getSuggestions(
+      final StaplerRequest2 req, @QueryParameter final String query) {
     SearchResult suggestedItems = super.getSuggestions(req, query);
     suggestedItems.addAll(manager.getSuggestedItems(query));
     return suggestedItems;

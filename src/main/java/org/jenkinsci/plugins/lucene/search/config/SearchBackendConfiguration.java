@@ -14,7 +14,7 @@ import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 @Extension
 public class SearchBackendConfiguration extends GlobalConfiguration {
@@ -66,7 +66,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
   }
 
   @Override
-  public boolean configure(final StaplerRequest req, final JSONObject json) throws FormException {
+  public boolean configure(final StaplerRequest2 req, final JSONObject json) throws FormException {
     JSONObject selectedJson = json.getJSONObject("searchBackend");
     if (selectedJson.containsKey(LUCENE_PATH)) {
       String lucenePath = selectedJson.getString(LUCENE_PATH);
