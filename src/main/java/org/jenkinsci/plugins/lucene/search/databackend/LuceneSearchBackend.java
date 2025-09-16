@@ -240,10 +240,13 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
           throw new IllegalStateException("Unknown project type for project name: " + projectName);
         }
         Job job = (Job) jobItem;
-        String url = job.getBuildByNumber(Integer.parseInt(buildNumber)).getUrl();
-        luceneSearchResultImpl.add(
-            new FreeTextSearchItemImplementation(
-                searchName, projectName, bestFragments, url, isShowConsole));
+        Run build = job.getBuildByNumber(Integer.parseInt(buildNumber));
+        if (build != null) {
+          FreeTextSearchItemImplementation itemImpl =
+              new FreeTextSearchItemImplementation(
+                  searchName, projectName, bestFragments, build.getUrl(), isShowConsole);
+          luceneSearchResultImpl.add(itemImpl);
+        }
       }
       reader.close();
     } catch (ParseException e) {
