@@ -21,25 +21,34 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
 
   private static final String LUCENE_PATH = "lucenePath";
   private static final String USE_SECURITY = "useSecurity";
+  private static final String COLLECTED_BUILD_LOG = "collectBuildLogs";
 
   @Inject private transient SearchBackendManager backendManager;
 
   private File lucenePath = new File(Jenkins.getInstance().getRootDir(), "luceneIndex");
   private boolean useSecurity = true;
   private boolean luceneSearchEnabled = true;
+  private boolean collectBuildLogs = true;
 
   @DataBoundConstructor
   public SearchBackendConfiguration(
-      final String lucenePath, boolean useSecurity, boolean luceneSearchEnabled) {
-    this(new File(lucenePath), useSecurity, luceneSearchEnabled);
+      final String lucenePath,
+      boolean useSecurity,
+      boolean luceneSearchEnabled,
+      boolean collectBuildLogs) {
+    this(new File(lucenePath), useSecurity, luceneSearchEnabled, collectBuildLogs);
   }
 
   public SearchBackendConfiguration(
-      final File lucenePath, boolean useSecurity, boolean luceneSearchEnabled) {
+      final File lucenePath,
+      boolean useSecurity,
+      boolean luceneSearchEnabled,
+      boolean collectBuildLogs) {
     load();
     this.lucenePath = lucenePath;
     this.useSecurity = useSecurity;
     this.luceneSearchEnabled = luceneSearchEnabled;
+    this.collectBuildLogs = collectBuildLogs;
   }
 
   public SearchBackendConfiguration() {
@@ -48,6 +57,10 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
 
   public File getLucenePath() {
     return lucenePath;
+  }
+
+  public boolean isCollectBuildLogs() {
+    return collectBuildLogs;
   }
 
   public void setLucenePath(final File lucenePath) {
@@ -76,6 +89,9 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
     if (json.containsKey(USE_SECURITY)) {
       setUseSecurity(json.getBoolean(USE_SECURITY));
     }
+    if (json.containsKey(COLLECTED_BUILD_LOG)) {
+      setCollectBuildLogs(json.getBoolean(COLLECTED_BUILD_LOG));
+    }
     try {
       reconfigure();
     } catch (IOException e) {
@@ -100,6 +116,7 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
   public Map<String, Object> getConfig() {
     Map<String, Object> config = new HashMap<String, Object>();
     config.put("lucenePath", lucenePath);
+    config.put("collectBuildLogs", collectBuildLogs);
     return config;
   }
 
@@ -110,6 +127,11 @@ public class SearchBackendConfiguration extends GlobalConfiguration {
   public void setUseSecurity(boolean useSecurity) {
     Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
     this.useSecurity = useSecurity;
+  }
+
+  public void setCollectBuildLogs(boolean collectBuildLogs) {
+    Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
+    this.collectBuildLogs = collectBuildLogs;
   }
 
   public boolean isLuceneSearchEnabled() {
