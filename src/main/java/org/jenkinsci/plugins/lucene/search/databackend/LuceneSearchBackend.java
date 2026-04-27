@@ -54,6 +54,10 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     TEXT
   }
 
+  private boolean isConsoleField(Field field) {
+    return field == Field.CONSOLE;
+  }
+
   static final Map<Field, LuceneFieldType> FIELD_TYPE_MAP;
 
   static {
@@ -84,10 +88,12 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
   private final IndexWriter dbWriter;
   private final Jenkins jenkins;
   private volatile ScoreDoc lastDoc;
+  private final boolean collectBuildLogs;
 
-  public LuceneSearchBackend(final File indexPath) throws IOException {
+  public LuceneSearchBackend(final File indexPath, final boolean useBuildLogs) throws IOException {
     analyzer = new CaseSensitiveAnalyzer();
     index = FSDirectory.open(indexPath.toPath());
+    collectBuildLogs = useBuildLogs;
     IndexWriterConfig config = new IndexWriterConfig(analyzer);
     dbWriter = new IndexWriter(index, config);
     dbWriter.commit();
@@ -96,7 +102,11 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
   public static LuceneSearchBackend create(final Map<String, Object> config) {
     try {
-      return new LuceneSearchBackend(getIndexPath(config));
+      boolean shouldCollect = false;
+      if (config.containsKey("collectBuildLogs")) {
+        shouldCollect = (boolean) config.get("collectBuildLogs");
+      }
+      return new LuceneSearchBackend(getIndexPath(config), shouldCollect);
     } catch (IOException e) {
       LOGGER.error("create lucene search backend failed: " + e);
     }
@@ -293,22 +303,26 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
       Document doc = new Document();
       for (Field field : Field.values()) {
         org.apache.lucene.document.Field.Store store = field.persist ? STORE : DONT_STORE;
-        Object fieldValue = field.getValue(run);
-        if (fieldValue != null) {
-
-          switch (FIELD_TYPE_MAP.get(field)) {
-            case LONG:
-              doc.add(new LongPoint(field.fieldName, ((Number) fieldValue).longValue()));
-              break;
-            case STRING:
-              doc.add(new StringField(field.fieldName, fieldValue.toString(), store));
-              break;
-            case TEXT:
-              doc.add(new TextField(field.fieldName, fieldValue.toString(), store));
-              break;
-            default:
-              throw new IllegalArgumentException(
-                  "Don't know how to handle " + FIELD_TYPE_MAP.get(field));
+        if (isConsoleField(field) && !collectBuildLogs) {
+          LOGGER.debug("Skipping console log indexing for field: " + field.fieldName);
+          doc.add(new TextField(field.fieldName, "", store));
+        } else {
+          Object fieldValue = field.getValue(run);
+          if (fieldValue != null) {
+            switch (FIELD_TYPE_MAP.get(field)) {
+              case LONG:
+                doc.add(new LongPoint(field.fieldName, ((Number) fieldValue).longValue()));
+                break;
+              case STRING:
+                doc.add(new StringField(field.fieldName, fieldValue.toString(), store));
+                break;
+              case TEXT:
+                doc.add(new TextField(field.fieldName, fieldValue.toString(), store));
+                break;
+              default:
+                throw new IllegalArgumentException(
+                    "Don't know how to handle " + FIELD_TYPE_MAP.get(field));
+            }
           }
         }
       }
