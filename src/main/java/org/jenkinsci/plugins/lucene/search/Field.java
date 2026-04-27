@@ -40,7 +40,13 @@ public enum Field {
         List<ParameterValue> parameters = parametersAction.getParameters();
         StringBuilder builder = new StringBuilder();
         for (ParameterValue value : parameters) {
-          builder.append(value.getValue()).append(" ");
+          Object val = value.getValue();
+          if (val instanceof hudson.util.Secret) {
+            // skip: we dont want secrets in your Lucene index
+            continue;
+          } else {
+            builder.append(val).append(" ");
+          }
         }
         return builder.toString();
       } else {
