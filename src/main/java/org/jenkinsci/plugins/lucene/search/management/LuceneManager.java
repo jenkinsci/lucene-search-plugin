@@ -26,6 +26,7 @@ public class LuceneManager extends ManagementLink {
   private static final Logger LOGGER = Logger.getLogger(SearchBackend.class);
 
   @Inject private transient SearchBackendManager backendManager;
+
   private ManagerProgress progress;
   private int workers = 0;
 
