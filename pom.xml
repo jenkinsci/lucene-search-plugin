@@ -21,6 +21,7 @@
 		<jenkins.baseline>2.492</jenkins.baseline>
 		<jenkins.version>${jenkins.baseline}.3</jenkins.version>
 		<lucene.version>8.11.2</lucene.version>
+		<ban-junit4-imports.skip>false</ban-junit4-imports.skip>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
