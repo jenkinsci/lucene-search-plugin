@@ -53,7 +53,7 @@
   <dependencies>
     <dependency>
       <groupId>io.jenkins.plugins</groupId>
-      <artifactId>caffeine-api</artifactId>
+      <artifactId>gson-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.lucene</groupId>
