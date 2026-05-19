@@ -18,6 +18,15 @@ public class FreeTextRunListener extends RunListener<Run<?, ?>> {
   @Inject SearchBackendManager searchBackendManager;
 
   @Override
+  public void onStarted(final Run<?, ?> build, @NonNull final TaskListener listener) {
+    try {
+      searchBackendManager.storeBuild(build);
+    } catch (IOException e) {
+      logger.error("When saving the started build index: ", e);
+    }
+  }
+
+  @Override
   public void onCompleted(final Run<?, ?> build, @NonNull final TaskListener listener) {
     try {
       searchBackendManager.storeBuild(build);
