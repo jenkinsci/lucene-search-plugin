@@ -1,5 +1,9 @@
 package org.jenkinsci.plugins.lucene.search.management;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
 import hudson.Extension;
 import hudson.model.Job;
 import hudson.model.ManagementLink;
@@ -7,9 +11,9 @@ import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import jenkins.model.Jenkins;
-import net.sf.json.JSONSerializer;
 import org.apache.log4j.Logger;
 import org.jenkinsci.plugins.lucene.search.databackend.ManagerProgress;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackend;
@@ -24,6 +28,11 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 public class LuceneManager extends ManagementLink {
 
     private static final Logger LOGGER = Logger.getLogger(SearchBackend.class);
+
+    private static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(AtomicInteger.class, (JsonSerializer<AtomicInteger>)
+                    (src, type, context) -> new JsonPrimitive(src.get()))
+            .create();
 
     @Inject
     private transient SearchBackendManager backendManager;
@@ -158,7 +167,7 @@ public class LuceneManager extends ManagementLink {
 
     public void writeStatus(StaplerResponse2 rsp, JSReturnCollection status) throws IOException {
         Writer compressedWriter = rsp.getWriter();
-        JSONSerializer.toJSON(status).write(compressedWriter);
+        GSON.toJson(status, compressedWriter);
         rsp.setStatus(200);
         compressedWriter.flush();
     }
