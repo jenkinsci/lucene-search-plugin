@@ -31,8 +31,9 @@ There are five fields Lucene Search can search: console log, build display name,
    - OR 
    - NOT
 4. Wildcards:
-   - "*" means zero or more characters
    - "?" means one character
+   - "*" means zero or more characters. Leading wildcards (e.g. `*foo`) are disabled for security reasons.
+   - Trailing wildcards and mid-word wildcards (e.g. `foo*`, `f?o`) are still supported.
 4. You can limit the range of search by using keywords. The supported keywords are:
    - j : project name
    - d : build dispaly name
@@ -60,6 +61,41 @@ You can customize Lucene Search according to your needs. For example. if you wan
 
 For more information on the query syntax, you can consult [Apache Lucene Query Parser Syntax](https://lucene.apache.org/core/2_9_4/queryparsersyntax.html).
 
-## Version 
+## Upgrade Warning: Lucene 8 → 9 Index Migration
 
-Please download release version 358.vf0bb3a3ef215 or other newer version. The old versions might not work properly. 
+This version upgrades the embedded Lucene library from 8.11.2 to 9.12.0. This is a **major version jump** with the following implications:
+
+### Index Compatibility
+
+- Lucene 8.x writes index segments labeled `Lucene87`. Lucene 9.x writes `Lucene912`.
+- **The plugin bundles `lucene-backward-codecs`**, which allows Lucene 9 to read existing 8.x indexes. Your existing search data will continue to work after the upgrade **without a rebuild**, as long as the index files are healthy.
+- If the existing index cannot be read (corruption or unsupported codec), the plugin will automatically **delete the old index and create a fresh one**. This preserves availability — searches will work, but old data is lost until you manually rebuild the database.
+
+### Recommended Pre-Upgrade Steps
+
+1. **Back up your `$JENKINS_HOME/luceneIndex` directory.**
+2. **Upgrade the plugin.**
+3. **Verify search works** with a simple query like `j:*` (should return results from indexed jobs).
+4. **If the index was automatically reset**, go to **Manage Jenkins → Lucene Search Manager** and click **Rebuild** to re-index all existing build data.
+
+### Rebuild After Upgrade
+
+If you see no search results after upgrading, the index was automatically recreated. Run a full rebuild:
+
+1. Navigate to **Manage Jenkins → Lucene Search Manager**.
+2. Leave the job name field empty (rebuilds all jobs).
+3. Set mode to **Overwrite**.
+4. Click **Rebuild**.
+
+The rebuild runs in the background. Search results will appear progressively as jobs are indexed.
+
+### Other Changes in This Version
+
+- **Security:** Search results now respect Jenkins job-level ACLs. Users will only see results from jobs they have `Item.READ` permission for.
+- **Security:** Leading wildcard queries (`*term`) are no longer supported, following Lucene best practices to prevent denial-of-service.
+- **Security:** Highlighted search fragments are HTML-escaped to prevent XSS.
+- **Serialization:** Gson replaces `net.sf.json-lib` for JSON serialization.
+
+## Version
+
+Please download the latest release version. Old versions prior to this release may not work properly with current Jenkins baselines.
