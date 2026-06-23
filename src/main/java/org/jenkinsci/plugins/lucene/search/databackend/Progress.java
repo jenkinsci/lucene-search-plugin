@@ -10,7 +10,7 @@ public class Progress {
         COMPLETE_WITH_ERROR
     }
 
-    protected long startTime;
+    protected transient long startTime;
     private long elapsedTime;
 
     private ProgressState state = ProgressState.PROCESSING;
@@ -88,11 +88,26 @@ public class Progress {
     }
 
     public String getName() {
-        return name;
+        return escapeHtml(name);
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getReasonMessage() {
+        return escapeHtml(reasonMessage);
+    }
+
+    public void setReasonMessage(String reasonMessage) {
+        this.reasonMessage = reasonMessage;
+    }
+
+    private static String escapeHtml(String s) {
+        if (s == null) {
+            return "";
+        }
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 
     public long getElapsedTime() {
@@ -105,13 +120,5 @@ public class Progress {
 
     public void withReason(Exception reason) {
         this.reason = reason;
-    }
-
-    public String getReasonMessage() {
-        return reasonMessage;
-    }
-
-    public void setReasonMessage(String reasonMessage) {
-        this.reasonMessage = reasonMessage;
     }
 }
