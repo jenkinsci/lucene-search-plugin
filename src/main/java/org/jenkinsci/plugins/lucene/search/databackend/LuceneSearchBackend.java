@@ -79,9 +79,9 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     private static final int MAX_HITS_PER_PAGE = 100;
 
-    private final Directory index;
     private final Analyzer analyzer;
-    private final IndexWriter dbWriter;
+    private Directory index;
+    private IndexWriter dbWriter;
     private final Jenkins jenkins;
     private volatile ScoreDoc lastDoc;
     private final boolean collectBuildLogs;
@@ -91,9 +91,28 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         index = FSDirectory.open(indexPath.toPath());
         collectBuildLogs = useBuildLogs;
         IndexWriterConfig config = new IndexWriterConfig(analyzer);
-        dbWriter = new IndexWriter(index, config);
+        try {
+            dbWriter = new IndexWriter(index, config);
+        } catch (IllegalArgumentException e) {
+            // The existing index may use an incompatible codec (e.g., Lucene87 after
+            // upgrading from 8.x) or may be corrupt. Delete it and start fresh.
+            LOGGER.warn("Failed to open existing Lucene index at "
+                    + indexPath
+                    + ", deleting and recreating: "
+                    + e.getMessage());
+            IOUtils.closeQuietly(index);
+            deleteDirectory(indexPath);
+            index = FSDirectory.open(indexPath.toPath());
+            dbWriter = new IndexWriter(index, config);
+        }
         dbWriter.commit();
         jenkins = Jenkins.get();
+    }
+
+    private static void deleteDirectory(File directory) throws IOException {
+        if (directory.exists()) {
+            org.apache.commons.io.FileUtils.deleteDirectory(directory);
+        }
     }
 
     public static LuceneSearchBackend create(final Map<String, Object> config) {
