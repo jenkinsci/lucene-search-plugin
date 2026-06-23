@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import hudson.Functions;
 import hudson.model.FreeStyleProject;
+import hudson.model.Run;
 import hudson.tasks.BatchFile;
 import hudson.tasks.Shell;
 import java.net.URL;
@@ -133,6 +134,39 @@ class LuceneSearchBackendTest {
         0,
         jenkinsSearchBackend.search("UNIQUE_DELETE_TEST").suggestions.size(),
         "Build entries should be removed when project is deleted");
+  }
+
+  @Test
+  @Timeout(value = 10000, unit = TimeUnit.MILLISECONDS)
+  void getRunQueryShouldMatchByFullNameNotDisplayName() throws Exception {
+    jenkinsSearchBackend.setLuceneBackend(false);
+
+    FreeStyleProject project = rule.createFreeStyleProject("removeBuildTarget");
+    project.setDisplayName("Custom Display Name");
+    project
+        .getBuildersList()
+        .add(
+            Functions.isWindows()
+                ? new BatchFile("echo UNIQUE_REMOVE_TEST\n")
+                : new Shell("echo UNIQUE_REMOVE_TEST\n"));
+    rule.buildAndAssertSuccess(project);
+
+    rebuildDatabase();
+    assertEquals(
+        1,
+        jenkinsSearchBackend.search("UNIQUE_REMOVE_TEST").suggestions.size(),
+        "Build should be searchable before removal");
+
+    SearchBackendManager manager =
+        Jenkins.get().getExtensionList(SearchBackendManager.class).get(0);
+    Run<?, ?> lastBuild = project.getLastBuild();
+    assertNotNull(lastBuild);
+    manager.removeBuild(lastBuild);
+
+    assertEquals(
+        0,
+        jenkinsSearchBackend.search("UNIQUE_REMOVE_TEST").suggestions.size(),
+        "Build should be removed when removeBuild is called (getRunQuery must match by fullName)");
   }
 
   private void rebuildDatabase() throws Exception {

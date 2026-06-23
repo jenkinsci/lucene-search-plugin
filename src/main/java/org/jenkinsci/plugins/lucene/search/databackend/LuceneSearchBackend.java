@@ -359,14 +359,13 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
   public Query getRunQuery(Run<?, ?> run) throws ParseException {
     BooleanQuery.Builder builder = new BooleanQuery.Builder();
+    String[] parts = run.getParent().getFullName().split("/");
+    PhraseQuery.Builder phraseBuilder = new PhraseQuery.Builder();
+    for (int i = 0; i < parts.length; i++) {
+      phraseBuilder.add(new Term(PROJECT_NAME.fieldName, parts[i]), i);
+    }
     builder
-        .add(
-            getQueryParser()
-                .parse(
-                    PROJECT_NAME.fieldName
-                        + ":"
-                        + QueryParser.escape(run.getParent().getDisplayName())),
-            BooleanClause.Occur.MUST)
+        .add(phraseBuilder.build(), BooleanClause.Occur.MUST)
         .add(
             getQueryParser().parse(BUILD_NUMBER.fieldName + ":" + run.getNumber()),
             BooleanClause.Occur.MUST);
