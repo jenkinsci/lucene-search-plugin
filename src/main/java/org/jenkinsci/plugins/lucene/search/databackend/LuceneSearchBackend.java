@@ -188,10 +188,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         }
 
         Set<String> fields = calculateQueryFieldsRecursively(highlight);
-        return new Pair<>(
-                query.rewrite(searcher.getIndexReader()),
-                highlight.rewrite(searcher.getIndexReader()),
-                fields.contains(CONSOLE.fieldName));
+        return new Pair<>(searcher.rewrite(query), searcher.rewrite(highlight), fields.contains(CONSOLE.fieldName));
     }
 
     @SuppressWarnings("rawtypes")
@@ -288,7 +285,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         queryParser.setDefaultOperator(QueryParser.Operator.AND);
         queryParser.setLocale(LOCALE);
         queryParser.setAllowLeadingWildcard(true);
-        queryParser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_REWRITE);
+        queryParser.setMultiTermRewriteMethod(MultiTermQuery.CONSTANT_SCORE_BOOLEAN_REWRITE);
         return queryParser;
     }
 
