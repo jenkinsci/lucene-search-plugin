@@ -10,27 +10,27 @@ import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 @Extension
 public class JunitFreeTextSearchExtension extends FreeTextSearchExtension {
 
-  @Override
-  public String getKeyword() {
-    return "unittest";
-  }
-
-  @Override
-  public String getTextResult(Run<?, ?> run) {
-    List<TestResultAction> actions = run.getActions(TestResultAction.class);
-    StringBuilder builder = new StringBuilder();
-    for (TestResultAction action : actions) {
-      List<CaseResult> failedTests = action.getFailedTests();
-      for (CaseResult result : failedTests) {
-        builder.append(result.getTitle() + "\n");
-        builder.append(result.getErrorDetails() + "\n");
-      }
+    @Override
+    public String getKeyword() {
+        return "unittest";
     }
-    return builder.toString();
-  }
 
-  @Override
-  public boolean isPersist() {
-    return true;
-  }
+    @Override
+    public String getTextResult(Run<?, ?> run) {
+        List<TestResultAction> actions = run.getActions(TestResultAction.class);
+        StringBuilder builder = new StringBuilder();
+        for (TestResultAction action : actions) {
+            List<CaseResult> failedTests = action.getFailedTests();
+            for (CaseResult result : failedTests) {
+                builder.append(result.getTitle() + "\n");
+                builder.append(result.getErrorDetails() + "\n");
+            }
+        }
+        return builder.toString();
+    }
+
+    @Override
+    public boolean isPersist() {
+        return true;
+    }
 }

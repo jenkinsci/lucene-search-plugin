@@ -4,114 +4,114 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Progress {
 
-  public enum ProgressState {
-    PROCESSING,
-    COMPLETE,
-    COMPLETE_WITH_ERROR
-  }
-
-  protected long startTime;
-  private long elapsedTime;
-
-  private ProgressState state = ProgressState.PROCESSING;
-  private transient Exception reason;
-  private String reasonMessage = "";
-  private int max;
-  private AtomicInteger current = new AtomicInteger(0);
-  private String name;
-
-  public void assertNoErrors() throws Exception {
-    if (getState() == ProgressState.COMPLETE_WITH_ERROR) {
-      throw reason;
+    public enum ProgressState {
+        PROCESSING,
+        COMPLETE,
+        COMPLETE_WITH_ERROR
     }
-  }
 
-  public Progress() {
-    startTime = System.currentTimeMillis();
-  }
+    protected long startTime;
+    private long elapsedTime;
 
-  public Progress(String name) {
-    this.setName(name);
-    startTime = System.currentTimeMillis();
-    max = 0;
-  }
+    private ProgressState state = ProgressState.PROCESSING;
+    private transient Exception reason;
+    private String reasonMessage = "";
+    private int max;
+    private AtomicInteger current = new AtomicInteger(0);
+    private String name;
 
-  public void completedWithErrors(Exception reason) {
-    state = ProgressState.COMPLETE_WITH_ERROR;
-    this.withReason(reason);
-    reasonMessage = reason.getMessage();
-  }
-
-  /** Work complete. Does NOT imply success, only that no more processing will be done */
-  public void setFinished() {
-    if (state == ProgressState.PROCESSING) {
-      state = ProgressState.COMPLETE_WITH_ERROR;
+    public void assertNoErrors() throws Exception {
+        if (getState() == ProgressState.COMPLETE_WITH_ERROR) {
+            throw reason;
+        }
     }
-    setElapsedTime(System.currentTimeMillis() - startTime);
-  }
 
-  /** Work has been successfully completed. Current will be one less than max. */
-  public void setSuccessfullyCompleted() {
-    state = ProgressState.COMPLETE;
-  }
+    public Progress() {
+        startTime = System.currentTimeMillis();
+    }
 
-  public ProgressState getState() {
-    return state;
-  }
+    public Progress(String name) {
+        this.setName(name);
+        startTime = System.currentTimeMillis();
+        max = 0;
+    }
 
-  public boolean isFinished() {
-    return state == ProgressState.COMPLETE || state == ProgressState.COMPLETE_WITH_ERROR;
-  }
+    public void completedWithErrors(Exception reason) {
+        state = ProgressState.COMPLETE_WITH_ERROR;
+        this.withReason(reason);
+        reasonMessage = reason.getMessage();
+    }
 
-  public Throwable getReason() {
-    return reason;
-  }
+    /** Work complete. Does NOT imply success, only that no more processing will be done */
+    public void setFinished() {
+        if (state == ProgressState.PROCESSING) {
+            state = ProgressState.COMPLETE_WITH_ERROR;
+        }
+        setElapsedTime(System.currentTimeMillis() - startTime);
+    }
 
-  public int getMax() {
-    return max;
-  }
+    /** Work has been successfully completed. Current will be one less than max. */
+    public void setSuccessfullyCompleted() {
+        state = ProgressState.COMPLETE;
+    }
 
-  public void setMax(int max) {
-    this.max = max;
-  }
+    public ProgressState getState() {
+        return state;
+    }
 
-  public int getCurrent() {
-    return current.get();
-  }
+    public boolean isFinished() {
+        return state == ProgressState.COMPLETE || state == ProgressState.COMPLETE_WITH_ERROR;
+    }
 
-  public void setCurrent(int current) {
-    this.current.set(current);
-  }
+    public Throwable getReason() {
+        return reason;
+    }
 
-  public void incCurrent() {
-    this.current.incrementAndGet();
-  }
+    public int getMax() {
+        return max;
+    }
 
-  public String getName() {
-    return name;
-  }
+    public void setMax(int max) {
+        this.max = max;
+    }
 
-  public void setName(String name) {
-    this.name = name;
-  }
+    public int getCurrent() {
+        return current.get();
+    }
 
-  public long getElapsedTime() {
-    return elapsedTime;
-  }
+    public void setCurrent(int current) {
+        this.current.set(current);
+    }
 
-  public void setElapsedTime(long elapsedTime) {
-    this.elapsedTime = elapsedTime;
-  }
+    public void incCurrent() {
+        this.current.incrementAndGet();
+    }
 
-  public void withReason(Exception reason) {
-    this.reason = reason;
-  }
+    public String getName() {
+        return name;
+    }
 
-  public String getReasonMessage() {
-    return reasonMessage;
-  }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-  public void setReasonMessage(String reasonMessage) {
-    this.reasonMessage = reasonMessage;
-  }
+    public long getElapsedTime() {
+        return elapsedTime;
+    }
+
+    public void setElapsedTime(long elapsedTime) {
+        this.elapsedTime = elapsedTime;
+    }
+
+    public void withReason(Exception reason) {
+        this.reason = reason;
+    }
+
+    public String getReasonMessage() {
+        return reasonMessage;
+    }
+
+    public void setReasonMessage(String reasonMessage) {
+        this.reasonMessage = reasonMessage;
+    }
 }

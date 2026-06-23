@@ -20,89 +20,89 @@ import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
 
 @Extension
 public class SearchBackendManager {
-  private static final Logger LOG = Logger.getLogger(SearchBackendManager.class);
+    private static final Logger LOG = Logger.getLogger(SearchBackendManager.class);
 
-  private transient SearchBackend<?> instance;
+    private transient SearchBackend<?> instance;
 
-  @Inject private transient SearchBackendConfiguration backendConfig;
+    @Inject
+    private transient SearchBackendConfiguration backendConfig;
 
-  private synchronized SearchBackend<?> getBackend() {
-    if (instance == null) {
-      instance = LuceneSearchBackend.create(backendConfig.getConfig());
-    }
-    return instance;
-  }
-
-  public synchronized void reconfigure(final Map<String, Object> config) throws IOException {
-    if (instance != null) {
-      instance.close();
-      instance = instance.reconfigure(config);
-    } else {
-      instance = LuceneSearchBackend.create(backendConfig.getConfig());
-    }
-  }
-
-  public List<FreeTextSearchItemImplementation> getHits(String query, boolean searchNext) {
-    List<FreeTextSearchItemImplementation> hits = getBackend().getHits(query, searchNext);
-    if (backendConfig.isUseSecurity()) {
-      Jenkins jenkins = Jenkins.getInstance();
-      Iterator<FreeTextSearchItemImplementation> iter = hits.iterator();
-      while (iter.hasNext()) {
-        FreeTextSearchItemImplementation searchItem = iter.next();
-        Item item = jenkins.getItemByFullName(searchItem.getProjectName());
-        if (item == null) {
-          iter.remove();
+    private synchronized SearchBackend<?> getBackend() {
+        if (instance == null) {
+            instance = LuceneSearchBackend.create(backendConfig.getConfig());
         }
-      }
+        return instance;
     }
-    return hits;
-  }
 
-  public SearchResult getSuggestedItems(String query) {
-    SearchResultImpl result = new SearchResultImpl();
-    for (FreeTextSearchItemImplementation item : getHits(query, false)) {
-      result.add(new SuggestedItem(item));
+    public synchronized void reconfigure(final Map<String, Object> config) throws IOException {
+        if (instance != null) {
+            instance.close();
+            instance = instance.reconfigure(config);
+        } else {
+            instance = LuceneSearchBackend.create(backendConfig.getConfig());
+        }
     }
-    return result;
-  }
 
-  public void clean(ManagerProgress progress) {
-    progress.setMax(1);
-    getBackend().cleanAllJob(progress);
-  }
-
-  public void abort() {
-    getBackend().abort();
-  }
-
-  public void removeBuild(Run<?, ?> run) throws IOException {
-    getBackend().removeBuild(run);
-  }
-
-  public void deleteJob(String jobName) throws IOException {
-    getBackend().deleteJob(jobName);
-  }
-
-  public void renameJob(String oldFullName, Job<?, ?> job) throws IOException {
-    getBackend().deleteJob(oldFullName);
-    for (Run<?, ?> run : job.getBuilds()) {
-      getBackend().storeBuild(run);
+    public List<FreeTextSearchItemImplementation> getHits(String query, boolean searchNext) {
+        List<FreeTextSearchItemImplementation> hits = getBackend().getHits(query, searchNext);
+        if (backendConfig.isUseSecurity()) {
+            Jenkins jenkins = Jenkins.getInstance();
+            Iterator<FreeTextSearchItemImplementation> iter = hits.iterator();
+            while (iter.hasNext()) {
+                FreeTextSearchItemImplementation searchItem = iter.next();
+                Item item = jenkins.getItemByFullName(searchItem.getProjectName());
+                if (item == null) {
+                    iter.remove();
+                }
+            }
+        }
+        return hits;
     }
-  }
 
-  public void storeBuild(Run<?, ?> run) throws IOException {
-    getBackend().storeBuild(run);
-  }
-
-  public void rebuildDatabase(
-      ManagerProgress progress, int maxWorkers, Set<String> jobs, boolean overwrite) {
-    try {
-      getBackend().rebuildDatabase(progress, maxWorkers, jobs, overwrite);
-    } catch (Exception e) {
-      progress.completedWithErrors(e);
-      LOG.error("Failed rebuilding search database", e);
-    } finally {
-      progress.setFinished();
+    public SearchResult getSuggestedItems(String query) {
+        SearchResultImpl result = new SearchResultImpl();
+        for (FreeTextSearchItemImplementation item : getHits(query, false)) {
+            result.add(new SuggestedItem(item));
+        }
+        return result;
     }
-  }
+
+    public void clean(ManagerProgress progress) {
+        progress.setMax(1);
+        getBackend().cleanAllJob(progress);
+    }
+
+    public void abort() {
+        getBackend().abort();
+    }
+
+    public void removeBuild(Run<?, ?> run) throws IOException {
+        getBackend().removeBuild(run);
+    }
+
+    public void deleteJob(String jobName) throws IOException {
+        getBackend().deleteJob(jobName);
+    }
+
+    public void renameJob(String oldFullName, Job<?, ?> job) throws IOException {
+        getBackend().deleteJob(oldFullName);
+        for (Run<?, ?> run : job.getBuilds()) {
+            getBackend().storeBuild(run);
+        }
+    }
+
+    public void storeBuild(Run<?, ?> run) throws IOException {
+        getBackend().storeBuild(run);
+    }
+
+    public void rebuildDatabase(ManagerProgress progress, int maxWorkers, Set<String> jobs, boolean overwrite) {
+        try {
+            getBackend().rebuildDatabase(progress, maxWorkers, jobs, overwrite);
+        } catch (Exception e) {
+            progress.completedWithErrors(e);
+            LOG.error("Failed rebuilding search database", e);
+        } finally {
+            progress.setFinished();
+        }
+    }
 }
