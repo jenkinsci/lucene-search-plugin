@@ -246,17 +246,24 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         String searchName = doc.get(PROJECT_NAME.fieldName) + doc.get(BUILD_DISPLAY_NAME.fieldName);
 
         Item jobItem = jenkins.getItemByFullName(projectName);
+        if (jobItem == null) {
+          LOGGER.debug("Project not found (removed or renamed): " + projectName);
+          continue;
+        }
         if (!(jobItem instanceof Job)) {
-          throw new IllegalStateException("Unknown project type for project name: " + projectName);
+          LOGGER.debug("Unknown project type for project name: " + projectName);
+          continue;
         }
         Job job = (Job) jobItem;
         Run build = job.getBuildByNumber(Integer.parseInt(buildNumber));
-        if (build != null) {
-          FreeTextSearchItemImplementation itemImpl =
-              new FreeTextSearchItemImplementation(
-                  searchName, projectName, bestFragments, build.getUrl(), isShowConsole);
-          luceneSearchResultImpl.add(itemImpl);
+        if (build == null) {
+          LOGGER.debug("Build #" + buildNumber + " not found for project " + projectName + " (possibly removed)");
+          continue;
         }
+        FreeTextSearchItemImplementation itemImpl =
+            new FreeTextSearchItemImplementation(
+                searchName, projectName, bestFragments, build.getUrl(), isShowConsole);
+        luceneSearchResultImpl.add(itemImpl);
       }
       reader.close();
     } catch (ParseException e) {
