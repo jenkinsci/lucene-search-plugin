@@ -5,18 +5,19 @@ import org.apache.lucene.analysis.StopFilter;
 import org.apache.lucene.analysis.StopwordAnalyzerBase;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
+import org.apache.lucene.util.AttributeFactory;
 
 public class CaseSensitiveAnalyzer extends StopwordAnalyzerBase {
 
     public static final int DEFAULT_MAX_TOKEN_LENGTH = 255;
 
     public CaseSensitiveAnalyzer() {
-        super(CharArraySet.EMPTY_SET);
+        super(new CharArraySet(0, true));
     }
 
     @Override
     protected TokenStreamComponents createComponents(final String fieldName) {
-        final StandardTokenizer src = new StandardTokenizer();
+        final StandardTokenizer src = new StandardTokenizer(AttributeFactory.DEFAULT_ATTRIBUTE_FACTORY);
         src.setMaxTokenLength(DEFAULT_MAX_TOKEN_LENGTH);
 
         TokenStream tok = new StopFilter(src, this.stopwords);
