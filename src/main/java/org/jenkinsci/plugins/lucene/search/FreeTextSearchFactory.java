@@ -10,15 +10,17 @@ import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 
 @Extension
 public class FreeTextSearchFactory extends SearchFactory {
-  @Inject SearchBackendManager manager;
+    @Inject
+    SearchBackendManager manager;
 
-  @Inject private transient SearchBackendConfiguration backendConfig;
+    @Inject
+    private transient SearchBackendConfiguration backendConfig;
 
-  @Override
-  public Search createFor(final SearchableModelObject owner) {
-    if (backendConfig.isLuceneSearchEnabled()) {
-      return new FreeTextSearch(manager);
+    @Override
+    public Search createFor(final SearchableModelObject owner) {
+        if (backendConfig.isLuceneSearchEnabled()) {
+            return new FreeTextSearch(manager);
+        }
+        return null;
     }
-    return null;
-  }
 }

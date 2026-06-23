@@ -16,38 +16,37 @@ import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 @Extension
 public class FreeTextSaveableListener extends SaveableListener {
 
-  private static final ExecutorService INDEX_UPDATE_EXECUTOR =
-      Executors.newSingleThreadExecutor(
-          runnable -> {
-            Thread thread = new Thread(runnable, "lucene-search-index-update");
-            thread.setDaemon(true);
-            return thread;
-          });
+    private static final ExecutorService INDEX_UPDATE_EXECUTOR = Executors.newSingleThreadExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "lucene-search-index-update");
+        thread.setDaemon(true);
+        return thread;
+    });
 
-  Logger logger = Logger.getLogger(FreeTextSaveableListener.class);
+    Logger logger = Logger.getLogger(FreeTextSaveableListener.class);
 
-  @Inject SearchBackendManager searchBackendManager;
+    @Inject
+    SearchBackendManager searchBackendManager;
 
-  @Override
-  public void onChange(Saveable o, XmlFile file) {
-    if (o instanceof Run) {
-      Run run = (Run) o;
-      updateIndex(run);
+    @Override
+    public void onChange(Saveable o, XmlFile file) {
+        if (o instanceof Run) {
+            Run run = (Run) o;
+            updateIndex(run);
+        }
     }
-  }
 
-  private void updateIndex(Run run) {
-    SearchBackendManager manager = searchBackendManager;
-    CompletableFuture.runAsync(
-            () -> {
-              try {
-                manager.removeBuild(run);
-                manager.storeBuild(run);
-              } catch (IOException e) {
-                logger.error("update index failed: ", e);
-              }
-            },
-            INDEX_UPDATE_EXECUTOR)
-        .join();
-  }
+    private void updateIndex(Run run) {
+        SearchBackendManager manager = searchBackendManager;
+        CompletableFuture.runAsync(
+                        () -> {
+                            try {
+                                manager.removeBuild(run);
+                                manager.storeBuild(run);
+                            } catch (IOException e) {
+                                logger.error("update index failed: ", e);
+                            }
+                        },
+                        INDEX_UPDATE_EXECUTOR)
+                .join();
+    }
 }

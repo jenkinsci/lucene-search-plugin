@@ -12,104 +12,103 @@ import java.util.Map;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
 public enum Field {
-  PROJECT_NAME("j", Persist.TRUE) {
-    public String getValue(final Run<?, ?> build) {
-      return build.getParent().getFullName();
-    }
-  },
-
-  BUILD_NUMBER("n", DefaultSearchable.FALSE, Numeric.TRUE, Persist.TRUE) {
-    @Override
-    public String getValue(Run<?, ?> build) {
-      return String.valueOf(build.getNumber());
-    }
-  },
-
-  BUILD_DISPLAY_NAME("d", Persist.TRUE) {
-    @Override
-    public String getValue(Run<?, ?> build) {
-      return build.getDisplayName();
-    }
-  },
-
-  BUILD_PARAMETER("p", Persist.TRUE) {
-    @Override
-    public String getValue(Run<?, ?> build) {
-      ParametersAction parametersAction = build.getAction(ParametersAction.class);
-      if (parametersAction != null) {
-        List<ParameterValue> parameters = parametersAction.getParameters();
-        StringBuilder builder = new StringBuilder();
-        for (ParameterValue value : parameters) {
-          Object val = value.getValue();
-          if (val instanceof hudson.util.Secret) {
-            // skip: we dont want secrets in your Lucene index
-            continue;
-          } else {
-            builder.append(val).append(" ");
-          }
+    PROJECT_NAME("j", Persist.TRUE) {
+        public String getValue(final Run<?, ?> build) {
+            return build.getParent().getFullName();
         }
-        return builder.toString();
-      } else {
-        return null;
-      }
+    },
+
+    BUILD_NUMBER("n", DefaultSearchable.FALSE, Numeric.TRUE, Persist.TRUE) {
+        @Override
+        public String getValue(Run<?, ?> build) {
+            return String.valueOf(build.getNumber());
+        }
+    },
+
+    BUILD_DISPLAY_NAME("d", Persist.TRUE) {
+        @Override
+        public String getValue(Run<?, ?> build) {
+            return build.getDisplayName();
+        }
+    },
+
+    BUILD_PARAMETER("p", Persist.TRUE) {
+        @Override
+        public String getValue(Run<?, ?> build) {
+            ParametersAction parametersAction = build.getAction(ParametersAction.class);
+            if (parametersAction != null) {
+                List<ParameterValue> parameters = parametersAction.getParameters();
+                StringBuilder builder = new StringBuilder();
+                for (ParameterValue value : parameters) {
+                    Object val = value.getValue();
+                    if (val instanceof hudson.util.Secret) {
+                        // skip: we dont want secrets in your Lucene index
+                        continue;
+                    } else {
+                        builder.append(val).append(" ");
+                    }
+                }
+                return builder.toString();
+            } else {
+                return null;
+            }
+        }
+    },
+
+    CONSOLE("c", Persist.TRUE) {
+        @SuppressFBWarnings(
+                value = "RV_RETURN_VALUE_IGNORED",
+                justification = "The offset returned by writeLogTo() can be ignored, "
+                        + "since no furtehr text is written to the output stream.")
+        @Override
+        public String getValue(Run<?, ?> build) {
+            try {
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                build.getLogText().writeLogTo(0, byteArrayOutputStream);
+                return byteArrayOutputStream.toString();
+            } catch (IOException e) {
+                return null;
+            }
+        }
+    };
+
+    private static Map<String, Field> index;
+    public final String fieldName;
+    public final boolean defaultSearchable;
+    public final boolean numeric;
+    public final boolean persist;
+
+    @SuppressWarnings("rawtypes")
+    Field(String fieldName, Enum... e) {
+        List<Enum> es = Arrays.asList(e);
+        defaultSearchable = !es.contains(DefaultSearchable.FALSE);
+        numeric = es.contains(Numeric.TRUE);
+        persist = es.contains(Persist.TRUE);
+        this.fieldName = fieldName;
     }
-  },
 
-  CONSOLE("c", Persist.TRUE) {
-    @SuppressFBWarnings(
-        value = "RV_RETURN_VALUE_IGNORED",
-        justification =
-            "The offset returned by writeLogTo() can be ignored, "
-                + "since no furtehr text is written to the output stream.")
-    @Override
-    public String getValue(Run<?, ?> build) {
-      try {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        build.getLogText().writeLogTo(0, byteArrayOutputStream);
-        return byteArrayOutputStream.toString();
-      } catch (IOException e) {
-        return null;
-      }
+    public static Field getIndex(String fieldName) {
+        if (index == null) {
+            Map<String, Field> indexReverseLookup = new HashMap<String, Field>();
+            for (Field idx : Field.values()) {
+                indexReverseLookup.put(idx.fieldName, idx);
+            }
+            index = indexReverseLookup;
+        }
+        return index.get(fieldName);
     }
-  };
 
-  private static Map<String, Field> index;
-  public final String fieldName;
-  public final boolean defaultSearchable;
-  public final boolean numeric;
-  public final boolean persist;
+    public abstract Object getValue(final Run<?, ?> build);
 
-  @SuppressWarnings("rawtypes")
-  Field(String fieldName, Enum... e) {
-    List<Enum> es = Arrays.asList(e);
-    defaultSearchable = !es.contains(DefaultSearchable.FALSE);
-    numeric = es.contains(Numeric.TRUE);
-    persist = es.contains(Persist.TRUE);
-    this.fieldName = fieldName;
-  }
-
-  public static Field getIndex(String fieldName) {
-    if (index == null) {
-      Map<String, Field> indexReverseLookup = new HashMap<String, Field>();
-      for (Field idx : Field.values()) {
-        indexReverseLookup.put(idx.fieldName, idx);
-      }
-      index = indexReverseLookup;
+    private enum Persist {
+        TRUE;
     }
-    return index.get(fieldName);
-  }
 
-  public abstract Object getValue(final Run<?, ?> build);
+    private enum DefaultSearchable {
+        FALSE;
+    }
 
-  private enum Persist {
-    TRUE;
-  }
-
-  private enum DefaultSearchable {
-    FALSE;
-  }
-
-  private enum Numeric {
-    TRUE;
-  }
+    private enum Numeric {
+        TRUE;
+    }
 }

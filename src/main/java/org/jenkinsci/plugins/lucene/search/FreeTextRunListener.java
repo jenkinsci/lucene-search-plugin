@@ -13,34 +13,35 @@ import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 @Extension
 public class FreeTextRunListener extends RunListener<Run<?, ?>> {
 
-  Logger logger = Logger.getLogger(FreeTextRunListener.class);
+    Logger logger = Logger.getLogger(FreeTextRunListener.class);
 
-  @Inject SearchBackendManager searchBackendManager;
+    @Inject
+    SearchBackendManager searchBackendManager;
 
-  @Override
-  public void onStarted(final Run<?, ?> build, @NonNull final TaskListener listener) {
-    try {
-      searchBackendManager.storeBuild(build);
-    } catch (IOException e) {
-      logger.error("When saving the started build index: ", e);
+    @Override
+    public void onStarted(final Run<?, ?> build, @NonNull final TaskListener listener) {
+        try {
+            searchBackendManager.storeBuild(build);
+        } catch (IOException e) {
+            logger.error("When saving the started build index: ", e);
+        }
     }
-  }
 
-  @Override
-  public void onCompleted(final Run<?, ?> build, @NonNull final TaskListener listener) {
-    try {
-      searchBackendManager.storeBuild(build);
-    } catch (IOException e) {
-      logger.error("When saving the finished build index: ", e);
+    @Override
+    public void onCompleted(final Run<?, ?> build, @NonNull final TaskListener listener) {
+        try {
+            searchBackendManager.storeBuild(build);
+        } catch (IOException e) {
+            logger.error("When saving the finished build index: ", e);
+        }
     }
-  }
 
-  @Override
-  public void onDeleted(final Run<?, ?> build) {
-    try {
-      searchBackendManager.removeBuild(build);
-    } catch (IOException e) {
-      logger.error("When removing the deleted build index: ", e);
+    @Override
+    public void onDeleted(final Run<?, ?> build) {
+        try {
+            searchBackendManager.removeBuild(build);
+        } catch (IOException e) {
+            logger.error("When removing the deleted build index: ", e);
+        }
     }
-  }
 }

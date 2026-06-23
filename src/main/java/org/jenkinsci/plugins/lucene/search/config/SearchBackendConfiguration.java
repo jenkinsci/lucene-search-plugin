@@ -19,126 +19,121 @@ import org.kohsuke.stapler.StaplerRequest2;
 @Extension
 public class SearchBackendConfiguration extends GlobalConfiguration {
 
-  private static final String LUCENE_PATH = "lucenePath";
-  private static final String USE_SECURITY = "useSecurity";
-  private static final String COLLECTED_BUILD_LOG = "collectBuildLogs";
+    private static final String LUCENE_PATH = "lucenePath";
+    private static final String USE_SECURITY = "useSecurity";
+    private static final String COLLECTED_BUILD_LOG = "collectBuildLogs";
 
-  @Inject private transient SearchBackendManager backendManager;
+    @Inject
+    private transient SearchBackendManager backendManager;
 
-  private File lucenePath = new File(Jenkins.getInstance().getRootDir(), "luceneIndex");
-  private boolean useSecurity = true;
-  private boolean luceneSearchEnabled = true;
-  private boolean collectBuildLogs = true;
+    private File lucenePath = new File(Jenkins.getInstance().getRootDir(), "luceneIndex");
+    private boolean useSecurity = true;
+    private boolean luceneSearchEnabled = true;
+    private boolean collectBuildLogs = true;
 
-  @DataBoundConstructor
-  public SearchBackendConfiguration(
-      final String lucenePath,
-      boolean useSecurity,
-      boolean luceneSearchEnabled,
-      boolean collectBuildLogs) {
-    this(new File(lucenePath), useSecurity, luceneSearchEnabled, collectBuildLogs);
-  }
-
-  public SearchBackendConfiguration(
-      final File lucenePath,
-      boolean useSecurity,
-      boolean luceneSearchEnabled,
-      boolean collectBuildLogs) {
-    load();
-    this.lucenePath = lucenePath;
-    this.useSecurity = useSecurity;
-    this.luceneSearchEnabled = luceneSearchEnabled;
-    this.collectBuildLogs = collectBuildLogs;
-  }
-
-  public SearchBackendConfiguration() {
-    load();
-  }
-
-  public File getLucenePath() {
-    return lucenePath;
-  }
-
-  public boolean isCollectBuildLogs() {
-    return collectBuildLogs;
-  }
-
-  public void setLucenePath(final File lucenePath) {
-    Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
-    this.lucenePath = lucenePath;
-  }
-
-  public FormValidation doCheckLucenePath(@QueryParameter final String lucenePath) {
-    Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
-    try {
-      new File(lucenePath);
-      return FormValidation.ok();
-    } catch (RuntimeException e) {
-      return FormValidation.error(e.getMessage());
+    @DataBoundConstructor
+    public SearchBackendConfiguration(
+            final String lucenePath, boolean useSecurity, boolean luceneSearchEnabled, boolean collectBuildLogs) {
+        this(new File(lucenePath), useSecurity, luceneSearchEnabled, collectBuildLogs);
     }
-  }
 
-  @Override
-  public boolean configure(final StaplerRequest2 req, final JSONObject json) throws FormException {
-    JSONObject selectedJson = json.getJSONObject("searchBackend");
-    if (selectedJson.containsKey(LUCENE_PATH)) {
-      String lucenePath = selectedJson.getString(LUCENE_PATH);
-      ensureNotError(doCheckLucenePath(lucenePath), LUCENE_PATH);
-      setLucenePath(new File(lucenePath));
+    public SearchBackendConfiguration(
+            final File lucenePath, boolean useSecurity, boolean luceneSearchEnabled, boolean collectBuildLogs) {
+        load();
+        this.lucenePath = lucenePath;
+        this.useSecurity = useSecurity;
+        this.luceneSearchEnabled = luceneSearchEnabled;
+        this.collectBuildLogs = collectBuildLogs;
     }
-    if (json.containsKey(USE_SECURITY)) {
-      setUseSecurity(json.getBoolean(USE_SECURITY));
+
+    public SearchBackendConfiguration() {
+        load();
     }
-    if (json.containsKey(COLLECTED_BUILD_LOG)) {
-      setCollectBuildLogs(json.getBoolean(COLLECTED_BUILD_LOG));
+
+    public File getLucenePath() {
+        return lucenePath;
     }
-    try {
-      reconfigure();
-    } catch (IOException e) {
-      //
+
+    public boolean isCollectBuildLogs() {
+        return collectBuildLogs;
     }
-    return super.configure(req, json);
-  }
 
-  @VisibleForTesting
-  public void reconfigure() throws IOException {
-    Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
-    backendManager.reconfigure(getConfig());
-    save();
-  }
-
-  private void ensureNotError(FormValidation formValidation, String field) throws FormException {
-    if (formValidation.kind == FormValidation.Kind.ERROR) {
-      throw new FormException("Incorrect search config field: " + field, field);
+    public void setLucenePath(final File lucenePath) {
+        Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
+        this.lucenePath = lucenePath;
     }
-  }
 
-  public Map<String, Object> getConfig() {
-    Map<String, Object> config = new HashMap<String, Object>();
-    config.put("lucenePath", lucenePath);
-    config.put("collectBuildLogs", collectBuildLogs);
-    return config;
-  }
+    public FormValidation doCheckLucenePath(@QueryParameter final String lucenePath) {
+        Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
+        try {
+            new File(lucenePath);
+            return FormValidation.ok();
+        } catch (RuntimeException e) {
+            return FormValidation.error(e.getMessage());
+        }
+    }
 
-  public boolean isUseSecurity() {
-    return useSecurity;
-  }
+    @Override
+    public boolean configure(final StaplerRequest2 req, final JSONObject json) throws FormException {
+        JSONObject selectedJson = json.getJSONObject("searchBackend");
+        if (selectedJson.containsKey(LUCENE_PATH)) {
+            String lucenePath = selectedJson.getString(LUCENE_PATH);
+            ensureNotError(doCheckLucenePath(lucenePath), LUCENE_PATH);
+            setLucenePath(new File(lucenePath));
+        }
+        if (json.containsKey(USE_SECURITY)) {
+            setUseSecurity(json.getBoolean(USE_SECURITY));
+        }
+        if (json.containsKey(COLLECTED_BUILD_LOG)) {
+            setCollectBuildLogs(json.getBoolean(COLLECTED_BUILD_LOG));
+        }
+        try {
+            reconfigure();
+        } catch (IOException e) {
+            //
+        }
+        return super.configure(req, json);
+    }
 
-  public void setUseSecurity(boolean useSecurity) {
-    Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
-    this.useSecurity = useSecurity;
-  }
+    @VisibleForTesting
+    public void reconfigure() throws IOException {
+        Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
+        backendManager.reconfigure(getConfig());
+        save();
+    }
 
-  public void setCollectBuildLogs(boolean collectBuildLogs) {
-    Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
-    this.collectBuildLogs = collectBuildLogs;
-  }
+    private void ensureNotError(FormValidation formValidation, String field) throws FormException {
+        if (formValidation.kind == FormValidation.Kind.ERROR) {
+            throw new FormException("Incorrect search config field: " + field, field);
+        }
+    }
 
-  public boolean isLuceneSearchEnabled() {
-    return luceneSearchEnabled;
-  }
+    public Map<String, Object> getConfig() {
+        Map<String, Object> config = new HashMap<String, Object>();
+        config.put("lucenePath", lucenePath);
+        config.put("collectBuildLogs", collectBuildLogs);
+        return config;
+    }
 
-  public void setLuceneSearchEnabled(boolean luceneSearchEnabled) {
-    this.luceneSearchEnabled = luceneSearchEnabled;
-  }
+    public boolean isUseSecurity() {
+        return useSecurity;
+    }
+
+    public void setUseSecurity(boolean useSecurity) {
+        Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
+        this.useSecurity = useSecurity;
+    }
+
+    public void setCollectBuildLogs(boolean collectBuildLogs) {
+        Jenkins.get().getACL().checkPermission(Jenkins.ADMINISTER);
+        this.collectBuildLogs = collectBuildLogs;
+    }
+
+    public boolean isLuceneSearchEnabled() {
+        return luceneSearchEnabled;
+    }
+
+    public void setLuceneSearchEnabled(boolean luceneSearchEnabled) {
+        this.luceneSearchEnabled = luceneSearchEnabled;
+    }
 }
