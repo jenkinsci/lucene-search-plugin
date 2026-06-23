@@ -169,6 +169,53 @@ class LuceneSearchBackendTest {
         "Build should be removed when removeBuild is called (getRunQuery must match by fullName)");
   }
 
+  @Test
+  @Timeout(value = 10000, unit = TimeUnit.MILLISECONDS)
+  void renameJobShouldInvalidateOldEntriesAndReindex() throws Exception {
+    jenkinsSearchBackend.setLuceneBackend(false);
+
+    FreeStyleProject project = rule.createFreeStyleProject("oldRenameName");
+    project
+        .getBuildersList()
+        .add(
+            Functions.isWindows()
+                ? new BatchFile("echo UNIQUE_RENAME_TEST\n")
+                : new Shell("echo UNIQUE_RENAME_TEST\n"));
+    rule.buildAndAssertSuccess(project);
+
+    rebuildDatabase();
+    assertEquals(
+        1,
+        jenkinsSearchBackend.search("UNIQUE_RENAME_TEST").suggestions.size(),
+        "Build should be searchable before rename");
+
+    // Rename the project to change its getFullName(), then manually
+    // invoke renameJob to update the Lucene index. This is what
+    // FreeTextItemListener.onRenamed / onLocationChanged do in production.
+    String oldFullName = project.getFullName();
+    project.renameTo("newRenameName");
+    assertNotEquals(oldFullName, project.getFullName(), "Project full name should have changed");
+
+    SearchBackendManager manager =
+        Jenkins.get().getExtensionList(SearchBackendManager.class).get(0);
+    manager.renameJob(oldFullName, project);
+
+    // Use field-prefixed search to query only the PROJECT_NAME field ("j"),
+    // since the console log may still contain the old project name from the
+    // original build log (workspace path, echo headers, etc.).
+    assertEquals(
+        0,
+        jenkinsSearchBackend.search("j:oldRenameName").suggestions.size(),
+        "Old project name should no longer return results after rename");
+    assertTrue(
+        jenkinsSearchBackend.search("j:newRenameName").suggestions.size() > 0,
+        "New project name should return results after rename");
+    assertEquals(
+        1,
+        jenkinsSearchBackend.search("UNIQUE_RENAME_TEST").suggestions.size(),
+        "Build content should still be searchable under the new name");
+  }
+
   private void rebuildDatabase() throws Exception {
     URL statusUrl = new URL(rule.getURL(), "lucenesearchmanager/status");
     final URL rebuildUrl =
