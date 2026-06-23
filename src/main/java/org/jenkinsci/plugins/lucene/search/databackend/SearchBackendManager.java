@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import hudson.Extension;
 import hudson.model.Item;
+import hudson.model.Job;
 import hudson.model.Run;
 import hudson.search.SearchResult;
 import hudson.search.SuggestedItem;
@@ -80,6 +81,13 @@ public class SearchBackendManager {
 
   public void deleteJob(String jobName) throws IOException {
     getBackend().deleteJob(jobName);
+  }
+
+  public void renameJob(String oldFullName, Job<?, ?> job) throws IOException {
+    getBackend().deleteJob(oldFullName);
+    for (Run<?, ?> run : job.getBuilds()) {
+      getBackend().storeBuild(run);
+    }
   }
 
   public void storeBuild(Run<?, ?> run) throws IOException {
