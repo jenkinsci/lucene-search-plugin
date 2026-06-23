@@ -14,7 +14,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.lucene.search.Field;
+import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 import org.jenkinsci.plugins.lucene.search.management.LuceneManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -103,6 +105,34 @@ class LuceneSearchBackendTest {
     rule.buildAndAssertSuccess(project1);
     rebuildDatabase();
     assertEquals(3, jenkinsSearchBackend.search("echo").suggestions.size());
+  }
+
+  @Test
+  @Timeout(value = 10000, unit = TimeUnit.MILLISECONDS)
+  void deleteJobShouldRemoveAllSearchEntries() throws Exception {
+    jenkinsSearchBackend.setLuceneBackend(false);
+
+    FreeStyleProject project = rule.createFreeStyleProject("deleteJobTarget");
+    project
+        .getBuildersList()
+        .add(
+            Functions.isWindows()
+                ? new BatchFile("echo UNIQUE_DELETE_TEST\n")
+                : new Shell("echo UNIQUE_DELETE_TEST\n"));
+    rule.buildAndAssertSuccess(project);
+
+    rebuildDatabase();
+    assertEquals(
+        1,
+        jenkinsSearchBackend.search("UNIQUE_DELETE_TEST").suggestions.size(),
+        "Build should be searchable before deletion");
+
+    project.delete();
+
+    assertEquals(
+        0,
+        jenkinsSearchBackend.search("UNIQUE_DELETE_TEST").suggestions.size(),
+        "Build entries should be removed when project is deleted");
   }
 
   private void rebuildDatabase() throws Exception {
