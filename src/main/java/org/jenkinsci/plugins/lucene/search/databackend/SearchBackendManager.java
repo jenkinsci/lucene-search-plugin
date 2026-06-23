@@ -51,7 +51,7 @@ public class SearchBackendManager {
             while (iter.hasNext()) {
                 FreeTextSearchItemImplementation searchItem = iter.next();
                 Item item = jenkins.getItemByFullName(searchItem.getProjectName());
-                if (item == null) {
+                if (item == null || !item.hasPermission(Item.READ)) {
                     iter.remove();
                 }
             }
