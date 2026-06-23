@@ -39,10 +39,10 @@ function updateStatusFromResponse(statement) {
 		var progress = statement.progress;
 		document.getElementById("currentWorkers").innerHTML = statement.workers;
 		document.getElementById("currentlyProcessing").innerHTML = progress.name;
-		document.getElementById("currentlyProcessingIndex").innerHTML = progress.current;
-		document.getElementById("currentlyProcessingMax").innerHTML = progress.max;
-		document.getElementById("totalProcessesedRun").innerHTML = progress.processedItems;
-		document.getElementById("currentElapsedTime").innerHTML = (progress.elapsedTime / 1000)
+		document.getElementById("currentlyProcessingIndex").textContent = progress.current;
+		document.getElementById("currentlyProcessingMax").textContent = progress.max;
+		document.getElementById("totalProcessesedRun").textContent = progress.processedItems;
+		document.getElementById("currentElapsedTime").textContent = (progress.elapsedTime / 1000)
 				+ "s";
 		var historyString = "";
 		for (var historyIndex = 0; historyIndex < progress.history.length; historyIndex++) {
