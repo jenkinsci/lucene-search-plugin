@@ -403,7 +403,12 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
   @Override
   public void deleteJob(String jobName) throws IOException {
     try {
-      dbWriter.deleteDocuments(new Term("j", "\"" + jobName + "\""));
+      String[] parts = jobName.split("/");
+      PhraseQuery.Builder phraseBuilder = new PhraseQuery.Builder();
+      for (int i = 0; i < parts.length; i++) {
+        phraseBuilder.add(new Term(PROJECT_NAME.fieldName, parts[i]), i);
+      }
+      dbWriter.deleteDocuments(phraseBuilder.build());
       dbWriter.commit();
     } catch (IOException e) {
       LOGGER.error("Could not delete job", e);
