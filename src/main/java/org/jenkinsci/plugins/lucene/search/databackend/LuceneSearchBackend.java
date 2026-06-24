@@ -218,32 +218,10 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         try {
             IndexReader reader = DirectoryReader.open(index);
             IndexSearcher searcher = new IndexSearcher(reader);
-            searcher.setTimeout(new QueryTimeoutImpl(30_000));
             Pair<Query, Query, Boolean> fieldQueryPair = parseQuery(q, searcher);
             Query query = fieldQueryPair.first;
             Query highlight = fieldQueryPair.second;
             Boolean isShowConsole = fieldQueryPair.third;
-
-            // Build permission filter: only search jobs the current user can read.
-            // This prevents Lucene from scoring, highlighting, or returning documents
-            // from jobs the user lacks Item.READ access to.
-            BooleanQuery.Builder permissionFilter = new BooleanQuery.Builder();
-            for (Job<?, ?> job : jenkins.getAllItems(Job.class)) {
-                if (job.hasPermission(Item.READ)) {
-                    permissionFilter.add(
-                            new TermQuery(new Term(PROJECT_NAME.fieldName, job.getFullName())),
-                            BooleanClause.Occur.SHOULD);
-                }
-            }
-            Query permissionQuery = permissionFilter.build();
-            if (((BooleanQuery) permissionQuery).clauses().isEmpty()) {
-                reader.close();
-                return luceneSearchResultImpl;
-            }
-            query = new BooleanQuery.Builder()
-                    .add(query, BooleanClause.Occur.MUST)
-                    .add(permissionQuery, BooleanClause.Occur.FILTER)
-                    .build();
 
             QueryTermScorer scorer = new QueryTermScorer(highlight);
             Highlighter highlighter = new Highlighter(new SimpleHTMLFormatter(), scorer);
@@ -326,6 +304,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         };
         queryParser.setDefaultOperator(QueryParser.Operator.AND);
         queryParser.setLocale(LOCALE);
+        queryParser.setAllowLeadingWildcard(true);
         queryParser.setMultiTermRewriteMethod(MultiTermQuery.CONSTANT_SCORE_BOOLEAN_REWRITE);
         return queryParser;
     }
