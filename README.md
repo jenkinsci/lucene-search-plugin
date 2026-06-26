@@ -89,6 +89,42 @@ If you see no search results after upgrading, the index was automatically recrea
 
 The rebuild runs in the background. Search results will appear progressively as jobs are indexed.
 
+### Local search on lucene jenkins DB from console
+
+Clue (Command Line Lucene Explorer) - Linux Guide
+
+Clue is an interactive command-line application used to inspect, query, and analyze Apache Lucene indexes directly from the filesystem. It is highly recommended for headless Linux environments where GUI tools like Luke are unavailable.
+
+#### Prerequisites
+
+To build and run Clue, your Linux environment (e.g., Ubuntu) must have Git, Java Development Kit (JDK), and Maven installed.
+
+```bash
+# Update package lists
+sudo apt update
+
+# Install Git, default JDK, and Maven
+sudo apt install git default-jdk maven
+```
+
+Open the database using:
+
+```bash
+clue.sh <lucene search index inside jenkins>
+```
+
+Search inside the db using:
+
+```bash
+search -q "p:refs\\/changes\\/77\\/45177\\/2"
+```
+
+Dump the data using
+
+```bash
+dumpinfo -d <doc index>
+```
+
 ### Other Changes in This Version
 
 - **Security:** Search results now respect Jenkins job-level ACLs. Users will only see results from jobs they have `Item.READ` permission for.
