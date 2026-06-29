@@ -107,6 +107,8 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                 // best-effort
             }
             index = FSDirectory.open(indexPath.toPath());
+            // IndexWriterConfig is consumed on first use — must create a fresh one.
+            config = new IndexWriterConfig(analyzer);
             dbWriter = new IndexWriter(index, config);
         } catch (IllegalArgumentException e) {
             // The existing index may use an incompatible codec (e.g., Lucene87 after
