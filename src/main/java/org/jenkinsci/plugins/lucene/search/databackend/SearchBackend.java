@@ -62,6 +62,15 @@ public abstract class SearchBackend<T> {
 
     public abstract void deleteJob(String jobName) throws IOException;
 
+    /**
+     * Flushes pending write operations. The default implementation is a no-op;
+     * subclasses that batch writes (e.g. {@link LuceneSearchBackend}) override
+     * it to commit the underlying writer and refresh searchers.
+     */
+    public void commitWrites() throws IOException {
+        // no-op default
+    }
+
     @SuppressWarnings("rawtypes")
     public void rebuildJob(Progress progress, Job<?, ?> job, int maxWorkers, boolean overwrite) throws IOException {
         BurstExecutor<Run> burstExecutor = BurstExecutor.create(new RebuildBuildWorker(progress, overwrite), maxWorkers)
@@ -153,6 +162,7 @@ public abstract class SearchBackend<T> {
                 rebuildJob(currentJobProgress, job, maxWorkers, overwrite);
                 progress.assertNoErrors();
             }
+            commitWrites();
         } finally {
             progress.jobComplete();
         }

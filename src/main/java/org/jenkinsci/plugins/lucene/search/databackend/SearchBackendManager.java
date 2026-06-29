@@ -147,6 +147,7 @@ public class SearchBackendManager {
         }
         try {
             backend.removeBuild(run);
+            backend.commitWrites();
         } finally {
             unlockBackend();
         }
@@ -159,6 +160,7 @@ public class SearchBackendManager {
         }
         try {
             backend.deleteJob(jobName);
+            backend.commitWrites();
         } finally {
             unlockBackend();
         }
@@ -174,6 +176,7 @@ public class SearchBackendManager {
             for (Run<?, ?> run : job.getBuilds()) {
                 backend.storeBuild(run);
             }
+            backend.commitWrites();
         } finally {
             unlockBackend();
         }
@@ -186,6 +189,7 @@ public class SearchBackendManager {
         }
         try {
             backend.storeBuild(run);
+            backend.commitWrites();
         } finally {
             unlockBackend();
         }

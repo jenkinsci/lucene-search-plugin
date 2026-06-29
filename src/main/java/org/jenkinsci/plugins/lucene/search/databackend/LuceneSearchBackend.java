@@ -338,54 +338,49 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     @Override
     public void storeBuild(final Run<?, ?> run) throws IOException {
-        try {
-            Document doc = new Document();
-            for (Field field : Field.values()) {
-                org.apache.lucene.document.Field.Store store = field.persist ? STORE : DONT_STORE;
-                if (isConsoleField(field) && !collectBuildLogs) {
-                    LOGGER.debug("Skipping console log indexing for field: " + field.fieldName);
-                    doc.add(new TextField(field.fieldName, "", store));
-                } else {
-                    Object fieldValue = field.getValue(run);
-                    if (fieldValue != null) {
-                        switch (FIELD_TYPE_MAP.get(field)) {
-                            case LONG:
-                                doc.add(new LongPoint(field.fieldName, ((Number) fieldValue).longValue()));
-                                break;
-                            case STRING:
-                                doc.add(new StringField(field.fieldName, fieldValue.toString(), store));
-                                break;
-                            case TEXT:
-                                doc.add(new TextField(field.fieldName, fieldValue.toString(), store));
-                                break;
-                            default:
-                                throw new IllegalArgumentException(
-                                        "Don't know how to handle " + FIELD_TYPE_MAP.get(field));
-                        }
+        Document doc = new Document();
+        for (Field field : Field.values()) {
+            org.apache.lucene.document.Field.Store store = field.persist ? STORE : DONT_STORE;
+            if (isConsoleField(field) && !collectBuildLogs) {
+                LOGGER.debug("Skipping console log indexing for field: " + field.fieldName);
+                doc.add(new TextField(field.fieldName, "", store));
+            } else {
+                Object fieldValue = field.getValue(run);
+                if (fieldValue != null) {
+                    switch (FIELD_TYPE_MAP.get(field)) {
+                        case LONG:
+                            doc.add(new LongPoint(field.fieldName, ((Number) fieldValue).longValue()));
+                            break;
+                        case STRING:
+                            doc.add(new StringField(field.fieldName, fieldValue.toString(), store));
+                            break;
+                        case TEXT:
+                            doc.add(new TextField(field.fieldName, fieldValue.toString(), store));
+                            break;
+                        default:
+                            throw new IllegalArgumentException(
+                                    "Don't know how to handle " + FIELD_TYPE_MAP.get(field));
                     }
                 }
             }
-
-            for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
-                try {
-                    Object fieldValue = extension.getTextResult(run);
-                    if (fieldValue != null) {
-                        doc.add(new TextField(
-                                extension.getKeyword(),
-                                extension.getTextResult(run),
-                                (extension.isPersist()) ? STORE : DONT_STORE));
-                    }
-                } catch (Throwable t) {
-                    // We don't want to crash the collection of log from other plugin extensions if we happen
-                    // to add a plugin that crashes while collecting the logs.
-                    LOGGER.warn("CRASH: " + extension.getClass().getName() + ", " + extension.getKeyword() + t);
-                }
-            }
-            dbWriter.addDocument(doc);
-        } finally {
-            dbWriter.commit();
-            searcherManager.maybeRefresh();
         }
+
+        for (FreeTextSearchExtension extension : FreeTextSearchExtension.all()) {
+            try {
+                Object fieldValue = extension.getTextResult(run);
+                if (fieldValue != null) {
+                    doc.add(new TextField(
+                            extension.getKeyword(),
+                            extension.getTextResult(run),
+                            (extension.isPersist()) ? STORE : DONT_STORE));
+                }
+            } catch (Throwable t) {
+                // We don't want to crash the collection of log from other plugin extensions if we happen
+                // to add a plugin that crashes while collecting the logs.
+                LOGGER.warn("CRASH: " + extension.getClass().getName() + ", " + extension.getKeyword() + t);
+            }
+        }
+        dbWriter.addDocument(doc);
     }
 
     public Query getRunQuery(Run<?, ?> run) throws ParseException {
@@ -428,8 +423,6 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     public void removeBuild(Run<?, ?> run) throws IOException {
         try {
             dbWriter.deleteDocuments(getRunQuery(run));
-            dbWriter.commit();
-            searcherManager.maybeRefresh();
         } catch (ParseException e) {
             LOGGER.warn("removeBuild: " + e);
         }
@@ -444,11 +437,15 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                 phraseBuilder.add(new Term(PROJECT_NAME.fieldName, parts[i]), i);
             }
             dbWriter.deleteDocuments(phraseBuilder.build());
-            dbWriter.commit();
-            searcherManager.maybeRefresh();
         } catch (IOException e) {
             LOGGER.error("Could not delete job", e);
         }
+    }
+
+    @Override
+    public void commitWrites() throws IOException {
+        dbWriter.commit();
+        searcherManager.maybeRefresh();
     }
 
     @Override
