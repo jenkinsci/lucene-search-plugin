@@ -83,6 +83,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     private final Analyzer analyzer;
     private Directory index;
     private IndexWriter dbWriter;
+    private SearcherManager searcherManager;
     private final Jenkins jenkins;
     private volatile ScoreDoc lastDoc;
     private final boolean collectBuildLogs;
@@ -123,6 +124,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             dbWriter = new IndexWriter(index, config);
         }
         dbWriter.commit();
+        searcherManager = new SearcherManager(dbWriter, null);
         jenkins = Jenkins.get();
     }
 
@@ -156,6 +158,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     }
 
     public void close() {
+        IOUtils.closeQuietly(searcherManager);
         IOUtils.closeQuietly(dbWriter);
         IOUtils.closeQuietly(index);
     }
@@ -232,9 +235,9 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     @Override
     public List<FreeTextSearchItemImplementation> getHits(String q, boolean searchNext) {
         List<FreeTextSearchItemImplementation> luceneSearchResultImpl = new ArrayList<>();
+        IndexSearcher searcher = null;
         try {
-            IndexReader reader = DirectoryReader.open(index);
-            IndexSearcher searcher = new IndexSearcher(reader);
+            searcher = searcherManager.acquire();
             Pair<Query, Query, Boolean> fieldQueryPair = parseQuery(q, searcher);
             Query query = fieldQueryPair.first;
             Query highlight = fieldQueryPair.second;
@@ -292,13 +295,20 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                         searchName, projectName, bestFragments, build.getUrl(), isShowConsole);
                 luceneSearchResultImpl.add(itemImpl);
             }
-            reader.close();
         } catch (ParseException e) {
             //            LOGGER.warn("Search Parsing Error: ", e);
         } catch (IOException e) {
             LOGGER.warn("Search IO Error: ", e);
         } catch (AlreadyClosedException e) {
             LOGGER.warn("IndexReader is closed: ", e);
+        } finally {
+            if (searcher != null) {
+                try {
+                    searcherManager.release(searcher);
+                } catch (IOException e) {
+                    LOGGER.warn("Failed to release searcher: ", e);
+                }
+            }
         }
         return luceneSearchResultImpl;
     }
@@ -374,6 +384,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             dbWriter.addDocument(doc);
         } finally {
             dbWriter.commit();
+            searcherManager.maybeRefresh();
         }
     }
 
@@ -391,17 +402,24 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     @Override
     public boolean findRunIndex(Run<?, ?> run) {
+        IndexSearcher searcher = null;
         try {
             Query query = getRunQuery(run);
-            IndexReader reader = DirectoryReader.open(index);
-            IndexSearcher searcher = new IndexSearcher(reader);
+            searcher = searcherManager.acquire();
             TopDocs docs = searcher.search(query, 1);
-            reader.close();
             return docs.scoreDocs.length > 0;
         } catch (ParseException e) {
             LOGGER.warn("findRunIndex: " + e);
         } catch (IOException e) {
             LOGGER.warn("findRunIndex: " + e);
+        } finally {
+            if (searcher != null) {
+                try {
+                    searcherManager.release(searcher);
+                } catch (IOException e) {
+                    LOGGER.warn("Failed to release searcher in findRunIndex: ", e);
+                }
+            }
         }
         return false;
     }
@@ -411,6 +429,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         try {
             dbWriter.deleteDocuments(getRunQuery(run));
             dbWriter.commit();
+            searcherManager.maybeRefresh();
         } catch (ParseException e) {
             LOGGER.warn("removeBuild: " + e);
         }
@@ -426,6 +445,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             }
             dbWriter.deleteDocuments(phraseBuilder.build());
             dbWriter.commit();
+            searcherManager.maybeRefresh();
         } catch (IOException e) {
             LOGGER.error("Could not delete job", e);
         }
@@ -434,16 +454,24 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     @Override
     public void cleanAllJob(ManagerProgress progress) {
         Progress currentProgress = progress.beginCleanJob();
+        IndexSearcher searcher = null;
         try {
-            IndexReader reader = DirectoryReader.open(index);
-            currentProgress.setCurrent(reader.numDocs());
+            searcher = searcherManager.acquire();
+            currentProgress.setCurrent(searcher.getIndexReader().numDocs());
             dbWriter.deleteAll();
             dbWriter.commit();
-            reader.close();
+            searcherManager.maybeRefresh();
             progress.setSuccessfullyCompleted();
         } catch (IOException e) {
             progress.completedWithErrors(e);
         } finally {
+            if (searcher != null) {
+                try {
+                    searcherManager.release(searcher);
+                } catch (IOException e) {
+                    LOGGER.warn("Failed to release searcher in cleanAllJob: ", e);
+                }
+            }
             currentProgress.setFinished();
             progress.jobComplete();
         }
