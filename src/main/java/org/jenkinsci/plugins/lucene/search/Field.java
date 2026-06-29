@@ -72,7 +72,7 @@ public enum Field {
         }
     };
 
-    private static Map<String, Field> index;
+    private static volatile Map<String, Field> index;
     public final String fieldName;
     public final boolean defaultSearchable;
     public final boolean numeric;
@@ -88,14 +88,20 @@ public enum Field {
     }
 
     public static Field getIndex(String fieldName) {
-        if (index == null) {
-            Map<String, Field> indexReverseLookup = new HashMap<String, Field>();
-            for (Field idx : Field.values()) {
-                indexReverseLookup.put(idx.fieldName, idx);
+        Map<String, Field> idx = index;
+        if (idx == null) {
+            synchronized (Field.class) {
+                idx = index;
+                if (idx == null) {
+                    Map<String, Field> indexReverseLookup = new HashMap<>();
+                    for (Field f : Field.values()) {
+                        indexReverseLookup.put(f.fieldName, f);
+                    }
+                    index = idx = indexReverseLookup;
+                }
             }
-            index = indexReverseLookup;
         }
-        return index.get(fieldName);
+        return idx.get(fieldName);
     }
 
     public abstract Object getValue(final Run<?, ?> build);

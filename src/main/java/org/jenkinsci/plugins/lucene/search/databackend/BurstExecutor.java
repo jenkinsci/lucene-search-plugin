@@ -49,7 +49,7 @@ public class BurstExecutor<T> {
             try {
                 while (!workQueue.isEmpty()) {
                     try {
-                        T poll = workQueue.poll(1000, TimeUnit.MILLISECONDS);
+                        T poll = workQueue.poll(100, TimeUnit.MILLISECONDS);
                         //                        T poll = workQueue.poll();
                         if (poll != null) {
                             worker.run(poll);
@@ -68,22 +68,25 @@ public class BurstExecutor<T> {
         if (!started) {
             throw new IllegalStateException("Not started yet");
         }
+        // Spawn workers to handle remaining work (including work added by
+        // workers themselves during processing).  Do NOT drain the queue
+        // on the calling thread — that would defeat the parallelism.
+        ensureEnoughThreadToFinishJob();
+        // Snapshot active threads under the lock, then join every one
+        // outside the lock to avoid deadlock with removeThread().
+        java.util.ArrayList<WorkerThread> snapshot;
+        synchronized (this) {
+            snapshot = new java.util.ArrayList<>(activeThreads);
+        }
+        for (WorkerThread wt : snapshot) {
+            wt.join();
+        }
+        // A joined thread may have spawned a new one from
+        // ensureEnoughThreadToFinishJob inside its run loop, so
+        // do one final drain pass just in case.
         while (!workQueue.isEmpty()) {
             worker.run(workQueue.poll());
         }
-        ensureEnoughThreadToFinishJob();
-        WorkerThread workerThread;
-        while ((workerThread = getFirstWorkerThread()) != null) {
-            workerThread.join();
-        }
-    }
-
-    private synchronized WorkerThread getFirstWorkerThread() {
-        WorkerThread workerThread = null;
-        if (!activeThreads.isEmpty()) {
-            workerThread = activeThreads.iterator().next();
-        }
-        return workerThread;
     }
 
     public static <T> BurstExecutor<T> create(RunWithArgument<T> worker, int maxThreads) {
