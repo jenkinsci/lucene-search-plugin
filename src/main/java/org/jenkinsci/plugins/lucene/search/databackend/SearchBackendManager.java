@@ -7,6 +7,7 @@ import hudson.model.Run;
 import hudson.search.SearchResult;
 import hudson.search.SuggestedItem;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,14 @@ public class SearchBackendManager {
         return instance;
     }
 
+    private SearchBackend<?> getBackendOrWarn(String operation) {
+        SearchBackend<?> backend = getBackend();
+        if (backend == null) {
+            LOG.warn("Search backend is unavailable; cannot " + operation);
+        }
+        return backend;
+    }
+
     public synchronized void reconfigure(final Map<String, Object> config) throws IOException {
         if (instance != null) {
             instance.close();
@@ -41,10 +50,17 @@ public class SearchBackendManager {
         } else {
             instance = LuceneSearchBackend.create(backendConfig.getConfig());
         }
+        if (instance == null) {
+            LOG.warn("Search backend reconfigure failed: backend is null");
+        }
     }
 
     public List<FreeTextSearchItemImplementation> getHits(String query, boolean searchNext) {
-        List<FreeTextSearchItemImplementation> hits = getBackend().getHits(query, searchNext);
+        SearchBackend<?> backend = getBackendOrWarn("get hits");
+        if (backend == null) {
+            return Collections.emptyList();
+        }
+        List<FreeTextSearchItemImplementation> hits = backend.getHits(query, searchNext);
         if (backendConfig.isUseSecurity()) {
             Jenkins jenkins = Jenkins.getInstance();
             Iterator<FreeTextSearchItemImplementation> iter = hits.iterator();
@@ -68,36 +84,63 @@ public class SearchBackendManager {
     }
 
     public void clean(ManagerProgress progress) {
+        SearchBackend<?> backend = getBackendOrWarn("clean index");
+        if (backend == null) {
+            return;
+        }
         progress.setMax(1);
-        getBackend().cleanAllJob(progress);
+        backend.cleanAllJob(progress);
     }
 
     public void abort() {
-        getBackend().abort();
+        SearchBackend<?> backend = getBackend();
+        if (backend != null) {
+            backend.abort();
+        }
     }
 
     public void removeBuild(Run<?, ?> run) throws IOException {
-        getBackend().removeBuild(run);
+        SearchBackend<?> backend = getBackendOrWarn("remove build " + run.getFullDisplayName());
+        if (backend == null) {
+            return;
+        }
+        backend.removeBuild(run);
     }
 
     public void deleteJob(String jobName) throws IOException {
-        getBackend().deleteJob(jobName);
+        SearchBackend<?> backend = getBackendOrWarn("delete job " + jobName);
+        if (backend == null) {
+            return;
+        }
+        backend.deleteJob(jobName);
     }
 
     public void renameJob(String oldFullName, Job<?, ?> job) throws IOException {
-        getBackend().deleteJob(oldFullName);
+        SearchBackend<?> backend = getBackendOrWarn("rename job " + oldFullName);
+        if (backend == null) {
+            return;
+        }
+        backend.deleteJob(oldFullName);
         for (Run<?, ?> run : job.getBuilds()) {
-            getBackend().storeBuild(run);
+            backend.storeBuild(run);
         }
     }
 
     public void storeBuild(Run<?, ?> run) throws IOException {
-        getBackend().storeBuild(run);
+        SearchBackend<?> backend = getBackendOrWarn("store build " + run.getFullDisplayName());
+        if (backend == null) {
+            return;
+        }
+        backend.storeBuild(run);
     }
 
     public void rebuildDatabase(ManagerProgress progress, int maxWorkers, Set<String> jobs, boolean overwrite) {
+        SearchBackend<?> backend = getBackendOrWarn("rebuild database");
+        if (backend == null) {
+            return;
+        }
         try {
-            getBackend().rebuildDatabase(progress, maxWorkers, jobs, overwrite);
+            backend.rebuildDatabase(progress, maxWorkers, jobs, overwrite);
         } catch (Exception e) {
             progress.completedWithErrors(e);
             LOG.error("Failed rebuilding search database", e);

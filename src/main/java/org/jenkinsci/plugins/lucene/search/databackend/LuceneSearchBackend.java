@@ -30,6 +30,7 @@ import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.LockObtainFailedException;
 import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
@@ -92,6 +93,20 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         collectBuildLogs = useBuildLogs;
         IndexWriterConfig config = new IndexWriterConfig(analyzer);
         try {
+            dbWriter = new IndexWriter(index, config);
+        } catch (LockObtainFailedException e) {
+            // A stale write.lock from a previous plugin load or unclean shutdown
+            // (e.g. Jenkins restart where instance was transient) can block
+            // creation. Force-unlock and retry.
+            LOGGER.warn("Stale lock file on Lucene index at " + indexPath
+                    + ", force unlocking: " + e.getMessage());
+            IOUtils.closeQuietly(index);
+            try {
+                java.nio.file.Files.deleteIfExists(indexPath.toPath().resolve("write.lock"));
+            } catch (IOException ignored) {
+                // best-effort
+            }
+            index = FSDirectory.open(indexPath.toPath());
             dbWriter = new IndexWriter(index, config);
         } catch (IllegalArgumentException e) {
             // The existing index may use an incompatible codec (e.g., Lucene87 after
