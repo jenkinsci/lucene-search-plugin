@@ -38,15 +38,14 @@ public class FreeTextSaveableListener extends SaveableListener {
     private void updateIndex(Run run) {
         SearchBackendManager manager = searchBackendManager;
         CompletableFuture.runAsync(
-                        () -> {
-                            try {
-                                manager.removeBuild(run);
-                                manager.storeBuild(run);
-                            } catch (IOException e) {
-                                logger.error("update index failed: ", e);
-                            }
-                        },
-                        INDEX_UPDATE_EXECUTOR)
-                .join();
+                () -> {
+                    try {
+                        manager.removeBuild(run);
+                        manager.storeBuild(run);
+                    } catch (IOException e) {
+                        logger.error("update index failed: ", e);
+                    }
+                },
+                INDEX_UPDATE_EXECUTOR);
     }
 }
