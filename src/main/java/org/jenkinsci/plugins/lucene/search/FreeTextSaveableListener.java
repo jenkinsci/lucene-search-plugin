@@ -46,6 +46,7 @@ public class FreeTextSaveableListener extends SaveableListener {
                         logger.error("update index failed: ", e);
                     }
                 },
-                INDEX_UPDATE_EXECUTOR);
+                INDEX_UPDATE_EXECUTOR)
+                .join();
     }
 }
