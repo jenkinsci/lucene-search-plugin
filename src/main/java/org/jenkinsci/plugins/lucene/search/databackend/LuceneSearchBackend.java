@@ -80,6 +80,13 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     private static final int MAX_HITS_PER_PAGE = 100;
 
+    /**
+     * A synthetic stored field that uniquely identifies a build document.
+     * Used with {@link IndexWriter#updateDocument(Term, Iterable)} to make
+     * storeBuild an atomic upsert — no gap between remove and add.
+     */
+    static final String UNIQUE_KEY_FIELD = "_unique_key";
+
     private final Analyzer analyzer;
     private Directory index;
     private IndexWriter dbWriter;
@@ -87,6 +94,16 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     private final Jenkins jenkins;
     private volatile ScoreDoc lastDoc;
     private final boolean collectBuildLogs;
+
+    /** Builds the unique key for a Run: "projectFullName#buildNumber". */
+    private static String uniqueKeyFor(Run<?, ?> run) {
+        return run.getParent().getFullName() + "#" + run.getNumber();
+    }
+
+    /** Builds the unique {@link Term} for a Run, used for upsert/deletion. */
+    static Term uniqueTermFor(Run<?, ?> run) {
+        return new Term(UNIQUE_KEY_FIELD, uniqueKeyFor(run));
+    }
 
     public LuceneSearchBackend(final File indexPath, final boolean useBuildLogs) throws IOException {
         analyzer = new CaseSensitiveAnalyzer();
@@ -342,6 +359,9 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                 + " number=" + run.getNumber()
                 + " project=" + run.getParent().getFullName());
         Document doc = new Document();
+        // Unique key for atomic upsert — updateDocument deletes any
+        // existing doc with the same term before adding this one.
+        doc.add(new StringField(UNIQUE_KEY_FIELD, uniqueKeyFor(run), STORE));
         for (Field field : Field.values()) {
             org.apache.lucene.document.Field.Store store = field.persist ? STORE : DONT_STORE;
             if (isConsoleField(field) && !collectBuildLogs) {
@@ -383,8 +403,10 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                 LOGGER.warn("CRASH: " + extension.getClass().getName() + ", " + extension.getKeyword() + t);
             }
         }
-        dbWriter.addDocument(doc);
-        LOGGER.debug("LuceneBackend.storeBuild: document added to writer for build="
+        // Atomic upsert: delete any existing doc for this build, then add.
+        // No gap between remove and add — the build never disappears from searches.
+        dbWriter.updateDocument(uniqueTermFor(run), doc);
+        LOGGER.debug("LuceneBackend.storeBuild: document upserted (updateDocument) for build="
                 + run.getFullDisplayName() + " (commitWrites will flush)");
     }
 
@@ -404,12 +426,11 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     public boolean findRunIndex(Run<?, ?> run) {
         IndexSearcher searcher = null;
         try {
-            Query query = getRunQuery(run);
+            Term term = uniqueTermFor(run);
+            Query query = new TermQuery(term);
             searcher = searcherManager.acquire();
             TopDocs docs = searcher.search(query, 1);
             return docs.scoreDocs.length > 0;
-        } catch (ParseException e) {
-            LOGGER.warn("findRunIndex: " + e);
         } catch (IOException e) {
             LOGGER.warn("findRunIndex: " + e);
         } finally {
@@ -429,11 +450,9 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         LOGGER.debug("LuceneBackend.removeBuild: build=" + run.getFullDisplayName()
                 + " number=" + run.getNumber()
                 + " project=" + run.getParent().getFullName());
-        try {
-            dbWriter.deleteDocuments(getRunQuery(run));
-        } catch (ParseException e) {
-            LOGGER.warn("removeBuild: " + e);
-        }
+        Term term = uniqueTermFor(run);
+        LOGGER.debug("LuceneBackend.removeBuild: term=" + term);
+        dbWriter.deleteDocuments(term);
     }
 
     @Override
