@@ -12,7 +12,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.LongPoint;
@@ -36,7 +37,7 @@ import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 
 public class LuceneSearchBackend extends SearchBackend<Document> {
-    private static final Logger LOGGER = Logger.getLogger(LuceneSearchBackend.class);
+    private static final Logger LOG = Logger.getLogger(LuceneSearchBackend.class.getName());
 
     private static final int MAX_NUM_FRAGMENTS = 5;
     private static final String[] EMPTY_ARRAY = new String[0];
@@ -116,7 +117,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             // A stale write.lock from a previous plugin load or unclean shutdown
             // (e.g. Jenkins restart where instance was transient) can block
             // creation. Force-unlock and retry.
-            LOGGER.warn("Stale lock file on Lucene index at " + indexPath
+            LOG.warning("Stale lock file on Lucene index at " + indexPath
                     + ", force unlocking: " + e.getMessage());
             IOUtils.closeQuietly(index);
             try {
@@ -131,7 +132,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         } catch (IllegalArgumentException e) {
             // The existing index may use an incompatible codec (e.g., Lucene87 after
             // upgrading from 8.x) or may be corrupt. Delete it and start fresh.
-            LOGGER.warn("Failed to open existing Lucene index at "
+            LOG.warning("Failed to open existing Lucene index at "
                     + indexPath
                     + ", deleting and recreating: "
                     + e.getMessage());
@@ -159,7 +160,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             }
             return new LuceneSearchBackend(getIndexPath(config), shouldCollect);
         } catch (IOException e) {
-            LOGGER.error("create lucene search backend failed: " + e);
+            LOG.log(Level.SEVERE,"create lucene search backend failed: " + e);
         }
         return null;
     }
@@ -285,7 +286,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                     bestFragments = highlighter.getBestFragments(
                             analyzer, CONSOLE.fieldName, doc.get(CONSOLE.fieldName), MAX_NUM_FRAGMENTS);
                 } catch (InvalidTokenOffsetsException e) {
-                    LOGGER.debug("Failed to find bestFragments", e);
+                    LOG.log(Level.FINE, "Failed to find bestFragments", e);
                 }
 
                 String projectName = doc.get(PROJECT_NAME.fieldName);
@@ -294,17 +295,17 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
                 Item jobItem = jenkins.getItemByFullName(projectName);
                 if (jobItem == null) {
-                    LOGGER.debug("Project not found (removed or renamed): " + projectName);
+                    LOG.fine("Project not found (removed or renamed): " + projectName);
                     continue;
                 }
                 if (!(jobItem instanceof Job)) {
-                    LOGGER.debug("Unknown project type for project name: " + projectName);
+                    LOG.fine("Unknown project type for project name: " + projectName);
                     continue;
                 }
                 Job job = (Job) jobItem;
                 Run build = job.getBuildByNumber(Integer.parseInt(buildNumber));
                 if (build == null) {
-                    LOGGER.debug(
+                    LOG.fine(
                             "Build #" + buildNumber + " not found for project " + projectName + " (possibly removed)");
                     continue;
                 }
@@ -313,17 +314,17 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                 luceneSearchResultImpl.add(itemImpl);
             }
         } catch (ParseException e) {
-            //            LOGGER.warn("Search Parsing Error: ", e);
+            //            LOG.warning("Search Parsing Error: ", e);
         } catch (IOException e) {
-            LOGGER.warn("Search IO Error: ", e);
+            LOG.log(Level.WARNING, "Search IO Error: ", e);
         } catch (AlreadyClosedException e) {
-            LOGGER.warn("IndexReader is closed: ", e);
+            LOG.log(Level.WARNING, "IndexReader is closed: ", e);
         } finally {
             if (searcher != null) {
                 try {
                     searcherManager.release(searcher);
                 } catch (IOException e) {
-                    LOGGER.warn("Failed to release searcher: ", e);
+                    LOG.log(Level.WARNING, "Failed to release searcher: ", e);
                 }
             }
         }
@@ -355,7 +356,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     @Override
     public void storeBuild(final Run<?, ?> run) throws IOException {
-        LOGGER.debug("LuceneBackend.storeBuild: build=" + run.getFullDisplayName()
+        LOG.fine("LuceneBackend.storeBuild: build=" + run.getFullDisplayName()
                 + " number=" + run.getNumber()
                 + " project=" + run.getParent().getFullName());
         Document doc = new Document();
@@ -365,7 +366,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         for (Field field : Field.values()) {
             org.apache.lucene.document.Field.Store store = field.persist ? STORE : DONT_STORE;
             if (isConsoleField(field) && !collectBuildLogs) {
-                LOGGER.debug("Skipping console log indexing for field: " + field.fieldName);
+                LOG.fine("Skipping console log indexing for field: " + field.fieldName);
                 doc.add(new TextField(field.fieldName, "", store));
             } else {
                 Object fieldValue = field.getValue(run);
@@ -400,13 +401,13 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             } catch (Throwable t) {
                 // We don't want to crash the collection of log from other plugin extensions if we happen
                 // to add a plugin that crashes while collecting the logs.
-                LOGGER.warn("CRASH: " + extension.getClass().getName() + ", " + extension.getKeyword() + t);
+                LOG.warning("CRASH: " + extension.getClass().getName() + ", " + extension.getKeyword() + t);
             }
         }
         // Atomic upsert: delete any existing doc for this build, then add.
         // No gap between remove and add — the build never disappears from searches.
         dbWriter.updateDocument(uniqueTermFor(run), doc);
-        LOGGER.debug("LuceneBackend.storeBuild: document upserted (updateDocument) for build="
+        LOG.fine("LuceneBackend.storeBuild: document upserted (updateDocument) for build="
                 + run.getFullDisplayName() + " (commitWrites will flush)");
     }
 
@@ -432,13 +433,13 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             TopDocs docs = searcher.search(query, 1);
             return docs.scoreDocs.length > 0;
         } catch (IOException e) {
-            LOGGER.warn("findRunIndex: " + e);
+            LOG.warning("findRunIndex: " + e);
         } finally {
             if (searcher != null) {
                 try {
                     searcherManager.release(searcher);
                 } catch (IOException e) {
-                    LOGGER.warn("Failed to release searcher in findRunIndex: ", e);
+                    LOG.log(Level.WARNING, "Failed to release searcher in findRunIndex: ", e);
                 }
             }
         }
@@ -447,17 +448,17 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     @Override
     public void removeBuild(Run<?, ?> run) throws IOException {
-        LOGGER.debug("LuceneBackend.removeBuild: build=" + run.getFullDisplayName()
+        LOG.fine("LuceneBackend.removeBuild: build=" + run.getFullDisplayName()
                 + " number=" + run.getNumber()
                 + " project=" + run.getParent().getFullName());
         Term term = uniqueTermFor(run);
-        LOGGER.debug("LuceneBackend.removeBuild: term=" + term);
+        LOG.fine("LuceneBackend.removeBuild: term=" + term);
         dbWriter.deleteDocuments(term);
     }
 
     @Override
     public void deleteJob(String jobName) throws IOException {
-        LOGGER.debug("LuceneBackend.deleteJob: job=" + jobName);
+        LOG.fine("LuceneBackend.deleteJob: job=" + jobName);
         try {
             String[] parts = jobName.split("/");
             PhraseQuery.Builder phraseBuilder = new PhraseQuery.Builder();
@@ -466,16 +467,16 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             }
             dbWriter.deleteDocuments(phraseBuilder.build());
         } catch (IOException e) {
-            LOGGER.error("Could not delete job", e);
+            LOG.log(Level.SEVERE,"Could not delete job", e);
         }
     }
 
     @Override
     public void commitWrites() throws IOException {
-        LOGGER.debug("LuceneBackend.commitWrites: committing and refreshing searcher");
+        LOG.fine("LuceneBackend.commitWrites: committing and refreshing searcher");
         dbWriter.commit();
         searcherManager.maybeRefresh();
-        LOGGER.debug("LuceneBackend.commitWrites: done");
+        LOG.fine("LuceneBackend.commitWrites: done");
     }
 
     @Override
@@ -496,7 +497,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
                 try {
                     searcherManager.release(searcher);
                 } catch (IOException e) {
-                    LOGGER.warn("Failed to release searcher in cleanAllJob: ", e);
+                    LOG.log(Level.WARNING, "Failed to release searcher in cleanAllJob: ", e);
                 }
             }
             currentProgress.setFinished();
