@@ -15,14 +15,15 @@ import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.inject.Inject;
 import jenkins.model.Jenkins;
-import org.apache.log4j.Logger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 import org.jenkinsci.plugins.lucene.search.SearchResultImpl;
 import org.jenkinsci.plugins.lucene.search.config.SearchBackendConfiguration;
 
 @Extension
 public class SearchBackendManager {
-    private static final Logger LOG = Logger.getLogger(SearchBackendManager.class);
+    private static final Logger LOG = Logger.getLogger(SearchBackendManager.class.getName());
 
     private transient SearchBackend<?> instance;
 
@@ -56,7 +57,7 @@ public class SearchBackendManager {
             }
         }
         if (instance == null) {
-            LOG.warn("Search backend is unavailable; cannot " + operation);
+            LOG.warning("Search backend is unavailable; cannot " + operation);
             backendLock.readLock().unlock();
         }
         return instance;
@@ -76,7 +77,7 @@ public class SearchBackendManager {
                 instance = LuceneSearchBackend.create(backendConfig.getConfig());
             }
             if (instance == null) {
-                LOG.warn("Search backend reconfigure failed: backend is null");
+                LOG.warning("Search backend reconfigure failed: backend is null");
             }
         } finally {
             backendLock.writeLock().unlock();
@@ -141,34 +142,34 @@ public class SearchBackendManager {
     }
 
     public void removeBuild(Run<?, ?> run) throws IOException {
-        LOG.debug("removeBuild: build=" + run.getFullDisplayName());
+        LOG.fine("removeBuild: build=" + run.getFullDisplayName());
         SearchBackend<?> backend = lockBackend("remove build " + run.getFullDisplayName());
         if (backend == null) {
-            LOG.debug("removeBuild: backend is null, SKIPPING build=" + run.getFullDisplayName());
+            LOG.fine("removeBuild: backend is null, SKIPPING build=" + run.getFullDisplayName());
             return;
         }
         try {
             boolean existed = backend.findRunIndex(run);
-            LOG.debug("removeBuild: existed=" + existed + " build=" + run.getFullDisplayName());
+            LOG.fine("removeBuild: existed=" + existed + " build=" + run.getFullDisplayName());
             backend.removeBuild(run);
             backend.commitWrites();
-            LOG.debug("removeBuild: committed OK build=" + run.getFullDisplayName());
+            LOG.fine("removeBuild: committed OK build=" + run.getFullDisplayName());
         } finally {
             unlockBackend();
         }
     }
 
     public void deleteJob(String jobName) throws IOException {
-        LOG.debug("deleteJob: job=" + jobName);
+        LOG.fine("deleteJob: job=" + jobName);
         SearchBackend<?> backend = lockBackend("delete job " + jobName);
         if (backend == null) {
-            LOG.debug("deleteJob: backend is null, SKIPPING job=" + jobName);
+            LOG.fine("deleteJob: backend is null, SKIPPING job=" + jobName);
             return;
         }
         try {
             backend.deleteJob(jobName);
             backend.commitWrites();
-            LOG.debug("deleteJob: committed OK job=" + jobName);
+            LOG.fine("deleteJob: committed OK job=" + jobName);
         } finally {
             unlockBackend();
         }
@@ -200,22 +201,22 @@ public class SearchBackendManager {
     }
 
     public void storeBuild(Run<?, ?> run) throws IOException {
-        LOG.debug("storeBuild: build=" + run.getFullDisplayName()
+        LOG.fine("storeBuild: build=" + run.getFullDisplayName()
                 + " number=" + run.getNumber()
                 + " isBuilding=" + run.isBuilding()
                 + " isLogUpdated=" + run.isLogUpdated()
                 + " result=" + run.getResult());
         SearchBackend<?> backend = lockBackend("store build " + run.getFullDisplayName());
         if (backend == null) {
-            LOG.debug("storeBuild: backend is null, SKIPPING build=" + run.getFullDisplayName());
+            LOG.fine("storeBuild: backend is null, SKIPPING build=" + run.getFullDisplayName());
             return;
         }
         try {
             boolean existed = backend.findRunIndex(run);
-            LOG.debug("storeBuild: existed=" + existed + " build=" + run.getFullDisplayName());
+            LOG.fine("storeBuild: existed=" + existed + " build=" + run.getFullDisplayName());
             backend.storeBuild(run);
             backend.commitWrites();
-            LOG.debug("storeBuild: committed OK build=" + run.getFullDisplayName());
+            LOG.fine("storeBuild: committed OK build=" + run.getFullDisplayName());
         } finally {
             unlockBackend();
         }
@@ -230,7 +231,7 @@ public class SearchBackendManager {
             backend.rebuildDatabase(progress, maxWorkers, jobs, overwrite);
         } catch (Exception e) {
             progress.completedWithErrors(e);
-            LOG.error("Failed rebuilding search database", e);
+            LOG.log(Level.SEVERE, "Failed rebuilding search database", e);
         } finally {
             progress.setFinished();
             unlockBackend();
