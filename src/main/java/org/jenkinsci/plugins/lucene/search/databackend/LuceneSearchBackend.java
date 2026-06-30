@@ -338,6 +338,9 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     @Override
     public void storeBuild(final Run<?, ?> run) throws IOException {
+        LOGGER.debug("LuceneBackend.storeBuild: build=" + run.getFullDisplayName()
+                + " number=" + run.getNumber()
+                + " project=" + run.getParent().getFullName());
         Document doc = new Document();
         for (Field field : Field.values()) {
             org.apache.lucene.document.Field.Store store = field.persist ? STORE : DONT_STORE;
@@ -381,6 +384,8 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             }
         }
         dbWriter.addDocument(doc);
+        LOGGER.debug("LuceneBackend.storeBuild: document added to writer for build="
+                + run.getFullDisplayName() + " (commitWrites will flush)");
     }
 
     public Query getRunQuery(Run<?, ?> run) throws ParseException {
@@ -421,6 +426,9 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     @Override
     public void removeBuild(Run<?, ?> run) throws IOException {
+        LOGGER.debug("LuceneBackend.removeBuild: build=" + run.getFullDisplayName()
+                + " number=" + run.getNumber()
+                + " project=" + run.getParent().getFullName());
         try {
             dbWriter.deleteDocuments(getRunQuery(run));
         } catch (ParseException e) {
@@ -430,6 +438,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     @Override
     public void deleteJob(String jobName) throws IOException {
+        LOGGER.debug("LuceneBackend.deleteJob: job=" + jobName);
         try {
             String[] parts = jobName.split("/");
             PhraseQuery.Builder phraseBuilder = new PhraseQuery.Builder();
@@ -444,8 +453,10 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     @Override
     public void commitWrites() throws IOException {
+        LOGGER.debug("LuceneBackend.commitWrites: committing and refreshing searcher");
         dbWriter.commit();
         searcherManager.maybeRefresh();
+        LOGGER.debug("LuceneBackend.commitWrites: done");
     }
 
     @Override

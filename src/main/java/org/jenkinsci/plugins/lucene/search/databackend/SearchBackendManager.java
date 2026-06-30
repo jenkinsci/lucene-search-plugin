@@ -141,26 +141,34 @@ public class SearchBackendManager {
     }
 
     public void removeBuild(Run<?, ?> run) throws IOException {
+        LOG.debug("removeBuild: build=" + run.getFullDisplayName());
         SearchBackend<?> backend = lockBackend("remove build " + run.getFullDisplayName());
         if (backend == null) {
+            LOG.debug("removeBuild: backend is null, SKIPPING build=" + run.getFullDisplayName());
             return;
         }
         try {
+            boolean existed = backend.findRunIndex(run);
+            LOG.debug("removeBuild: existed=" + existed + " build=" + run.getFullDisplayName());
             backend.removeBuild(run);
             backend.commitWrites();
+            LOG.debug("removeBuild: committed OK build=" + run.getFullDisplayName());
         } finally {
             unlockBackend();
         }
     }
 
     public void deleteJob(String jobName) throws IOException {
+        LOG.debug("deleteJob: job=" + jobName);
         SearchBackend<?> backend = lockBackend("delete job " + jobName);
         if (backend == null) {
+            LOG.debug("deleteJob: backend is null, SKIPPING job=" + jobName);
             return;
         }
         try {
             backend.deleteJob(jobName);
             backend.commitWrites();
+            LOG.debug("deleteJob: committed OK job=" + jobName);
         } finally {
             unlockBackend();
         }
@@ -183,13 +191,22 @@ public class SearchBackendManager {
     }
 
     public void storeBuild(Run<?, ?> run) throws IOException {
+        LOG.debug("storeBuild: build=" + run.getFullDisplayName()
+                + " number=" + run.getNumber()
+                + " isBuilding=" + run.isBuilding()
+                + " isLogUpdated=" + run.isLogUpdated()
+                + " result=" + run.getResult());
         SearchBackend<?> backend = lockBackend("store build " + run.getFullDisplayName());
         if (backend == null) {
+            LOG.debug("storeBuild: backend is null, SKIPPING build=" + run.getFullDisplayName());
             return;
         }
         try {
+            boolean existed = backend.findRunIndex(run);
+            LOG.debug("storeBuild: existed=" + existed + " build=" + run.getFullDisplayName());
             backend.storeBuild(run);
             backend.commitWrites();
+            LOG.debug("storeBuild: committed OK build=" + run.getFullDisplayName());
         } finally {
             unlockBackend();
         }

@@ -20,8 +20,10 @@ public class FreeTextItemListener extends ItemListener {
 
     @Override
     public void onDeleted(Item item) {
+        logger.debug("onDeleted: item=" + item.getFullName());
         try {
             searchBackendManager.deleteJob(item.getFullName());
+            logger.debug("onDeleted: deleted OK item=" + item.getFullName());
         } catch (IOException e) {
             logger.error("When deleting the job index: ", e);
         }
@@ -32,6 +34,7 @@ public class FreeTextItemListener extends ItemListener {
         if (!(item instanceof Job)) {
             return;
         }
+        logger.debug("onRenamed: old=" + oldName + " new=" + newName + " item=" + item.getFullName());
         try {
             String oldFullName;
             if (item.getParent() instanceof Jenkins) {
@@ -40,6 +43,7 @@ public class FreeTextItemListener extends ItemListener {
                 oldFullName = item.getParent().getFullName() + "/" + oldName;
             }
             searchBackendManager.renameJob(oldFullName, (Job<?, ?>) item);
+            logger.debug("onRenamed: renamed OK old=" + oldFullName + " new=" + item.getFullName());
         } catch (IOException e) {
             logger.error("When renaming the job index: ", e);
         }
@@ -50,8 +54,10 @@ public class FreeTextItemListener extends ItemListener {
         if (!(item instanceof Job)) {
             return;
         }
+        logger.debug("onLocationChanged: old=" + oldFullName + " new=" + newFullName + " item=" + item.getFullName());
         try {
             searchBackendManager.renameJob(oldFullName, (Job<?, ?>) item);
+            logger.debug("onLocationChanged: moved OK old=" + oldFullName + " new=" + newFullName);
         } catch (IOException e) {
             logger.error("When moving the job index: ", e);
         }
