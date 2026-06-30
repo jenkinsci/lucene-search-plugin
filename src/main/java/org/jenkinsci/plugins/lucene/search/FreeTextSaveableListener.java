@@ -30,7 +30,12 @@ public class FreeTextSaveableListener extends SaveableListener {
     @Override
     public void onChange(Saveable o, XmlFile file) {
         if (o instanceof Run) {
-            Run run = (Run) o;
+            Run<?, ?> run = (Run<?, ?>) o;
+            logger.debug("onChange: build=" + run.getFullDisplayName()
+                    + " number=" + run.getNumber()
+                    + " isBuilding=" + run.isBuilding()
+                    + " isLogUpdated=" + run.isLogUpdated()
+                    + " file=" + (file != null ? file.getFile() : "null"));
             updateIndex(run);
         }
     }
@@ -40,8 +45,10 @@ public class FreeTextSaveableListener extends SaveableListener {
         CompletableFuture.runAsync(
                 () -> {
                     try {
+                        logger.debug("updateIndex: remove+store build=" + run.getFullDisplayName());
                         manager.removeBuild(run);
                         manager.storeBuild(run);
+                        logger.debug("updateIndex: done build=" + run.getFullDisplayName());
                     } catch (IOException e) {
                         logger.error("update index failed: ", e);
                     }
