@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import jenkins.model.Jenkins;
-import org.apache.log4j.Logger;
+import java.util.logging.Logger;
 import org.jenkinsci.plugins.lucene.search.databackend.ManagerProgress;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackend;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
@@ -27,7 +27,7 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 @Extension
 public class LuceneManager extends ManagementLink {
 
-    private static final Logger LOGGER = Logger.getLogger(SearchBackend.class);
+    private static final Logger LOG = Logger.getLogger(LuceneManager.class.getName());
 
     private static final Gson GSON = new GsonBuilder()
             .registerTypeAdapter(AtomicInteger.class, (JsonSerializer<AtomicInteger>)
