@@ -3,10 +3,11 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import org.apache.log4j.Logger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class BurstExecutor<T> {
-    private static final Logger LOGGER = Logger.getLogger(BurstExecutor.class);
+    private static final Logger LOG = Logger.getLogger(BurstExecutor.class.getName());
     private final LinkedBlockingQueue<T> workQueue = new LinkedBlockingQueue<T>();
     private final HashSet<WorkerThread> activeThreads = new HashSet<WorkerThread>();
     private final RunWithArgument<T> worker;
@@ -55,7 +56,7 @@ public class BurstExecutor<T> {
                             worker.run(poll);
                         }
                     } catch (Exception e) {
-                        LOGGER.error("WorkerThread " + getName() + " exception", e);
+                        LOG.log(Level.SEVERE, "WorkerThread " + getName() + " exception", e);
                     }
                 }
             } finally {
