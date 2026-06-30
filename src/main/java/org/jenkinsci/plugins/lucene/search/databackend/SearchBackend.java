@@ -8,14 +8,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import jenkins.model.Jenkins;
-import org.apache.log4j.Logger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchExtension;
 import org.jenkinsci.plugins.lucene.search.FreeTextSearchItemImplementation;
 
 public abstract class SearchBackend<T> {
 
-    private static final Logger LOGGER = Logger.getLogger(SearchBackend.class);
+    private static final Logger LOG = Logger.getLogger(SearchBackend.class.getName());
     private boolean stop = false;
 
     @SuppressWarnings("rawtypes")
@@ -41,7 +42,7 @@ public abstract class SearchBackend<T> {
                 }
             } catch (Exception e) {
                 progress.completedWithErrors(e);
-                LOGGER.warn("Error rebuilding build", e);
+                LOG.log(Level.WARNING, "Error rebuilding build", e);
             } finally {
                 progress.incCurrent();
             }
@@ -86,7 +87,7 @@ public abstract class SearchBackend<T> {
             burstExecutor.waitForCompletion();
         } catch (InterruptedException e) {
             e.printStackTrace();
-            LOGGER.warn("Why was I interrupted?", e);
+            LOG.log(Level.WARNING, "Why was I interrupted?", e);
         }
     }
 
@@ -146,7 +147,7 @@ public abstract class SearchBackend<T> {
             }
         } catch (Exception e) {
             progress.completedWithErrors(e);
-            LOGGER.error("Rebuild database failed", e);
+            LOG.log(Level.SEVERE, "Rebuild database failed", e);
         } finally {
             progress.setFinished();
         }
