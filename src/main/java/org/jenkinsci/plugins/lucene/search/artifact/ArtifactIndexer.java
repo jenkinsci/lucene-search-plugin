@@ -19,9 +19,9 @@ import java.nio.charset.Charset;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import jenkins.MasterToSlaveFileCallable;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
 import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -31,7 +31,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class ArtifactIndexer extends Recorder {
 
-    private static final Logger LOGGER = Logger.getLogger(ArtifactIndexer.class);
+    private static final Logger LOG = Logger.getLogger(ArtifactIndexer.class.getName());
 
     /** Comma- or space-separated list of patterns of files/directories to be archived. */
     private final String artifacts;
@@ -85,9 +85,9 @@ public class ArtifactIndexer extends Recorder {
                 }
                 return sb.toString();
             } catch (IOException e) {
-                LOGGER.error("Couldn't get artifacts for search database", e);
+                LOG.log(Level.SEVERE,"Couldn't get artifacts for search database", e);
             } catch (InterruptedException e) {
-                LOGGER.error("Couldn't get artifacts for search database", e);
+                LOG.log(Level.SEVERE,"Couldn't get artifacts for search database", e);
             }
         }
         return null;
