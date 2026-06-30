@@ -190,6 +190,15 @@ public class SearchBackendManager {
         }
     }
 
+    /**
+     * Returns true when the backend indexes console logs. When false,
+     * onChange saves during a running build can be skipped — no indexed
+     * field changes between onStarted and onCompleted.
+     */
+    public boolean isCollectingBuildLogs() {
+        return backendConfig.isCollectBuildLogs();
+    }
+
     public void storeBuild(Run<?, ?> run) throws IOException {
         LOG.debug("storeBuild: build=" + run.getFullDisplayName()
                 + " number=" + run.getNumber()
