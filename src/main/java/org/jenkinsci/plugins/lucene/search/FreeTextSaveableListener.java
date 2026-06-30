@@ -10,7 +10,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.inject.Inject;
-import org.apache.log4j.Logger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jenkinsci.plugins.lucene.search.databackend.SearchBackendManager;
 
 @Extension
@@ -22,7 +23,7 @@ public class FreeTextSaveableListener extends SaveableListener {
         return thread;
     });
 
-    Logger logger = Logger.getLogger(FreeTextSaveableListener.class);
+    private static final Logger LOG = Logger.getLogger(FreeTextSaveableListener.class.getName());
 
     @Inject
     SearchBackendManager searchBackendManager;
@@ -38,11 +39,11 @@ public class FreeTextSaveableListener extends SaveableListener {
             // build start. Skipping mid-build saves eliminates the constant index
             // churn we'd otherwise cause every 1-2 seconds.
             if (run.isBuilding() && !searchBackendManager.isCollectingBuildLogs()) {
-                logger.debug("onChange: skipping still-building " + run.getFullDisplayName()
+                LOG.fine("onChange: skipping still-building " + run.getFullDisplayName()
                         + " (no indexed fields change)");
                 return;
             }
-            logger.debug("onChange: build=" + run.getFullDisplayName()
+            LOG.fine("onChange: build=" + run.getFullDisplayName()
                     + " number=" + run.getNumber()
                     + " isBuilding=" + run.isBuilding()
                     + " isLogUpdated=" + run.isLogUpdated()
@@ -58,11 +59,11 @@ public class FreeTextSaveableListener extends SaveableListener {
                     try {
                         // storeBuild uses updateDocument (atomic upsert) — no need
                         // to remove first; the build never disappears from searches.
-                        logger.debug("updateIndex: upsert build=" + run.getFullDisplayName());
+                        LOG.fine("updateIndex: upsert build=" + run.getFullDisplayName());
                         manager.storeBuild(run);
-                        logger.debug("updateIndex: done build=" + run.getFullDisplayName());
+                        LOG.fine("updateIndex: done build=" + run.getFullDisplayName());
                     } catch (IOException e) {
-                        logger.error("update index failed: ", e);
+                        LOG.log(Level.SEVERE, "update index failed: ", e);
                     }
                 },
                 INDEX_UPDATE_EXECUTOR)
