@@ -45,8 +45,9 @@ public class FreeTextSaveableListener extends SaveableListener {
         CompletableFuture.runAsync(
                 () -> {
                     try {
-                        logger.debug("updateIndex: remove+store build=" + run.getFullDisplayName());
-                        manager.removeBuild(run);
+                        // storeBuild uses updateDocument (atomic upsert) — no need
+                        // to remove first; the build never disappears from searches.
+                        logger.debug("updateIndex: upsert build=" + run.getFullDisplayName());
                         manager.storeBuild(run);
                         logger.debug("updateIndex: done build=" + run.getFullDisplayName());
                     } catch (IOException e) {
