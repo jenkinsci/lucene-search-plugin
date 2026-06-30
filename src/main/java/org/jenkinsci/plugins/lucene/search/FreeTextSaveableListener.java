@@ -31,6 +31,17 @@ public class FreeTextSaveableListener extends SaveableListener {
     public void onChange(Saveable o, XmlFile file) {
         if (o instanceof Run) {
             Run<?, ?> run = (Run<?, ?>) o;
+            // onStarted already indexed this build, and onCompleted will do the
+            // final index. When we're NOT indexing console logs, nothing in the
+            // searchable document changes between start and finish — project
+            // name, build number, parameters, and display name are all fixed at
+            // build start. Skipping mid-build saves eliminates the constant index
+            // churn we'd otherwise cause every 1-2 seconds.
+            if (run.isBuilding() && !searchBackendManager.isCollectingBuildLogs()) {
+                logger.debug("onChange: skipping still-building " + run.getFullDisplayName()
+                        + " (no indexed fields change)");
+                return;
+            }
             logger.debug("onChange: build=" + run.getFullDisplayName()
                     + " number=" + run.getNumber()
                     + " isBuilding=" + run.isBuilding()
