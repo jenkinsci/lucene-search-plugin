@@ -8,14 +8,14 @@ Lucene is a powerful search library. Many popular search engines like Elastic Se
 
 If you have job data before the installation of Lucene Search, you need to rebuild the database manually. Note that any new builds after the installation of Lucene Search will be indexed automatically and the index of deleted builds and jobs will be deleted accordingly.
 
-![image](https://user-images.githubusercontent.com/39845648/132785339-78b0b840-e99b-47ac-90fc-8528742d5c6d.png)
+![Settings](images/lucene-settings.png)
 
 
 To index the existing data, you need to go to "Manage Jenkins -> Lucene Search Manager" and click rebuild. You can enter the jobs that you want to index. If nothing is entered, all jobs will be indexed by default. There are two modes of rebuild available. In "overwrite" mode, the indexer deletes old index of the job if there are any and then index the job. In "preserve" mode, the indexer searches for the build name. If the build is already indexed, it will skip to the next build. Otherwise, the build will be indexed.
 
 The clean button will delete all your index. Please use it cautiously.
 
-![image](https://user-images.githubusercontent.com/39845648/132785285-a2744f43-1a93-4c15-8687-e69fe674ee0e.png)
+![Configuration](images/lucene-configuration.png)
 
 
 ## Search Query
@@ -44,9 +44,7 @@ There are five fields Lucene Search can search: console log, build display name,
 For example, if you want to search for builds in the job "test1", which have "1" in its display name and 
 "bash" in its console log, the query should be "test1 d:1 c:bash". If you want to search for all builds whose display name starts with "linux" or ends with "linux", the query should be "linux* OR *linux".  
 
-![image](https://user-images.githubusercontent.com/39845648/132785524-802adb56-c964-4aef-b215-59904668d3c7.png)
-
-![image](https://user-images.githubusercontent.com/39845648/132785770-377100db-b6e9-433c-a161-2e344227e1a7.png)
+![Configuration](images/lucene-search.png)
 
 
 ## Search Result
