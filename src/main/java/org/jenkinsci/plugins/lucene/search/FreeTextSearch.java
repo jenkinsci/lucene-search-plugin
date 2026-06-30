@@ -14,7 +14,7 @@ import org.kohsuke.stapler.StaplerResponse2;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
 
 public class FreeTextSearch extends Search {
-    private static final Logger LOGGER = Logger.getLogger(Search.class.getName());
+    private static final Logger LOG = Logger.getLogger(Search.class.getName());
 
     private final SearchBackendManager manager;
 
@@ -45,8 +45,8 @@ public class FreeTextSearch extends Search {
             Ancestor a = l.get(i);
             if (a.getObject() instanceof SearchableModelObject) {
                 SearchableModelObject smo = (SearchableModelObject) a.getObject();
-                if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine(String.format(
+                if (LOG.isLoggable(Level.FINE)) {
+                    LOG.fine(String.format(
                             "smo.displayName=%s, searchName=%s", smo.getDisplayName(), smo.getSearchName()));
                 }
 
