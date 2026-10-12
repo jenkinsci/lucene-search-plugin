@@ -37,6 +37,11 @@
     <jenkins.version>${jenkins.baseline}.3</jenkins.version>
     <lucene.version>9.12.0</lucene.version>
     <ban-junit4-imports.skip>false</ban-junit4-imports.skip>
+    <!-- The version pinned by parent 5.17 bundles a Groovy/ASM that cannot read Java 25
+         class files, which breaks `package` with "Unsupported class file major version
+         69" while running the inline license script. Drop this override once the parent
+         pins a fixed version. -->
+    <license-maven-plugin.version>210.v568d0b_a_2b_e44</license-maven-plugin.version>
   </properties>
   <dependencyManagement>
     <dependencies>
