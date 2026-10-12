@@ -1,18 +1,17 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hudson.model.FreeStyleProject;
 import hudson.model.Run;
 import hudson.tasks.Shell;
+import org.apache.lucene.store.AlreadyClosedException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -58,40 +57,47 @@ class LuceneSearchBackendConcurrencyTest {
     }
 
     /**
-     * The constructor used to react to a lock conflict by deleting
-     * {@code write.lock}. That does not release the holder's lock: it repoints the
-     * path at a fresh inode, so the live writer fails its next lock validation
-     * with "Underlying file changed by an external force" and dies. Opening a
-     * second backend must leave the live writer's lock file alone and keep that
-     * writer usable.
+     * A writer that is still holding the index — one leaked by an earlier plugin
+     * or configuration reload — must be closed and replaced, never bypassed by
+     * deleting {@code write.lock}. The old constructor did the latter: it left
+     * the leaked writer holding a lock on an unlinked file, so that writer died
+     * on its next write with "Underlying file changed by an external force", and
+     * nothing rebuilt it.
      */
     @Test
     @Timeout(value = 60, unit = TimeUnit.SECONDS)
-    void shouldNotTouchTheLockFileOfALiveWriter() throws Exception {
+    void shouldTakeOverFromALeakedWriterWithoutTouchingTheLockFile() throws Exception {
         FreeStyleProject project = rule.createFreeStyleProject("second-writer-test");
         project.getBuildersList().add(new Shell("echo SECOND_WRITER_MARKER\n"));
         rule.buildAndAssertSuccess(project);
         Run<?, ?> run = project.getLastBuild();
         assertNotNull(run, "Build must exist");
 
-        LuceneSearchBackend first = LuceneSearchBackend.create(configMap());
-        assertNotNull(first, "First backend should be created");
-        Object lockFileBefore = lockFileKey();
+        LuceneSearchBackend leaked = LuceneSearchBackend.create(configMap());
+        assertNotNull(leaked, "First backend should be created");
 
-        // A second writer cannot be let in — and must not be forced in either.
-        LuceneSearchBackend second = LuceneSearchBackend.create(configMap());
-        assertNull(second, "A second backend on the same index cannot be opened");
-        assertEquals(lockFileBefore, lockFileKey(), "write.lock must not be deleted and recreated");
+        // The successor must come up and take the index over.
+        LuceneSearchBackend successor = LuceneSearchBackend.create(configMap());
+        assertNotNull(successor, "The index must be reopened by closing the leaked writer, not refused");
 
-        // The live writer must still be able to write: that is what the deleted
-        // lock file used to break.
-        assertDoesNotThrow(
+        // The leaked writer is closed, not left half-alive on a deleted lock file.
+        assertThrows(
+                AlreadyClosedException.class,
                 () -> {
-                    first.storeBuild(run);
-                    first.commitWrites();
+                    leaked.storeBuild(run);
+                    leaked.commitWrites();
                 },
-                "The second open attempt must not have disturbed the live writer");
-        first.close();
+                "The leaked writer must have been closed");
+
+        // ...and the index it was holding is intact and writable by the successor.
+        successor.storeBuild(run);
+        successor.commitWrites();
+        successor.close();
+
+        LuceneSearchBackend reopened = LuceneSearchBackend.create(configMap());
+        assertNotNull(reopened, "Index must be reopenable after close()");
+        assertTrue(reopened.findRunIndex(run), "What the successor stored must be in the index");
+        reopened.close();
     }
 
     @Test
@@ -108,17 +114,10 @@ class LuceneSearchBackendConcurrencyTest {
                 },
                 "close() must be idempotent");
 
-        // Closing must also release the index, so it can be reopened.
+        // Closing must also release the index path, so the index can be reopened.
         LuceneSearchBackend reopened = LuceneSearchBackend.create(configMap());
         assertNotNull(reopened, "Index must be reopenable after close()");
         reopened.close();
-    }
-
-    private Object lockFileKey() throws IOException {
-        Object key = Files.readAttributes(tempDir.resolve("write.lock"), BasicFileAttributes.class)
-                .fileKey();
-        assertNotNull(key, "This filesystem should report a file key");
-        return key;
     }
 
     private Map<String, Object> configMap() {

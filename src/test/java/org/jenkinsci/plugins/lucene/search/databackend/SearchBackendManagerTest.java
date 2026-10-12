@@ -252,6 +252,31 @@ class SearchBackendManagerTest {
         assertNull(manager.currentBackend(), "No backend can exist for an unopenable path");
     }
 
+    // ── shutdown: commit and release the lock before the JVM goes ─
+
+    @Test
+    @Timeout(value = 30, unit = TimeUnit.SECONDS)
+    void closeBackendShouldCommitAndReleaseTheIndex() throws Exception {
+        SearchBackendManager manager = getManager();
+        FreeStyleProject project = rule.createFreeStyleProject("shutdown-test");
+        project.getBuildersList().add(new Shell("echo SHUTDOWN_MARKER\n"));
+        rule.buildAndAssertSuccess(project);
+        Run<?, ?> run = project.getLastBuild();
+        assertNotNull(run, "Build must exist");
+
+        // What the shutdown hook does before the JVM exits: close the backend so
+        // the writer commits and the index lock is released.
+        manager.closeBackend();
+        assertNull(manager.currentBackend(), "The backend must be closed and forgotten");
+
+        // The index must be left readable and the path free for the next start:
+        // a new backend has to be able to open it.
+        assertTrue(
+                manager.getHits("SHUTDOWN_MARKER", false).size() > 0,
+                "The committed index must still be readable after the backend was closed");
+        assertNotNull(manager.currentBackend(), "A later operation must build a fresh backend");
+    }
+
     // ── helpers ──────────────────────────────────────────────────
 
     private SearchBackendManager getManager() {
