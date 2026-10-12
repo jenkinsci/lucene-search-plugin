@@ -7,6 +7,8 @@ import hudson.model.Job;
 import hudson.model.Run;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,6 +16,7 @@ import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.LongPoint;
@@ -114,28 +117,26 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         try {
             dbWriter = new IndexWriter(index, config);
         } catch (LockObtainFailedException e) {
-            // A stale write.lock from a previous plugin load or unclean shutdown
-            // (e.g. Jenkins restart where instance was transient) can block
-            // creation. Force-unlock and retry.
-            LOG.warning("Stale lock file on Lucene index at " + indexPath
-                    + ", force unlocking: " + e.getMessage());
-            IOUtils.closeQuietly(index);
-            try {
-                java.nio.file.Files.deleteIfExists(indexPath.toPath().resolve("write.lock"));
-            } catch (IOException ignored) {
-                // best-effort
-            }
-            index = FSDirectory.open(indexPath.toPath());
-            // IndexWriterConfig is consumed on first use — must create a fresh one.
-            config = new IndexWriterConfig(analyzer);
-            dbWriter = new IndexWriter(index, config);
+            // Never force-unlock here. This exception can only be thrown while a
+            // *live* holder exists: after an unclean shutdown or a restart the
+            // operating system has already released the lock, so a write.lock
+            // file left on disk blocks nothing on its own. Deleting the file
+            // never releases the holder's lock either, and it is destructive in
+            // both cases it can hit:
+            //  - same classloader: Lucene still refuses the second writer (its
+            //    LOCK_HELD set), but the live writer's lock file has already
+            //    been deleted, so that writer fails its next lock validation
+            //    with "Underlying file changed by an external force" and dies.
+            //  - after a plugin reload, where the new classloader knows nothing
+            //    about the old writer, the second writer is created and two
+            //    writers share one index directory.
+            throw new IOException(lockConflictMessage(indexPath, e), e);
         } catch (IllegalArgumentException e) {
             // The existing index may use an incompatible codec (e.g., Lucene87 after
             // upgrading from 8.x) or may be corrupt. Delete it and start fresh.
-            LOG.warning("Failed to open existing Lucene index at "
-                    + indexPath
-                    + ", deleting and recreating: "
-                    + e.getMessage());
+            LOG.severe("Lucene index at " + indexPath + " cannot be opened ("
+                    + e.getMessage() + "); deleting and recreating it. Search data is lost until you run"
+                    + " 'Manage Jenkins -> Lucene Search Manager -> Rebuild'.");
             IOUtils.closeQuietly(index);
             deleteDirectory(indexPath);
             index = FSDirectory.open(indexPath.toPath());
@@ -146,10 +147,46 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         jenkins = Jenkins.get();
     }
 
-    private static void deleteDirectory(File directory) throws IOException {
-        if (directory.exists()) {
-            org.apache.commons.io.FileUtils.deleteDirectory(directory);
+    /**
+     * Lucene reports the two possible holders in its message: a lock held by a
+     * live writer in this JVM ("this virtual machine") and one held by another
+     * process ("another program"). The first is the case this plugin can actually
+     * produce — two writers on one index in a single Jenkins JVM — and is worth
+     * saying plainly; the second is kept only as a defensive branch. The wording
+     * check is guarded so a future Lucene change cannot break it.
+     */
+    private static String lockConflictMessage(File indexPath, LockObtainFailedException cause) {
+        String luceneMessage = cause.getMessage() == null ? "" : cause.getMessage();
+        if (luceneMessage.contains("this virtual machine")) {
+            return "Lucene index " + indexPath + " is locked by another search backend in this Jenkins JVM:"
+                    + " two writers on one index. Refusing to steal the lock; this backend stays unavailable"
+                    + " until that writer is closed.";
         }
+        return "Lucene index " + indexPath + " is locked by a process outside this JVM (not expected on a"
+                + " single-instance host — check it with: fuser -v " + indexPath + "/write.lock). Refusing to"
+                + " steal the lock.";
+    }
+
+    /**
+     * Deletes an index directory that could not be opened. Refuses to touch a
+     * symlink or a directory without a segments file, so a misconfigured
+     * {@code lucenePath} can never wipe data that is not a Lucene index.
+     */
+    private static void deleteDirectory(File directory) throws IOException {
+        Path path = directory.toPath();
+        if (!Files.exists(path)) {
+            return;
+        }
+        if (Files.isSymbolicLink(path)) {
+            throw new IOException("Refusing to delete symlinked index path: " + path);
+        }
+        try (Stream<Path> entries = Files.list(path)) {
+            if (entries.noneMatch(entry -> entry.getFileName().toString().startsWith("segments_"))) {
+                throw new IOException("Refusing to delete " + path + ": it has no segments_ file, so it does not"
+                        + " look like a Lucene index.");
+            }
+        }
+        org.apache.commons.io.FileUtils.deleteDirectory(directory);
     }
 
     public static LuceneSearchBackend create(final Map<String, Object> config) {
