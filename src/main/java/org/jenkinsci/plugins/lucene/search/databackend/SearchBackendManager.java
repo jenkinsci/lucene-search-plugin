@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.lucene.search.databackend;
 
+import com.google.common.annotations.VisibleForTesting;
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.model.Job;
@@ -67,15 +68,33 @@ public class SearchBackendManager {
         backendLock.readLock().unlock();
     }
 
+    /** The live backend, for tests. Production code goes through the manager. */
+    @VisibleForTesting
+    SearchBackend<?> currentBackend() {
+        backendLock.readLock().lock();
+        try {
+            return instance;
+        } finally {
+            backendLock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Replaces the backend with one built from {@code config}. The manager owns
+     * the swap: it nulls the field out first so nothing can pick up a backend
+     * that is about to be closed, closes the old one, and only then creates the
+     * replacement (the new writer cannot take the index lock while the old one
+     * still holds it).
+     */
     public void reconfigure(final Map<String, Object> config) throws IOException {
         backendLock.writeLock().lock();
         try {
-            if (instance != null) {
-                instance.close();
-                instance = instance.reconfigure(config);
-            } else {
-                instance = LuceneSearchBackend.create(backendConfig.getConfig());
+            SearchBackend<?> old = instance;
+            instance = null;
+            if (old != null) {
+                old.close();
             }
+            instance = LuceneSearchBackend.create(config);
             if (instance == null) {
                 LOG.warning("Search backend reconfigure failed: backend is null");
             }

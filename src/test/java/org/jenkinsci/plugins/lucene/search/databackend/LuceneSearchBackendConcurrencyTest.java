@@ -94,6 +94,26 @@ class LuceneSearchBackendConcurrencyTest {
         first.close();
     }
 
+    @Test
+    void shouldCloseIdempotentlyAndReleaseTheIndexPath() {
+        LuceneSearchBackend backend = LuceneSearchBackend.create(configMap());
+        assertNotNull(backend, "Backend creation should succeed on a clean directory");
+
+        // The manager may close an already closed backend (reconfigure, then a
+        // rebuild), so closing twice must be harmless.
+        assertDoesNotThrow(
+                () -> {
+                    backend.close();
+                    backend.close();
+                },
+                "close() must be idempotent");
+
+        // Closing must also release the index, so it can be reopened.
+        LuceneSearchBackend reopened = LuceneSearchBackend.create(configMap());
+        assertNotNull(reopened, "Index must be reopenable after close()");
+        reopened.close();
+    }
+
     private Object lockFileKey() throws IOException {
         Object key = Files.readAttributes(tempDir.resolve("write.lock"), BasicFileAttributes.class)
                 .fileKey();

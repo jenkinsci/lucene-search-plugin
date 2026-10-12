@@ -5,7 +5,6 @@ import hudson.model.Run;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import jenkins.model.Jenkins;
 import java.util.logging.Level;
@@ -56,8 +55,6 @@ public abstract class SearchBackend<T> {
     public abstract boolean findRunIndex(Run<?, ?> run);
 
     public abstract List<FreeTextSearchItemImplementation> getHits(final String query, boolean searchNext);
-
-    public abstract SearchBackend<?> reconfigure(Map<String, Object> config);
 
     public abstract void removeBuild(Run<?, ?> run) throws IOException;
 
