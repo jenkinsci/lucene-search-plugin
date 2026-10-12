@@ -2,9 +2,13 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hudson.model.FreeStyleProject;
+import hudson.model.Run;
 import hudson.tasks.Shell;
 import java.io.File;
 import java.nio.file.Files;
@@ -27,8 +31,9 @@ import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  * Tests that {@link SearchBackendManager} gracefully handles backend
- * unavailability and that the ReadWriteLock in lockBackend/reconfigure
- * prevents {@code AlreadyClosedException} from in-flight writes.
+ * unavailability, that the ReadWriteLock in lockBackend/reconfigure prevents
+ * {@code AlreadyClosedException} from in-flight writes, and that a backend whose
+ * writer has died is discarded, rebuilt and retried instead of failing forever.
  */
 @WithJenkins
 class SearchBackendManagerTest {
@@ -43,8 +48,15 @@ class SearchBackendManagerTest {
     }
 
     @AfterEach
-    void tearDown() {
+    void tearDown() throws Exception {
         executor.shutdownNow();
+        // Several tests point lucenePath at a file that cannot be opened as an
+        // index, and the Jenkins instance — including its configuration — is
+        // shared by every test in this class. Restore a usable path so the
+        // outcome of a test never depends on which test ran before it.
+        SearchBackendConfiguration config = GlobalConfiguration.all().get(SearchBackendConfiguration.class);
+        config.setLucenePath(new File(rule.jenkins.getRootDir(), "luceneIndex"));
+        config.reconfigure();
     }
 
     // ── null-safety ──────────────────────────────────────────────
@@ -185,6 +197,59 @@ class SearchBackendManagerTest {
                     "Concurrent reconfigure + getHits must not throw: " + failure.get().getMessage(),
                     failure.get());
         }
+    }
+
+    // ── dead writer: discard, rebuild, retry ─────────────────────
+
+    @Test
+    @Timeout(value = 60, unit = TimeUnit.SECONDS)
+    void storeBuildShouldRebuildADeadBackendAndRetry() throws Exception {
+        SearchBackendManager manager = getManager();
+        FreeStyleProject project = rule.createFreeStyleProject("heal-test");
+        project.getBuildersList().add(new Shell("echo HEAL_RETRY_MARKER\n"));
+        rule.buildAndAssertSuccess(project);
+        Run<?, ?> run = project.getLastBuild();
+        assertNotNull(run, "Build must exist");
+        assertTrue(
+                manager.getHits("HEAL_RETRY_MARKER", false).size() > 0,
+                "Build must be searchable before the writer is killed");
+
+        // Kill the live writer the way production did: the shared backend was
+        // closed while the plugin kept writing through it.
+        SearchBackend<?> killed = manager.currentBackend();
+        assertNotNull(killed, "A backend must be live");
+        killed.close();
+
+        // The write must be detected, the dead backend discarded and rebuilt, and
+        // the write retried — with nothing escaping into the calling listener.
+        assertDoesNotThrow(() -> manager.storeBuild(run), "storeBuild must heal a dead backend and retry");
+        assertNotSame(killed, manager.currentBackend(), "The dead backend must have been replaced");
+        assertTrue(
+                manager.getHits("HEAL_RETRY_MARKER", false).size() > 0,
+                "Build must be searchable again after the rebuild");
+    }
+
+    @Test
+    @Timeout(value = 30, unit = TimeUnit.SECONDS)
+    void storeBuildShouldSkipWhenNoBackendCanBeRebuilt() throws Exception {
+        SearchBackendManager manager = getManager();
+        FreeStyleProject project = rule.createFreeStyleProject("skip-test");
+        project.getBuildersList().add(new Shell("echo SKIP_MARKER\n"));
+        rule.buildAndAssertSuccess(project);
+        Run<?, ?> run = project.getLastBuild();
+        assertNotNull(run, "Build must exist");
+
+        SearchBackend<?> killed = manager.currentBackend();
+        assertNotNull(killed, "A backend must be live");
+        killed.close();
+        // Make rebuilding impossible: the configured path is a regular file.
+        breakBackend();
+
+        // storeBuild runs on every build.xml save, so a backend that cannot be
+        // created must skip the write rather than throw on every save. A backend
+        // that dies *after* a rebuild is the loud case and throws IOException.
+        assertDoesNotThrow(() -> manager.storeBuild(run), "A backend that cannot be rebuilt must skip, not throw");
+        assertNull(manager.currentBackend(), "No backend can exist for an unopenable path");
     }
 
     // ── helpers ──────────────────────────────────────────────────
