@@ -87,6 +87,33 @@ If you see no search results after upgrading, the index was automatically recrea
 
 The rebuild runs in the background. Search results will appear progressively as jobs are indexed.
 
+## Recovery: a dead index writer rebuilds itself
+
+The index is written by a single long-lived `IndexWriter`, and exactly **one** writer may own an index directory:
+
+- If that writer dies (for example something closed the search backend while builds were still being indexed), the plugin now **discards the dead backend, rebuilds it and retries the operation once**. Indexing continues without a Jenkins restart, and the rebuild is logged at `SEVERE`:
+
+  ```
+  SEVERE  Search backend died (IndexWriter closed); rebuilding it and retrying: store build myjob #42
+  WARNING Search backend discarded and will be rebuilt (1 time(s) since startup)
+  ```
+
+- Search results are never served from a stale writer indefinitely: a read that hits a dead writer triggers the same rebuild.
+- **On shutdown and restart the index is closed cleanly.** A JVM shutdown hook commits the pending writes and releases the index lock *before* the process exits, so a restart hands the index over in a known state instead of relying on the operating system to drop the lock when the JVM dies. (Jenkins' own `@Terminator` annotation would be the native way to be told about a shutdown, but nothing in current `jenkins-core` invokes it any more.)
+- **A writer leaked by a plugin or configuration reload is closed and replaced**, not left holding the index:
+
+  ```
+  WARNING Replacing a search backend that still had index <path> open in this JVM (leaked by an earlier plugin or configuration reload)
+  ```
+
+- A lock this JVM does **not** own is never forced. Earlier versions reacted to a lock conflict by deleting `write.lock`; that does not release the lock, it only invalidates the running writer's lock file. If you see this line, a writer outside this plugin's reach still has the index open:
+
+  ```
+  Lucene index <path> is locked by another search backend in this Jenkins JVM: two writers on one index.
+  ```
+
+  Restarting Jenkins clears it. A plugin or configuration reload must never leave a second writer behind — that is the condition to watch for, not a leftover `write.lock` file: after a restart the operating system has already dropped the lock, so a stale lock file on its own blocks nothing.
+
 ### Local search on lucene jenkins DB from console
 
 Clue (Command Line Lucene Explorer) - Linux Guide
