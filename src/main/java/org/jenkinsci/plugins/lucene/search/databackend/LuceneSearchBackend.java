@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import jenkins.model.Jenkins;
@@ -91,7 +92,43 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
      */
     static final String UNIQUE_KEY_FIELD = "_unique_key";
 
+    /**
+     * Indexes currently open in this JVM, keyed by canonical path. This is scoped
+     * to the plugin classloader, so it is diagnostics and defence in depth rather
+     * than the enforcement mechanism: what actually keeps a second writer out is
+     * the JDK's JVM-wide file lock table (a second tryLock on the same file raises
+     * OverlappingFileLockException, which Lucene reports as "Lock held by this
+     * virtual machine") and, across processes, the kernel's fcntl lock.
+     */
+    private static final Map<String, LuceneSearchBackend> OPEN_INDEXES = new ConcurrentHashMap<>();
+
+    static {
+        // Make the index safe before the JVM goes away: commit the pending writes
+        // and release the lock on the way out, instead of leaving it to the
+        // operating system to drop the lock when the process dies. Jenkins'
+        // @Terminator would be the native way to be told about a shutdown, but
+        // nothing in jenkins-core invokes it any more, so the hook does the work.
+        try {
+            Runtime.getRuntime()
+                    .addShutdownHook(new Thread(LuceneSearchBackend::closeAllOpenIndexes, "lucene-search-shutdown"));
+        } catch (IllegalStateException e) {
+            LOG.log(Level.WARNING, "The JVM is already shutting down; the index will not be closed cleanly", e);
+        }
+    }
+
+    /** Closes every index this classloader still has open. Runs on JVM shutdown. */
+    static void closeAllOpenIndexes() {
+        for (LuceneSearchBackend open : OPEN_INDEXES.values()) {
+            try {
+                open.close();
+            } catch (RuntimeException e) {
+                LOG.log(Level.WARNING, "Failed to close the search index cleanly on shutdown", e);
+            }
+        }
+    }
+
     private final Analyzer analyzer;
+    private final String canonicalPath;
     private Directory index;
     private IndexWriter dbWriter;
     private SearcherManager searcherManager;
@@ -112,40 +149,61 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
     public LuceneSearchBackend(final File indexPath, final boolean useBuildLogs) throws IOException {
         analyzer = new CaseSensitiveAnalyzer();
-        index = FSDirectory.open(indexPath.toPath());
-        collectBuildLogs = useBuildLogs;
-        IndexWriterConfig config = new IndexWriterConfig(analyzer);
-        try {
-            dbWriter = new IndexWriter(index, config);
-        } catch (LockObtainFailedException e) {
-            // Never force-unlock here. This exception can only be thrown while a
-            // *live* holder exists: after an unclean shutdown or a restart the
-            // operating system has already released the lock, so a write.lock
-            // file left on disk blocks nothing on its own. Deleting the file
-            // never releases the holder's lock either, and it is destructive in
-            // both cases it can hit:
-            //  - same classloader: Lucene still refuses the second writer (its
-            //    LOCK_HELD set), but the live writer's lock file has already
-            //    been deleted, so that writer fails its next lock validation
-            //    with "Underlying file changed by an external force" and dies.
-            //  - after a plugin reload, where the new classloader knows nothing
-            //    about the old writer, the second writer is created and two
-            //    writers share one index directory.
-            throw new IOException(lockConflictMessage(indexPath, e), e);
-        } catch (IllegalArgumentException e) {
-            // The existing index may use an incompatible codec (e.g., Lucene87 after
-            // upgrading from 8.x) or may be corrupt. Delete it and start fresh.
-            LOG.severe("Lucene index at " + indexPath + " cannot be opened ("
-                    + e.getMessage() + "); deleting and recreating it. Search data is lost until you run"
-                    + " 'Manage Jenkins -> Lucene Search Manager -> Rebuild'.");
-            IOUtils.closeQuietly(index);
-            deleteDirectory(indexPath);
-            index = FSDirectory.open(indexPath.toPath());
-            dbWriter = new IndexWriter(index, config);
+        canonicalPath = indexPath.getCanonicalPath();
+        LuceneSearchBackend previous = OPEN_INDEXES.put(canonicalPath, this);
+        if (previous != null) {
+            // A backend from an earlier plugin or configuration reload still had
+            // this index open. It is unreachable — only this classloader's registry
+            // referred to it — and leaving it open would keep the writer lock and
+            // block this one, so close it and take over.
+            LOG.warning("Replacing a search backend that still had index " + canonicalPath
+                    + " open in this JVM (leaked by an earlier plugin or configuration reload)");
+            previous.close();
         }
-        dbWriter.commit();
-        searcherManager = new SearcherManager(dbWriter, null);
-        jenkins = Jenkins.get();
+        boolean opened = false;
+        try {
+            index = FSDirectory.open(indexPath.toPath());
+            collectBuildLogs = useBuildLogs;
+            IndexWriterConfig config = new IndexWriterConfig(analyzer);
+            try {
+                dbWriter = new IndexWriter(index, config);
+            } catch (LockObtainFailedException e) {
+                // Never force-unlock here. This exception can only be thrown while a
+                // *live* holder exists: after an unclean shutdown or a restart the
+                // operating system has already released the lock, so a write.lock
+                // file left on disk blocks nothing on its own. Deleting the file
+                // never releases the holder's lock either, and it is destructive in
+                // both cases it can hit:
+                //  - same classloader: Lucene still refuses the second writer (its
+                //    LOCK_HELD set), but the live writer's lock file has already
+                //    been deleted, so that writer fails its next lock validation
+                //    with "Underlying file changed by an external force" and dies.
+                //  - after a plugin reload, where the new classloader knows nothing
+                //    about the old writer, the second writer is created and two
+                //    writers share one index directory.
+                throw new IOException(lockConflictMessage(indexPath, e), e);
+            } catch (IllegalArgumentException e) {
+                // The existing index may use an incompatible codec (e.g., Lucene87 after
+                // upgrading from 8.x) or may be corrupt. Delete it and start fresh.
+                LOG.severe("Lucene index at " + indexPath + " cannot be opened ("
+                        + e.getMessage() + "); deleting and recreating it. Search data is lost until you run"
+                        + " 'Manage Jenkins -> Lucene Search Manager -> Rebuild'.");
+                IOUtils.closeQuietly(index);
+                deleteDirectory(indexPath);
+                index = FSDirectory.open(indexPath.toPath());
+                // IndexWriterConfig is consumed on first use — must create a fresh one.
+                config = new IndexWriterConfig(analyzer);
+                dbWriter = new IndexWriter(index, config);
+            }
+            dbWriter.commit();
+            searcherManager = new SearcherManager(dbWriter, null);
+            jenkins = Jenkins.get();
+            opened = true;
+        } finally {
+            if (!opened) {
+                OPEN_INDEXES.remove(canonicalPath, this);
+            }
+        }
     }
 
     /**
@@ -210,9 +268,9 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     /**
      * Closes the writer and the searchers. Idempotent: the manager owns the
      * lifecycle and may close a backend that is already closed. The fields are
-     * deliberately not nulled, so that a concurrent reader observes a closed
-     * writer rather than a null field — which would surface as a
-     * NullPointerException instead.
+     * deliberately not nulled — a concurrent reader has to observe a closed
+     * writer (which {@code SearchBackendManager} heals by rebuilding) rather
+     * than a null field, which would surface as a NullPointerException.
      */
     @Override
     public synchronized void close() {
@@ -220,9 +278,14 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             return;
         }
         closed = true;
+        // Closing the writer commits the pending writes (commitOnClose) and
+        // releases the index lock.
         IOUtils.closeQuietly(searcherManager);
         IOUtils.closeQuietly(dbWriter);
         IOUtils.closeQuietly(index);
+        // Only deregister if this backend is still the one registered: a backend
+        // that was already replaced must not hide its successor.
+        OPEN_INDEXES.remove(canonicalPath, this);
     }
 
     private Long getWithDefault(String number, Long defaultNumber) {

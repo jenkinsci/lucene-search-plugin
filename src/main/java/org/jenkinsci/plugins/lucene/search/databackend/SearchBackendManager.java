@@ -206,6 +206,28 @@ public class SearchBackendManager {
         }
     }
 
+    /**
+     * Closes the backend so pending writes are committed and the index lock is
+     * released — the "make the index safe" step for a Jenkins restart or
+     * shutdown, for callers that go through the manager. Safe to call repeatedly,
+     * and a later operation simply builds a fresh backend. The JVM shutdown hook
+     * itself closes the registered backends directly, so that it also covers a
+     * backend leaked by an earlier plugin or configuration reload.
+     */
+    public void closeBackend() {
+        backendLock.writeLock().lock();
+        try {
+            SearchBackend<?> current = instance;
+            instance = null;
+            if (current != null) {
+                LOG.info("Closing the search backend: committing the index and releasing its lock");
+                current.close();
+            }
+        } finally {
+            backendLock.writeLock().unlock();
+        }
+    }
+
     /** The live backend, for tests. Production code goes through the manager. */
     @VisibleForTesting
     SearchBackend<?> currentBackend() {
