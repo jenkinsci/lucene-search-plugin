@@ -9,3 +9,5 @@ hs_err_pid*
 /target/
 *.sh
 /bin/
+__pycache__/
+*.pyc

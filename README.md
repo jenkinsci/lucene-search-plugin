@@ -114,6 +114,8 @@ The index is written by a single long-lived `IndexWriter`, and exactly **one** w
 
   Restarting Jenkins clears it. A plugin or configuration reload must never leave a second writer behind — that is the condition to watch for, not a leftover `write.lock` file: after a restart the operating system has already dropped the lock, so a stale lock file on its own blocks nothing.
 
+To provoke this behaviour on a running instance — readers and writers, with an optional restart in the middle — there is a soak harness with its own instructions: [`tools/stress`](tools/stress/README.md).
+
 ### Local search on lucene jenkins DB from console
 
 Clue (Command Line Lucene Explorer) - Linux Guide
