@@ -361,9 +361,11 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             //            LOG.warning("Search Parsing Error: ", e);
         } catch (IOException e) {
             LOG.log(Level.WARNING, "Search IO Error: ", e);
-        } catch (AlreadyClosedException e) {
-            LOG.log(Level.WARNING, "IndexReader is closed: ", e);
-        } finally {
+        }
+        // AlreadyClosedException is deliberately not caught here: it means the writer
+        // died, and SearchBackendManager rebuilds the backend when it sees it rather
+        // than silently returning no results forever.
+        finally {
             if (searcher != null) {
                 try {
                     searcherManager.release(searcher);
@@ -534,6 +536,11 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             dbWriter.commit();
             searcherManager.maybeRefresh();
             progress.setSuccessfullyCompleted();
+        } catch (AlreadyClosedException e) {
+            // Cleaning is admin-initiated and reports through ManagerProgress, so
+            // it is not routed through the manager's rebuild-and-retry path.
+            LOG.log(Level.SEVERE, "Index writer is closed; cannot clean the index", e);
+            progress.completedWithErrors(e);
         } catch (IOException e) {
             progress.completedWithErrors(e);
         } finally {
