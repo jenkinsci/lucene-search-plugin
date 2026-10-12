@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.lucene.search.databackend;
 
 import static org.jenkinsci.plugins.lucene.search.Field.*;
 
+import com.google.common.annotations.VisibleForTesting;
 import hudson.model.Item;
 import hudson.model.Job;
 import hudson.model.Run;
@@ -116,6 +117,12 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         }
     }
 
+    /** How many indexes this classloader currently has open, for tests. */
+    @VisibleForTesting
+    static int openIndexCount() {
+        return OPEN_INDEXES.size();
+    }
+
     /** Closes every index this classloader still has open. Runs on JVM shutdown. */
     static void closeAllOpenIndexes() {
         for (LuceneSearchBackend open : OPEN_INDEXES.values()) {
@@ -156,6 +163,13 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
             // this index open. It is unreachable — only this classloader's registry
             // referred to it — and leaving it open would keep the writer lock and
             // block this one, so close it and take over.
+            //
+            // This assumes the predecessor's owner is gone. The plugin never creates
+            // a writer while a live manager owns the index (the manager serialises
+            // its own creations under the write lock), so the only way to get here is
+            // a reload, where the old manager is no longer serving. Taking the index
+            // away from a *live* owner would leave two concurrent writers on it,
+            // which Lucene cannot tolerate.
             LOG.warning("Replacing a search backend that still had index " + canonicalPath
                     + " open in this JVM (leaked by an earlier plugin or configuration reload)");
             previous.close();

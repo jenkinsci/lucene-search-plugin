@@ -228,6 +228,12 @@ public class SearchBackendManager {
         }
     }
 
+    /** How many dead backends have been discarded so far, for tests. */
+    @VisibleForTesting
+    int rebuildCount() {
+        return backendRebuilds.get();
+    }
+
     /** The live backend, for tests. Production code goes through the manager. */
     @VisibleForTesting
     SearchBackend<?> currentBackend() {
