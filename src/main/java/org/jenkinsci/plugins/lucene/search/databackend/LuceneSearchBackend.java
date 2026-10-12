@@ -295,7 +295,21 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         // Closing the writer commits the pending writes (commitOnClose) and
         // releases the index lock.
         IOUtils.closeQuietly(searcherManager);
-        IOUtils.closeQuietly(dbWriter);
+        try {
+            dbWriter.close();
+        } catch (IOException | RuntimeException e) {
+            // A close landing between prepareCommit and commit makes Lucene refuse to
+            // close ("cannot close: prepareCommit was already called with no
+            // corresponding call to commit") without releasing the write lock, which
+            // leaves the index locked until this JVM exits. Every close in this
+            // plugin is serialised by the manager's write lock, so no commit can be
+            // in flight here — reaching this means something closed the writer from
+            // outside, and closeQuietly's silence would hide the locked index.
+            LOG.log(
+                    Level.SEVERE,
+                    "Failed to close the index writer; the index may stay locked until Jenkins restarts",
+                    e);
+        }
         IOUtils.closeQuietly(index);
         // Only deregister if this backend is still the one registered: a backend
         // that was already replaced must not hide its successor.
