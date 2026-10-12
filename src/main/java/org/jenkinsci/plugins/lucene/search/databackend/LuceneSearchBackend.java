@@ -98,6 +98,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
     private final Jenkins jenkins;
     private volatile ScoreDoc lastDoc;
     private final boolean collectBuildLogs;
+    private boolean closed;
 
     /** Builds the unique key for a Run: "projectFullName#buildNumber". */
     private static String uniqueKeyFor(Run<?, ?> run) {
@@ -206,13 +207,19 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
         return (File) config.get("lucenePath");
     }
 
+    /**
+     * Closes the writer and the searchers. Idempotent: the manager owns the
+     * lifecycle and may close a backend that is already closed. The fields are
+     * deliberately not nulled, so that a concurrent reader observes a closed
+     * writer rather than a null field — which would surface as a
+     * NullPointerException instead.
+     */
     @Override
-    public SearchBackend<Document> reconfigure(final Map<String, Object> newConfig) {
-        close();
-        return create(newConfig);
-    }
-
-    public void close() {
+    public synchronized void close() {
+        if (closed) {
+            return;
+        }
+        closed = true;
         IOUtils.closeQuietly(searcherManager);
         IOUtils.closeQuietly(dbWriter);
         IOUtils.closeQuietly(index);
