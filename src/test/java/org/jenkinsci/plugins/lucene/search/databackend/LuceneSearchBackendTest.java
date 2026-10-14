@@ -11,10 +11,12 @@ import hudson.model.Run;
 import hudson.tasks.BatchFile;
 import hudson.tasks.Shell;
 import java.net.URL;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.lucene.search.Field;
 import org.jenkinsci.plugins.lucene.search.management.LuceneManager;
@@ -120,6 +122,40 @@ class LuceneSearchBackendTest {
                 0,
                 jenkinsSearchBackend.search("UNIQUE_DELETE_TEST").suggestions.size(),
                 "Build entries should be removed when project is deleted");
+    }
+
+    @Test
+    @Timeout(value = 10000, unit = TimeUnit.MILLISECONDS)
+    void searchShouldReturnAllBuildsWithTheSameDisplayName() throws Exception {
+        jenkinsSearchBackend.setLuceneBackend(false);
+        SearchBackendManager manager =
+                Jenkins.get().getExtensionList(SearchBackendManager.class).get(0);
+        FreeStyleProject project = rule.createFreeStyleProject("duplicateDisplayName");
+        for (int i = 0; i < 2; i++) {
+            var build = rule.buildAndAssertSuccess(project);
+            build.setDisplayName("same-version");
+            manager.storeBuild(build);
+        }
+
+        var hits = manager.getHits("j:duplicateDisplayName", false);
+        assertEquals(2, hits.size(), "Builds with the same display name must remain distinct");
+        assertEquals(
+                Set.of("job/duplicateDisplayName/1/", "job/duplicateDisplayName/2/"),
+                hits.stream().map(hit -> hit.getSearchUrl()).collect(Collectors.toSet()));
+        for (var hit : hits) {
+            assertEquals("duplicateDisplayNamesame-version", hit.getSearchName());
+        }
+
+        FreeStyleProject otherProject = rule.createFreeStyleProject("otherProject");
+        var otherBuild = rule.buildAndAssertSuccess(otherProject);
+        otherBuild.setDisplayName("same-version");
+        manager.storeBuild(otherBuild);
+
+        hits = manager.getHits("d:same-version", false);
+        assertEquals(3, hits.size(), "Build numbers are only unique within a job");
+        assertEquals(
+                Set.of("job/duplicateDisplayName/1/", "job/duplicateDisplayName/2/", "job/otherProject/1/"),
+                hits.stream().map(hit -> hit.getSearchUrl()).collect(Collectors.toSet()));
     }
 
     @Test

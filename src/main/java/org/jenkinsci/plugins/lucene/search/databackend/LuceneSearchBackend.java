@@ -412,7 +412,7 @@ public class LuceneSearchBackend extends SearchBackend<Document> {
 
             for (ScoreDoc hit : hits) {
                 Document doc = searcher.doc(hit.doc);
-                docs.put(doc.get(PROJECT_NAME.fieldName) + doc.get(BUILD_DISPLAY_NAME.fieldName), doc);
+                docs.put(doc.get(PROJECT_NAME.fieldName) + "#" + doc.get(BUILD_NUMBER.fieldName), doc);
             }
 
             for (Document doc : docs.values()) {
